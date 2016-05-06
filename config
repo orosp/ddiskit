@@ -19,6 +19,8 @@ module_name = "template"
 rpm_name = "kmod-{dud_vendor}-{module_name}-{module_version}"
 # module_version
 module_version = "-rh1"
+# target kernel version
+kernel_version = "uname -r"
 # module summary in spec file
 summary = "Example module for Driver Update Program"
 # module description in spec file

@@ -9,7 +9,22 @@
 # General Public License version 2 (GPLv2).
 import sys
 import argparse
+import ConfigParser
 from pprint import pprint
+
+def parser_config(filename):
+    configs = {}
+    configParser = ConfigParser.RawConfigParser()
+    if len(configParser.read(filename)) == 0:
+        print "Config file: " + filename + " not found"
+        sys.exit(1)
+    try:
+        for section in configParser.sections():
+            configs[section] = configParser.items(section)
+    except ConfigParser.Error as e:
+        print e.str()
+        sys.exit(1)
+    return configs
 
 def parser_cli():
     root_parser = argparse.ArgumentParser(prog='ddiskit', description='Red Hat tool for create Driver Update Disk')
@@ -37,6 +52,9 @@ def parser_cli():
 
 def main():
     args = parser_cli()
+    #if args["config"] != "":
+    #    configs = parser_config("configs")
+
     pprint(args)
     sys.exit(1)
 
