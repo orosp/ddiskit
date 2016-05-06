@@ -1,0 +1,51 @@
+# global config values
+[global]
+# Driver Update Disc Vendor
+dud_vendor = "RedHat"
+# Driver Update Disc Author
+dud_author = "Petr Oros"
+# Driver Update Disc email
+dud_author_email = "poros@redhat.com"
+# Include srpm files into final iso
+include_srpm = True
+# Include rebuginfo rpm into final iso
+include_debuginfo = True
+
+# config values for driver spec file
+[spec_file]
+# kernel module name
+module_name = "template"
+# rpm file name expression. Can use eny variable from this config
+rpm_name = "kmod-{dud_vendor}-{module_name}-{module_version}"
+# module_version
+module_version = "-rh1"
+# module summary in spec file
+summary = "Example module for Driver Update Program"
+# module description in spec file
+description = "Example module for Driver Update Program"
+# dependencies on other modules based on rpm name
+# when creating DUD with firmware, dependency will by added automatically
+dependencies = ""
+# request signature for ko files
+# feature works only with redhat infrastructure, otherwise will be ignored
+request_signature = True
+
+# config values for firmware spec file
+[firmware_spec_file]
+# when no have firmware to update, leave it blank
+# firmware update is possible ONLY with driver update!!
+# firmware will be everytime in single rpm, never try mix
+# firmware with driver into single rpm!
+firmware_name = ""
+# firmware rpm file name xpression
+firmware_rpm_name = "kmod-{dud_vendor}-{module_name}-firmware"
+# firmware version
+firmware_version = ""
+# coma separated file list
+firmware_files = ""
+# module summary in spec file
+firmware_summary = "Example firmware for Driver Update Program"
+# module description in spec file
+firmware_description = "Example firmware for Driver Update Program"
+# dependencies on other modules do not make any sense here
+# dependency on driver, defined before, will be added automatically
