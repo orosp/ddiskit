@@ -17,6 +17,9 @@ def parser_cli():
 
     cmdparsers = root_parser.add_subparsers(title='Commands')
 
+    # parser for the "prepare_sources" command
+    parser_prepare_sources = cmdparsers.add_parser('prepare_sources', help='Prepare sources')
+
     # parser for the "generate_spec" command
     parser_generate_spec = cmdparsers.add_parser('generate_spec', help='Generate spec file')
     parser_generate_spec.add_argument("-c", "--config", default='', help="Config file")
