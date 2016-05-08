@@ -10,9 +10,10 @@
 import sys
 import argparse
 import ConfigParser
+from ddiskit import Ddiskit
 from pprint import pprint
 
-def parser_config(filename):
+def parse_config(filename):
     configs = {}
     configParser = ConfigParser.RawConfigParser()
     if len(configParser.read(filename)) == 0:
@@ -26,37 +27,43 @@ def parser_config(filename):
         sys.exit(1)
     return configs
 
-def parser_cli():
+def parse_cli():
+    ddiskit = Ddiskit()
     root_parser = argparse.ArgumentParser(prog='ddiskit', description='Red Hat tool for create Driver Update Disk')
     root_parser.add_argument("-v", "--verbosity", action="count", default=0, help="Increase output verbosity")
 
-    cmdparsers = root_parser.add_subparsers(title='Commands')
+    cmdparsers = root_parser.add_subparsers(title='Commands', help='main ddiskit commands')
 
     # parser for the "prepare_sources" command
     parser_prepare_sources = cmdparsers.add_parser('prepare_sources', help='Prepare sources')
+    parser_prepare_sources.add_argument("-c", "--config", default='', help="Config file")
+    parser_prepare_sources.set_defaults(func=ddiskit.cmd_prepare_sources)
 
     # parser for the "generate_spec" command
     parser_generate_spec = cmdparsers.add_parser('generate_spec', help='Generate spec file')
     parser_generate_spec.add_argument("-c", "--config", default='', help="Config file")
+    parser_generate_spec.set_defaults(func=ddiskit.cmd_generate_spec)
 
     # parser for the "build_rpm" command
     parser_build_rpm = cmdparsers.add_parser('build_rpm', help='Build rpm')
     parser_build_rpm.add_argument("-c", "--config", default='', help="Config file")
+    parser_build_rpm.set_defaults(func=ddiskit.cmd_build_rpm)
 
     # parser for the "build_iso" command
     parser_build_iso = cmdparsers.add_parser('build_iso', help='Build iso')
     parser_build_iso.add_argument("-c", "--config", default='', help="Config file")
+    parser_build_iso.set_defaults(func=ddiskit.cmd_build_iso)
 
     args = root_parser.parse_args()
     return args
 
 def main():
-    args = parser_cli()
-    #if args["config"] != "":
-    #    configs = parser_config("configs")
-
-    pprint(args)
-    sys.exit(1)
+    args = parse_cli()
+    if args.config != "":
+        configs = parse_config(args.config)
+        args.func(args, configs)
+    else:
+        args.func(args, None)
 
 if __name__ == "__main__":
     main()
