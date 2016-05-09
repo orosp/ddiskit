@@ -14,14 +14,14 @@ from pprint import pprint
 class Ddiskit:
     def cmd_prepare_sources(self, args, configs):
         try:
-            sys.stdout.write("Writing module.config ... ")
-            if os.path.isfile("module.config"):
+            sys.stdout.write("Writing new config file ... ")
+            if os.path.isfile(args.config):
                 sys.stdout.write("File Exist")
             else:
                 with open('config', 'r') as fin:
                     read_data = fin.read()
                 fin.close()
-                fout = open('module.config', 'w')
+                fout = open(args.config, 'w')
                 fout.write(read_data)
                 fout.close()
                 sys.stdout.write("OK")
@@ -46,8 +46,38 @@ class Ddiskit:
         sys.stdout.flush()
 
     def cmd_generate_spec(self, args, configs):
-        # parse config file and create spec file(s)
-        print "cmd_generate_spec"
+        if len(configs) == 0:
+            sys.stdout.write(args.config)
+            sys.stdout.write(" not found, use \"ddiskit prepare_sources\" for create\n")
+            sys.exit(1)
+        try:
+            with open('../spec', 'r') as fin:
+                read_data = fin.read()
+                fin.close()
+        except IOError as e:
+            sys.stdout.write(e.strerror)
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+        # apply global configs
+        for content in configs["global"]:
+            read_data = read_data.replace('"' + content[0].upper() + '"', content[1])
+
+        # apply spec configs
+        for content in configs["spec_file"]:
+            read_data = read_data.replace('"' + content[0].upper() + '"', content[1])
+
+        # apply firmawe spec configs
+        for content in configs["firmware_spec_file"]:
+            read_data = read_data.replace('"' + content[0].upper() + '"', content[1])
+
+        try:
+            with open('template.spec', 'w') as fout:
+                fout.write(read_data)
+                fout.close()
+        except IOError as e:
+            sys.stdout.write(e.strerror)
+            sys.stdout.write("\n")
+            sys.stdout.flush()
 
     def cmd_build_rpm(self, args, configs):
         # build all rpms
