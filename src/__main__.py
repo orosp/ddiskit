@@ -41,17 +41,17 @@ def parse_cli():
 
     # parser for the "generate_spec" command
     parser_generate_spec = cmdparsers.add_parser('generate_spec', help='Generate spec file')
-    parser_generate_spec.add_argument("-c", "--config", default='', help="Config file")
+    parser_generate_spec.add_argument("-c", "--config", default='module.config', help="Config file")
     parser_generate_spec.set_defaults(func=ddiskit.cmd_generate_spec)
 
     # parser for the "build_rpm" command
     parser_build_rpm = cmdparsers.add_parser('build_rpm', help='Build rpm')
-    parser_build_rpm.add_argument("-c", "--config", default='', help="Config file")
+    parser_build_rpm.add_argument("-c", "--config", default='module.config', help="Config file")
     parser_build_rpm.set_defaults(func=ddiskit.cmd_build_rpm)
 
     # parser for the "build_iso" command
     parser_build_iso = cmdparsers.add_parser('build_iso', help='Build iso')
-    parser_build_iso.add_argument("-c", "--config", default='', help="Config file")
+    parser_build_iso.add_argument("-c", "--config", default='module.config', help="Config file")
     parser_build_iso.set_defaults(func=ddiskit.cmd_build_iso)
 
     args = root_parser.parse_args()
