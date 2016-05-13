@@ -1,0 +1,152 @@
+%define kmod_name		"MODULE_NAME"
+%define kmod_vendor		"DUD_VENDOR"
+%define kmod_driver_version	"MODULE_VERSION"
+%define kmod_rpm_release	"RPM_RELEASE"
+%define kernel_version		"KERNEL_VERSION"
+%define kmod_kbuild_dir		"MODULE_BUILD_DIR"
+
+%{!?dist: %define dist "RPM_DIST"}
+
+Source0:	%{kmod_name}-%{kmod_driver_version}.tar.bz2
+Source1:	%{kmod_name}.files
+#Source2:	symbols.greylist-{arch}
+#Source3:	symbols.symvers-{arch}
+
+%define __find_requires %_sourcedir/find-requires.ksyms
+%define __find_provides %_sourcedir/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
+
+Name:		%{kmod_name}
+Version:	%{kmod_driver_version}
+Release:	%{kmod_rpm_release}%{?dist}
+Summary:	"SUMMARY"
+Group:		System/Kernel
+License:	GPLv2
+URL:		http://www.kernel.org/
+BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+BuildRequires:	%kernel_module_package_buildreqs
+ExclusiveArch:  i686 x86_64 s390x ppc64
+
+%global kmod_version %{version}
+%global kmod_release %{release}
+%global kverrel %(%{SOURCE5} verrel %{kernel_verrel} 2>/dev/null)
+%global flavors_to_build default
+%global kernel_source() /usr/src/kernels/%kverrel
+
+%global kernel_next_release	%(expr %{kernel_release} + 1)
+
+%global filelist %(cat %{SOURCE1} | sed -e "s/\-%1//g" | sed -e "s/%2/%{kverrel}/g")
+
+%package	-n %{kmod_name}
+Summary:	%{kmod_name} kernel module
+Group:		System Environment/Kernel
+Version:	%{kmod_version}
+Release:	%{kmod_release}
+%global _use_internal_dependency_generator 0
+Provides:	kernel-modules = %kverrel
+Provides:	%{kmod_name}-kmod = %{?epoch:%{epoch}:}%{version}-%{release}
+Requires(post):	/usr/sbin/depmod
+Requires(postun):	/usr/sbin/depmod
+Requires:	kernel >= %{kernel_version}-%{kernel_release}
+Requires:	kernel <= %{kernel_version}-%{kernel_next_release}
+Conflicts:	%{kmod_name}-kmod
+Obsoletes:	kmod-%{kmod_name}
+
+%description   -n "RPM_NAME"
+"DESCRIPTION"
+
+# The %post, %preun and %postun hooks are copied from kmodtool
+%post          -n kmod-%{kmod_name}-%{kmod_vendor}
+if [ -e "/boot/System.map-%{verrel}" ]; then
+    /usr/sbin/depmod -aeF "/boot/System.map-%{kverrel}" "%{kverrel}" > /dev/null || :
+fi
+
+modules=( $(find /lib/modules/%{kverrel}/extra/%{kmod_name} | grep '\.ko$') )
+if [ -x "/sbin/weak-modules" ]; then
+    printf '%s\n' "${modules[@]}" \
+    | /sbin/weak-modules --add-modules
+fi
+
+%preun         -n kmod-%{kmod_name}-%{kmod_vendor}
+rpm -ql kmod-%{kmod_name}-%{kmod_vendor}-%{kmod_version}-%{kmod_release}.$(arch) | grep '\.ko$' > /var/run/rpm-kmod-%{kmod_name}-modules
+
+%postun        -n kmod-%{kmod_name}-%{kmod_vendor}
+if [ -e "/boot/System.map-%{kverrel}" ]; then
+    /usr/sbin/depmod -aeF "/boot/System.map-%{kverrel}" "%{kverrel}" > /dev/null || :
+fi
+
+modules=( $(cat /var/run/rpm-kmod-%{kmod_name}-modules) )
+rm /var/run/rpm-kmod-%{kmod_name}-modules
+if [ -x "/sbin/weak-modules" ]; then
+    printf '%s\n' "${modules[@]}" \
+    | /sbin/weak-modules --remove-modules
+fi
+
+%files         -n kmod-%{kmod_name}-%{kmod_vendor}
+%{filelist}
+
+%description
+"DESCRIPTION"
+
+%prep
+%setup
+set -- *
+mkdir source
+mv "$@" source/
+#cp %{SOURCE2} source/
+#cp %{SOURCE3} source/
+mkdir obj
+
+%build
+for flavor in %flavors_to_build; do
+	rm -rf obj/$flavor
+	cp -r source obj/$flavor
+
+	# update symvers file if existing
+	symvers=source/Module.symvers-%{_target_cpu}
+	if [ -e $symvers ]; then
+		cp $symvers obj/$flavor/%{kmod_kbuild_dir}/Module.symvers
+	fi
+
+	make -C %{kernel_source $flavor} M=$PWD/obj/$flavor/%{kmod_kbuild_dir} \
+		NOSTDINC_FLAGS="-I $PWD/obj/$flavor/include"
+
+	# mark modules executable so that strip-to-file can strip them
+	find obj/$flavor/%{kmod_kbuild_dir} -name "*.ko" -type f -exec chmod u+x '{}' +
+done
+
+%{SOURCE2} %{name} %{kernel_verrel} obj > source/depmod.conf
+
+greylist=source/symbols.greylist-%{_target_cpu}
+if [ -f $greylist ]; then
+	cp $greylist source/symbols.greylist
+else
+	touch source/symbols.greylist
+fi
+
+if [ -d source/firmware ]; then
+	make -C source/firmware
+fi
+
+%install
+export INSTALL_MOD_PATH=$RPM_BUILD_ROOT
+export INSTALL_MOD_DIR=extra/%{name}
+for flavor in %flavors_to_build ; do
+	make -C %{kernel_source $flavor} modules_install \
+		M=$PWD/obj/$flavor/%{kmod_kbuild_dir}
+	# Cleanup unnecessary kernel-generated module dependency files.
+	find $INSTALL_MOD_PATH/lib/modules -iname 'modules.*' -exec rm {} \;
+done
+
+install -m 644 -D source/depmod.conf $RPM_BUILD_ROOT/etc/depmod.d/%{kmod_name}.conf
+install -m 644 -D source/symbols.greylist $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.txt
+
+if [ -d source/firmware ]; then
+	make -C source/firmware INSTALL_PATH=$RPM_BUILD_ROOT INSTALL_DIR=updates install
+fi
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%changelog
+* Mon May 9 2016 "DUD_AUTHOR" <"DUD_AUTHOR_EMAIL"> 0.99
+- Template for Driver Update module
