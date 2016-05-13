@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # ddiskit - Red Hat tool for create Driver Update Disk
 #
@@ -9,21 +9,20 @@
 # General Public License version 2 (GPLv2).
 import sys
 import argparse
-import ConfigParser
+import configparser
 from ddiskit import Ddiskit
-from pprint import pprint
 
 def parse_config(filename):
     configs = {}
-    configParser = ConfigParser.RawConfigParser()
-    if len(configParser.read(filename)) == 0:
-        print "Config file: " + filename + " not found"
+    cfgparser = configparser.RawConfigParser()
+    if len(cfgparser.read(filename)) == 0:
+        print("Config file: " + filename + " not found")
         sys.exit(1)
     try:
-        for section in configParser.sections():
-            configs[section] = configParser.items(section)
-    except ConfigParser.Error as e:
-        print e.str()
+        for section in cfgparser.sections():
+            configs[section] = cfgparser.items(section)
+    except configparser.Error as e:
+        print(e)
         sys.exit(1)
     return configs
 
@@ -55,6 +54,9 @@ def parse_cli():
     parser_build_iso.set_defaults(func=ddiskit.cmd_build_iso)
 
     args = root_parser.parse_args()
+    if not hasattr(args, "func"):
+        root_parser.print_help()
+        sys.exit(1)
     return args
 
 def main():
