@@ -16,9 +16,15 @@ include_debuginfo = True
 # kernel module name
 module_name = "template"
 # rpm file name expression. Can use eny variable from this config
-rpm_name = "kmod-{dud_vendor}-{module_name}-{module_version}"
+rpm_name = "kmod-{dud_vendor}-{module_name}"
+# rpm_release_version
+rpm_release = "1"
+# rpm_dist
+rpm_dist = "el7_2"
 # module_version
-module_version = "-rh1"
+module_version = "0.99"
+# module build dir
+module_build_dir = "drivers/module_name"
 # target kernel version
 kernel_version = "uname -r"
 # module summary in spec file
