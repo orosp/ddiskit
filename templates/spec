@@ -1,11 +1,11 @@
-%define kmod_name		"MODULE_NAME"
-%define kmod_vendor		"DUD_VENDOR"
-%define kmod_driver_version	"MODULE_VERSION"
-%define kmod_rpm_release	"RPM_RELEASE"
-%define kernel_version		"KERNEL_VERSION"
-%define kmod_kbuild_dir		"MODULE_BUILD_DIR"
+%define kmod_name		%{MODULE_NAME}
+%define kmod_vendor		%{DUD_VENDOR}
+%define kmod_driver_version	%{MODULE_VERSION}
+%define kmod_rpm_release	%{RPM_RELEASE}
+%define kernel_version		%{KERNEL_VERSION}
+%define kmod_kbuild_dir		%{MODULE_BUILD_DIR}
 
-%{!?dist: %define dist "RPM_DIST"}
+%{!?dist: %define dist %{RPM_DIST}}
 
 Source0:	%{kmod_name}-%{kmod_driver_version}.tar.bz2
 Source1:	%{kmod_name}.files
@@ -18,7 +18,7 @@ Source1:	%{kmod_name}.files
 Name:		%{kmod_name}
 Version:	%{kmod_driver_version}
 Release:	%{kmod_rpm_release}%{?dist}
-Summary:	"SUMMARY"
+Summary:	%{SUMMARY}
 Group:		System/Kernel
 License:	GPLv2
 URL:		http://www.kernel.org/
@@ -51,8 +51,8 @@ Requires:	kernel <= %{kernel_version}-%{kernel_next_release}
 Conflicts:	%{kmod_name}-kmod
 Obsoletes:	kmod-%{kmod_name}
 
-%description   -n "RPM_NAME"
-"DESCRIPTION"
+%description   -n %{RPM_NAME}
+%{DESCRIPTION}
 
 # The %post, %preun and %postun hooks are copied from kmodtool
 %post          -n kmod-%{kmod_name}-%{kmod_vendor}
@@ -85,7 +85,7 @@ fi
 %{filelist}
 
 %description
-"DESCRIPTION"
+%{DESCRIPTION}
 
 %prep
 %setup
@@ -148,5 +148,5 @@ fi
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon May 9 2016 "DUD_AUTHOR" <"DUD_AUTHOR_EMAIL"> 0.99
+* Mon May 9 2016 %{DUD_AUTHOR} <%{DUD_AUTHOR_EMAIL}> %{MODULE_VERSION}
 - Template for Driver Update module
