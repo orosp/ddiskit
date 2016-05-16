@@ -7,10 +7,12 @@
 #
 # This software may be freely redistributed under the terms of the GNU
 # General Public License version 2 (GPLv2).
+import os
 import sys
 import argparse
 import configparser
 from ddiskit import Ddiskit
+from pprint import pprint
 
 def parse_config(filename):
     configs = {}
@@ -35,7 +37,7 @@ def parse_cli():
 
     # parser for the "prepare_sources" command
     parser_prepare_sources = cmdparsers.add_parser('prepare_sources', help='Prepare sources')
-    parser_prepare_sources.add_argument("-c", "--config", default='', help="Config file")
+    parser_prepare_sources.add_argument("-c", "--config", default='module.config', help="Config file")
     parser_prepare_sources.set_defaults(func=ddiskit.cmd_prepare_sources)
 
     # parser for the "generate_spec" command
@@ -61,7 +63,7 @@ def parse_cli():
 
 def main():
     args = parse_cli()
-    if args.config != "":
+    if args.config != "" and os.path.isfile(args.config):
         configs = parse_config(args.config)
         args.func(args, configs)
     else:

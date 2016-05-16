@@ -12,7 +12,7 @@ Source0:        %{srcname}-%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python3-devel
-
+Requires:	kernel-devel redhat-rpm-config
 %description
 An python module which provides a convenient example.
 

@@ -9,15 +9,16 @@
 # General Public License version 2 (GPLv2).
 import os
 import sys
+from pprint import pprint
 
 class Ddiskit:
     def cmd_prepare_sources(self, args, configs):
         try:
-            print("Writing new config file ... ", end="")
+            print("Writing new config file (" + args.config + ")... ", end="")
             if os.path.isfile(args.config):
                 print("File Exist")
             else:
-                with open('config', 'r') as fin:
+                with open('../templates/config', 'r') as fin:
                     read_data = fin.read()
                 fin.close()
                 fout = open(args.config, 'w')
@@ -28,10 +29,11 @@ class Ddiskit:
             print(e.strerror)
 
         print("Creating directory structure for RPM build ... ", end="")
+        dir_list = ["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS", "rpm/SOURCES", "rpm/SPECS", "rpm/SRPMS"]
         try:
-            os.makedirs("rpm")
-            os.makedirs("rpm/SPEC")
-            os.makedirs("rpm/SOURCE")
+            for dirs in dir_list:
+               if not os.path.exists(dirs):
+                  os.makedirs(dirs)
         except OSError as e:
             print(e.strerror)
         else:
@@ -44,25 +46,25 @@ class Ddiskit:
             print(" not found, use \"ddiskit prepare_sources\" for create")
             sys.exit(1)
         try:
-            with open('../spec', 'r') as fin:
+            with open('../templates/spec', 'r') as fin:
                 read_data = fin.read()
                 fin.close()
         except IOError as e:
             print(e.strerror)
         # apply global configs
         for content in configs["global"]:
-            read_data = read_data.replace('"' + content[0].upper() + '"', content[1])
+            read_data = read_data.replace("%{" + content[0].upper() + "}", content[1])
 
         # apply spec configs
         for content in configs["spec_file"]:
-            read_data = read_data.replace('"' + content[0].upper() + '"', content[1])
+            read_data = read_data.replace("%{" + content[0].upper() + "}", content[1])
 
         # apply firmawe spec configs
         for content in configs["firmware_spec_file"]:
-            read_data = read_data.replace('"' + content[0].upper() + '"', content[1])
+            read_data = read_data.replace("%{" + content[0].upper() + "}", content[1])
 
         try:
-            with open('template.spec', 'w') as fout:
+            with open('rpm/SPEC/template.spec', 'w') as fout:
                 fout.write(read_data)
                 fout.close()
         except IOError as e:
