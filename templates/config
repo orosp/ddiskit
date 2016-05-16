@@ -1,11 +1,11 @@
 # global config values
 [global]
 # Driver Update Disc Vendor
-dud_vendor = "RedHat"
+dud_vendor = RedHat
 # Driver Update Disc Author
-dud_author = "Petr Oros"
+dud_author = Petr Oros
 # Driver Update Disc email
-dud_author_email = "poros@redhat.com"
+dud_author_email = poros@redhat.com
 # Include srpm files into final iso
 include_srpm = True
 # Include rebuginfo rpm into final iso
@@ -14,26 +14,26 @@ include_debuginfo = True
 # config values for driver spec file
 [spec_file]
 # kernel module name
-module_name = "template"
+module_name = template
 # rpm file name expression. Can use eny variable from this config
-rpm_name = "kmod-{dud_vendor}-{module_name}"
+rpm_name = kmod-{dud_vendor}-{module_name}
 # rpm_release_version
-rpm_release = "1"
+rpm_release = 1
 # rpm_dist
-rpm_dist = "el7_2"
+rpm_dist = el7_2
 # module_version
-module_version = "0.99"
+module_version = 0.99
 # module build dir
-module_build_dir = "drivers/module_name"
+module_build_dir = drivers/module_name
 # target kernel version
-kernel_version = "uname -r"
+kernel_version = uname -r
 # module summary in spec file
-summary = "Example module for Driver Update Program"
+summary = Example module for Driver Update Program
 # module description in spec file
-description = "Example module for Driver Update Program"
+description = Example module for Driver Update Program
 # dependencies on other modules based on rpm name
 # when creating DUD with firmware, dependency will by added automatically
-dependencies = ""
+dependencies = 
 # request signature for ko files
 # feature works only with redhat infrastructure, otherwise will be ignored
 request_signature = True
@@ -44,16 +44,16 @@ request_signature = True
 # firmware update is possible ONLY with driver update!!
 # firmware will be everytime in single rpm, never try mix
 # firmware with driver into single rpm!
-firmware_name = ""
+firmware_name = 
 # firmware rpm file name xpression
-firmware_rpm_name = "kmod-{dud_vendor}-{module_name}-firmware"
+firmware_rpm_name = kmod-{dud_vendor}-{module_name}-firmware
 # firmware version
-firmware_version = ""
+firmware_version = 
 # coma separated file list
-firmware_files = ""
+firmware_files = 
 # module summary in spec file
-firmware_summary = "Example firmware for Driver Update Program"
+firmware_summary = Example firmware for Driver Update Program
 # module description in spec file
-firmware_description = "Example firmware for Driver Update Program"
+firmware_description = Example firmware for Driver Update Program
 # dependencies on other modules do not make any sense here
 # dependency on driver, defined before, will be added automatically
