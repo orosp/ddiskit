@@ -45,30 +45,37 @@ class Ddiskit:
             print(args.config, end="")
             print(" not found, use \"ddiskit prepare_sources\" for create")
             sys.exit(1)
+        if os.path.isfile("rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"):
+            print("File Exist rpm/SPECS/tg3.spec!")
         try:
             with open('../templates/spec', 'r') as fin:
                 read_data = fin.read()
                 fin.close()
         except IOError as e:
             print(e.strerror)
+        print("Generating new spec file ... ", end="")
+
         # apply global configs
-        for content in configs["global"]:
-            read_data = read_data.replace("%{" + content[0].upper() + "}", content[1])
+        for key in configs["global"]:
+            read_data = read_data.replace("%{" + key.upper() + "}", configs["global"][key])
 
         # apply spec configs
-        for content in configs["spec_file"]:
-            read_data = read_data.replace("%{" + content[0].upper() + "}", content[1])
+        for key in configs["spec_file"]:
+            read_data = read_data.replace("%{" + key.upper() + "}", configs["spec_file"][key])
 
         # apply firmawe spec configs
-        for content in configs["firmware_spec_file"]:
-            read_data = read_data.replace("%{" + content[0].upper() + "}", content[1])
-
+        for key in configs["firmware_spec_file"]:
+            read_data = read_data.replace("%{" + key.upper() + "}", configs["firmware_spec_file"][key])
+        print("OK")
+        print("Writing spec rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
         try:
-            with open('rpm/SPEC/template.spec', 'w') as fout:
+            with open("rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec", 'w') as fout:
                 fout.write(read_data)
                 fout.close()
         except IOError as e:
             print(e.strerror)
+        print("OK")
+        print("Done")
 
     def cmd_build_rpm(self, args, configs):
         # build all rpms

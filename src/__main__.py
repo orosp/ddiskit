@@ -16,13 +16,13 @@ from pprint import pprint
 
 def parse_config(filename):
     configs = {}
-    cfgparser = configparser.RawConfigParser()
+    cfgparser = configparser.SafeConfigParser()
     if len(cfgparser.read(filename)) == 0:
         print("Config file: " + filename + " not found")
         sys.exit(1)
     try:
         for section in cfgparser.sections():
-            configs[section] = cfgparser.items(section)
+            configs[section] = dict(cfgparser.items(section))
     except configparser.Error as e:
         print(e)
         sys.exit(1)
