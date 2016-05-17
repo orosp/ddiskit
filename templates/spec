@@ -1,7 +1,7 @@
 %define kmod_name		%{MODULE_NAME}
-%define kmod_vendor		%{DUD_VENDOR}
+%define kmod_vendor		%{MODULE_VENDOR}
 %define kmod_driver_version	%{MODULE_VERSION}
-%define kmod_rpm_release	%{RPM_RELEASE}
+%define kmod_rpm_release	%{MODULE_RPM_RELEASE}
 %define kernel_version		%{KERNEL_VERSION}
 %define kmod_kbuild_dir		%{MODULE_BUILD_DIR}
 
@@ -15,7 +15,7 @@ Source1:	%{kmod_name}.files
 %define __find_requires %_sourcedir/find-requires.ksyms
 %define __find_provides %_sourcedir/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
 
-Name:		%{kmod_name}
+Name:		%{kmod_name}-%{kmod_vendor}
 Version:	%{kmod_driver_version}
 Release:	%{kmod_rpm_release}%{?dist}
 Summary:	%{SUMMARY}
@@ -26,9 +26,6 @@ BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildRequires:	%kernel_module_package_buildreqs
 ExclusiveArch:  i686 x86_64 s390x ppc64
 
-%global kmod_version %{version}
-%global kmod_release %{release}
-%global kverrel %(%{SOURCE5} verrel %{kernel_verrel} 2>/dev/null)
 %global flavors_to_build default
 %global kernel_source() /usr/src/kernels/%kverrel
 
@@ -36,11 +33,6 @@ ExclusiveArch:  i686 x86_64 s390x ppc64
 
 %global filelist %(cat %{SOURCE1} | sed -e "s/\-%1//g" | sed -e "s/%2/%{kverrel}/g")
 
-%package	-n %{kmod_name}
-Summary:	%{kmod_name} kernel module
-Group:		System Environment/Kernel
-Version:	%{kmod_version}
-Release:	%{kmod_release}
 %global _use_internal_dependency_generator 0
 Provides:	kernel-modules = %kverrel
 Provides:	%{kmod_name}-kmod = %{?epoch:%{epoch}:}%{version}-%{release}
@@ -51,11 +43,11 @@ Requires:	kernel <= %{kernel_version}-%{kernel_next_release}
 Conflicts:	%{kmod_name}-kmod
 Obsoletes:	kmod-%{kmod_name}
 
-%description   -n %{RPM_NAME}
+%description
 %{DESCRIPTION}
 
 # The %post, %preun and %postun hooks are copied from kmodtool
-%post          -n kmod-%{kmod_name}-%{kmod_vendor}
+%post
 if [ -e "/boot/System.map-%{verrel}" ]; then
     /usr/sbin/depmod -aeF "/boot/System.map-%{kverrel}" "%{kverrel}" > /dev/null || :
 fi
@@ -66,10 +58,10 @@ if [ -x "/sbin/weak-modules" ]; then
     | /sbin/weak-modules --add-modules
 fi
 
-%preun         -n kmod-%{kmod_name}-%{kmod_vendor}
+%preun
 rpm -ql kmod-%{kmod_name}-%{kmod_vendor}-%{kmod_version}-%{kmod_release}.$(arch) | grep '\.ko$' > /var/run/rpm-kmod-%{kmod_name}-modules
 
-%postun        -n kmod-%{kmod_name}-%{kmod_vendor}
+%postun
 if [ -e "/boot/System.map-%{kverrel}" ]; then
     /usr/sbin/depmod -aeF "/boot/System.map-%{kverrel}" "%{kverrel}" > /dev/null || :
 fi
@@ -81,11 +73,8 @@ if [ -x "/sbin/weak-modules" ]; then
     | /sbin/weak-modules --remove-modules
 fi
 
-%files         -n kmod-%{kmod_name}-%{kmod_vendor}
+%files
 %{filelist}
-
-%description
-%{DESCRIPTION}
 
 %prep
 %setup
