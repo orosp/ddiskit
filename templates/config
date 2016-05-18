@@ -1,11 +1,11 @@
 # global config values
 [global]
 # Driver Update Disc Vendor
-dud_vendor = RedHat
+module_vendor = RedHat
 # Driver Update Disc Author
-dud_author = Petr Oros
+module_author = Petr Oros
 # Driver Update Disc email
-dud_author_email = poros@redhat.com
+module_author_email = poros@redhat.com
 # Include srpm files into final iso
 include_srpm = True
 # Include rebuginfo rpm into final iso
@@ -18,7 +18,7 @@ module_name = template
 # rpm file name expression. Can use eny variable from this config
 rpm_name = kmod-{dud_vendor}-{module_name}
 # rpm_release_version
-rpm_release = 1
+module_rpm_release = 1
 # rpm_dist
 rpm_dist = el7_2
 # module_version

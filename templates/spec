@@ -137,5 +137,5 @@ fi
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* Mon May 9 2016 %{DUD_AUTHOR} <%{DUD_AUTHOR_EMAIL}> %{MODULE_VERSION}
+* %{DATE} %{MODULE_AUTHOR} <%{MODULE_AUTHOR_EMAIL}> %{MODULE_VERSION}
 - Template for Driver Update module

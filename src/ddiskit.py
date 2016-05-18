@@ -9,6 +9,7 @@
 # General Public License version 2 (GPLv2).
 import os
 import sys
+from datetime import datetime
 from pprint import pprint
 
 class Ddiskit:
@@ -66,6 +67,10 @@ class Ddiskit:
         # apply firmawe spec configs
         for key in configs["firmware_spec_file"]:
             read_data = read_data.replace("%{" + key.upper() + "}", configs["firmware_spec_file"][key])
+
+        # generic keys for spec
+        read_data = read_data.replace("%{DATE}", datetime.__format__(datetime.now(),"%a %b %d %Y"))
+
         print("OK")
         print("Writing spec rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
         try:
