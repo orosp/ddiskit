@@ -33,13 +33,22 @@ class Ddiskit:
         dir_list = ["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS", "rpm/SOURCES", "rpm/SPECS", "rpm/SRPMS"]
         try:
             for dirs in dir_list:
-               if not os.path.exists(dirs):
-                  os.makedirs(dirs)
+                if not os.path.exists(dirs):
+                    os.makedirs(dirs)
+        except OSError as e:
+            print(e.strerror)
+        else:
+            print("OK")
+        print("Creating directory for source code ... ", end="")
+        try:
+            if not os.path.exists("src"):
+                os.makedirs("src")
         except OSError as e:
             print(e.strerror)
         else:
             print("OK")
         print("Done")
+        print("Your module source code put in src directory.")
 
     def cmd_generate_spec(self, args, configs):
         if len(configs) == 0:
@@ -69,7 +78,7 @@ class Ddiskit:
             read_data = read_data.replace("%{" + key.upper() + "}", configs["firmware_spec_file"][key])
 
         # generic keys for spec
-        read_data = read_data.replace("%{DATE}", datetime.__format__(datetime.now(),"%a %b %d %Y"))
+        read_data = read_data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))
 
         print("OK")
         print("Writing spec rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
@@ -83,9 +92,29 @@ class Ddiskit:
         print("Done")
 
     def cmd_build_rpm(self, args, configs):
-        # build all rpms
+        # STAGE1 (prepare source)
+            # generate module.files & makefile
+            # pack source in src and write it into rpm/SOURCES
+            # copy module.files & makefile & patch into rpm/SOURCES
+        
+        # STAGE2 (generate build outputs)
+            # apply patches
+            # build module
+            # generate greylist & module.symvers and write into rpm/SOURCES
+            # add new files into spes
+        
+        # STAGE3 (build rpm with rpmbuild -ba & rpmbuild -ba firmware)
+            # here begin work driven by specfile
+            # apply patches
+            # build module
+            # sign module
+            # run depmod
+            # run find requires
+            # run find provides
+            # write rpm, srpm
         print("cmd_build_rpm")
 
     def cmd_build_iso(self, args, configs):
-        # build iso added param for multi iso
+        # get all files form rpm/SRPMS, rpm/RPMS
+        # build iso
         print("cmd_build_iso")
