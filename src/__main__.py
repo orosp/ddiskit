@@ -11,7 +11,7 @@ import os
 import sys
 import argparse
 import configparser
-from ddiskit import Ddiskit
+import ddiskit
 from pprint import pprint
 
 def parse_config(filename):
@@ -29,7 +29,6 @@ def parse_config(filename):
     return configs
 
 def parse_cli():
-    ddiskit = Ddiskit()
     root_parser = argparse.ArgumentParser(prog='ddiskit', description='Red Hat tool for create Driver Update Disk')
     root_parser.add_argument("-v", "--verbosity", action="count", default=0, help="Increase output verbosity")
 
