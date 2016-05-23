@@ -73,7 +73,7 @@ class Ddiskit:
             print(" not found, use \"ddiskit prepare_sources\" for create")
             sys.exit(1)
         if os.path.isfile("rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"):
-            print("File Exist rpm/SPECS/tg3.spec!")
+            print("File Exist rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec!")
         try:
             with open('../templates/spec', 'r') as fin:
                 read_data = fin.read()
