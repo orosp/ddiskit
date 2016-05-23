@@ -9,6 +9,8 @@
 # General Public License version 2 (GPLv2).
 import os
 import sys
+import tarfile
+from os.path import join, getsize
 from datetime import datetime
 from pprint import pprint
 
@@ -92,15 +94,82 @@ class Ddiskit:
                 fout.close()
         except IOError as e:
             print(e.strerror)
-        print("OK")
+        else:
+            print("OK")
         print("Done")
 
     def cmd_build_rpm(self, args, configs):
-        # STAGE1 (prepare source)
-            # generate module.files & makefile
-            # pack source in src and write it into rpm/SOURCES
-            # copy module.files & makefile & patch into rpm/SOURCES
+        if len(configs) == 0:
+            print(args.config, end="")
+            print(" not found, use \"ddiskit prepare_sources\" for create")
+            sys.exit(1)
+
+        try:
+            with open('../templates/files', 'r') as fin:
+                read_data = fin.read()
+                fin.close()
+        except IOError as e:
+            print(e.strerror)
+        print("Writing rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".files file ... ", end="")
         
+        read_data = self.apply_config(read_data, configs)
+
+        try:
+            with open("rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".files", 'w') as fout:
+                fout.write(read_data)
+                fout.close()
+        except IOError as e:
+            print(e.strerror)
+        print("OK")
+
+        # check Makefile
+        saved_root = ""
+        makefile_found = False
+        src_root = "src/"
+        for root, dirs, files in os.walk(src_root):
+            if len(root) > len(saved_root):
+                saved_root = root
+            if "Makefile" in files:
+                makefile_found = True
+        saved_root = saved_root.replace(src_root, "")
+
+        if not makefile_found:
+            try:
+                with open('../templates/makefile', 'r') as fin:
+                    read_data = fin.read()
+                    fin.close()
+            except IOError as e:
+                print(e.strerror)
+
+            read_data = self.apply_config(read_data, configs)
+            print("Makefile not found -> Using generic version")
+            print("  Writing " + src_root + saved_root + "/Makefile file ... ", end="")
+            try:
+                with open(src_root + saved_root + "/Makefile", 'w') as fout:
+                    fout.write(read_data)
+                    fout.close()
+            except IOError as e:
+                print(e.strerror)
+            else:
+                print("OK")        
+        else:
+            print("Checking makefile ... OK")
+
+        print("Writing archive rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".tar.bz2 ... ", end="")
+        try:
+            tar = tarfile.open("rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".tar.gz", "w:bz2")
+            os.chdir(src_root)
+            for files in os.listdir("."):
+                tar.add(files, recursive=True)
+            tar.close()
+            os.chdir("..")
+        except Exception as e:
+            print(str(e))
+        else:
+            print("OK")
+
+        # TODO: copy patches into rpm/SOURCES/
+
         # STAGE2 (generate build outputs)
             # apply patches
             # build module
@@ -116,9 +185,11 @@ class Ddiskit:
             # run find requires
             # run find provides
             # write rpm, srpm
-        print("cmd_build_rpm")
 
     def cmd_build_iso(self, args, configs):
-        # get all files form rpm/SRPMS, rpm/RPMS
-        # build iso
+        # Collect rpms/srpms for all arches
+        # Prepare iso filesystem
+        # Prepare repository
+        # Add rpms/srpms into repository
+        # Write repository into iso
         print("cmd_build_iso")
