@@ -110,7 +110,7 @@ class Ddiskit:
         except IOError as e:
             print(e.strerror)
         print("Writing rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".files file ... ", end="")
-        
+
         read_data = self.apply_config(read_data, configs)
 
         try:
@@ -150,7 +150,7 @@ class Ddiskit:
             except IOError as e:
                 print(e.strerror)
             else:
-                print("OK")        
+                print("OK")
         else:
             print("Checking makefile ... OK")
 
