@@ -33,7 +33,8 @@ def apply_config(data, configs):
 def do_build_rpm(args, configs):
     print("Start RPM build ... ")
     for arch in ["x86_64"]:
-        cmd = "rpmbuild --target " + arch
+        cmd = "rpmbuild --nodeps --target " + arch
+        # --------------^^^^^^^^ ----FOR DEBUG ONLY !!!!!!!!!!!
         cmd +=  " --define \"_topdir " + os.getcwd() + "/rpm\""
         cmd +=  " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
     os.system(cmd)
@@ -162,12 +163,16 @@ def cmd_build_rpm(args, configs):
     else:
         print("Checking makefile ... OK")
 
-    print("Writing archive rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".tar.bz2 ... ", end="")
+    nvv = configs["spec_file"]["module_name"] + "-" + \
+        configs["global"]["module_vendor"] + "-" + \
+        configs["spec_file"]["module_version"]
+    archive = "rpm/SOURCES/" + nvv + ".tar.bz2"
+    print("Writing archive " + archive + " ... ", end="")
     try:
-        tar = tarfile.open("rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".tar.bz2", "w:bz2")
+        tar = tarfile.open(archive, "w:bz2")
         os.chdir(src_root)
         for files in os.listdir("."):
-            tar.add(files, recursive=True)
+            tar.add(files, arcname=nvv + "/" + files, recursive=True)
         tar.close()
         os.chdir("..")
     except Exception as e:
