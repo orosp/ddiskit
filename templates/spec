@@ -7,7 +7,7 @@
 
 %{!?dist: %define dist %{RPM_DIST}}
 
-Source0:	%{kmod_name}-%{kmod_driver_version}.tar.bz2
+Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 Source1:	%{kmod_name}.files
 #Source2:	symbols.greylist-{arch}
 #Source3:	symbols.symvers-{arch}
@@ -27,7 +27,7 @@ BuildRequires:	%kernel_module_package_buildreqs
 ExclusiveArch:  i686 x86_64 s390x ppc64
 
 %global flavors_to_build default
-%global kernel_source() /usr/src/kernels/%kverrel
+%global kernel_source() /usr/src/kernels/%{kernel_version}.$(arch)
 
 %global kernel_next_release	%(expr %{kernel_release} + 1)
 
