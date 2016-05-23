@@ -30,6 +30,15 @@ def apply_config(data, configs):
     data = data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))
     return data
 
+def do_build_rpm(args, configs):
+    print("Start RPM build ... ")
+    for arch in ["x86_64"]:
+        cmd = "rpmbuild --target " + arch
+        cmd +=  " --define \"_topdir " + os.getcwd() + "/rpm\""
+        cmd +=  " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
+    os.system(cmd)
+    print("Done")
+
 def cmd_prepare_sources(args, configs):
     try:
         print("Writing new config file (" + args.config + ")... ", end="")
@@ -165,14 +174,16 @@ def cmd_build_rpm(args, configs):
         print(str(e))
     else:
         print("OK")
-
     # TODO: copy patches into rpm/SOURCES/
+
+    do_build_rpm(args, configs)
+
 
     # STAGE2 (generate build outputs)
         # apply patches
         # build module
-        # generate greylist & module.symvers and write into rpm/SOURCES
-        # add new files into spes
+        # generate greylist and write into rpm/SOURCES
+        # add new files into spec
         
     # STAGE3 (build rpm with rpmbuild -ba & rpmbuild -ba firmware)
         # here begin work driven by specfile
