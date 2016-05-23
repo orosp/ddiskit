@@ -13,6 +13,23 @@ from datetime import datetime
 from pprint import pprint
 
 class Ddiskit:
+    def apply_config(self, data, configs):
+        # apply global configs
+        for key in configs["global"]:
+            data = data.replace("%{" + key.upper() + "}", configs["global"][key])
+
+        # apply spec configs
+        for key in configs["spec_file"]:
+            data = data.replace("%{" + key.upper() + "}", configs["spec_file"][key])
+
+        # apply firmawe spec configs
+        for key in configs["firmware_spec_file"]:
+            data = data.replace("%{" + key.upper() + "}", configs["firmware_spec_file"][key])
+
+        # generic keys for spec
+        data = data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))
+        return data
+
     def cmd_prepare_sources(self, args, configs):
         try:
             print("Writing new config file (" + args.config + ")... ", end="")
@@ -65,20 +82,7 @@ class Ddiskit:
             print(e.strerror)
         print("Generating new spec file ... ", end="")
 
-        # apply global configs
-        for key in configs["global"]:
-            read_data = read_data.replace("%{" + key.upper() + "}", configs["global"][key])
-
-        # apply spec configs
-        for key in configs["spec_file"]:
-            read_data = read_data.replace("%{" + key.upper() + "}", configs["spec_file"][key])
-
-        # apply firmawe spec configs
-        for key in configs["firmware_spec_file"]:
-            read_data = read_data.replace("%{" + key.upper() + "}", configs["firmware_spec_file"][key])
-
-        # generic keys for spec
-        read_data = read_data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))
+        read_data = self.apply_config(read_data, configs)
 
         print("OK")
         print("Writing spec rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
