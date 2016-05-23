@@ -10,7 +10,6 @@
 import os
 import sys
 import tarfile
-from os.path import join, getsize
 from datetime import datetime
 from pprint import pprint
 
