@@ -164,7 +164,7 @@ def cmd_build_rpm(args, configs):
 
     print("Writing archive rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".tar.bz2 ... ", end="")
     try:
-        tar = tarfile.open("rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".tar.gz", "w:bz2")
+        tar = tarfile.open("rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".tar.bz2", "w:bz2")
         os.chdir(src_root)
         for files in os.listdir("."):
             tar.add(files, recursive=True)
