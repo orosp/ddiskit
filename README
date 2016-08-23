@@ -4,7 +4,6 @@ Step 1)
     Writing new config file (module.config)... File Exist
     Creating directory structure for RPM build ... OK
     Creating directory for source code ... OK
-    Done
     Your module source code put in src directory.
 
 Step 2)
@@ -29,13 +28,11 @@ Step 2)
 
 Step 3)
     poros@holly$ ddiskit generate_spec
-    File Exist rpm/SPECS/tg3.spec!
+    Found directory with patches, adding into spec file:
+        Patch0: 0001-test.patch
+        Patch1: 0002-test.patch
     Generating new spec file ... OK
-    Found directory with patches:
-        Copying: 0001-test.patch
-        Copying: 0002-test.patch
     Writing spec rpm/SPECS/tg3.spec ... OK
-    Done
 
 Step 4)
     poros@holly$ ddiskit build_rpm
