@@ -11,7 +11,7 @@ Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 Source1:	%{kmod_name}.files
 #%{SOURCE_GREYLISTS}
 #%{SOURCE_SYMVERS}
-#%{SOURCE_PATCHES}
+%{SOURCE_PATCHES}
 
 %define __find_requires /usr/lib/rpm/redhat/find-requires.ksyms
 %define __find_provides /usr/lib/rpm/redhat/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
@@ -79,6 +79,7 @@ fi
 
 %prep
 %setup
+%{SOURCE_PATCHES_DO}
 set -- *
 mkdir source
 mv "$@" source/

@@ -181,24 +181,33 @@ def cmd_build_rpm(args, configs):
         print(str(e))
     else:
         print("OK")
-    
+
+    configs["spec_file"]["source_patches_do"] = ""
+    configs["spec_file"]["source_patches"] = ""
     if os.path.isdir(src_root + "patches") and os.listdir(src_root + "patches"):
         print("Found directory with patches")
         os.chdir(src_root + "patches")
+        index = 0
+        configs["spec_file"]["source_patches"] = "# Source code patches"
         for files in os.listdir("."):
             shutil.copyfile(files, "../../rpm/SOURCES/" + files)
             print("  Copying: " + files)
+            configs["spec_file"]["source_patches"] = \
+              configs["spec_file"]["source_patches"] + "\nPatch" + str(index) + ":\t" + files
+            configs["spec_file"]["source_patches_do"] = \
+              configs["spec_file"]["source_patches_do"] + "\n%patch" + str(index) + " -p1" 
+            index = index + 1
         os.chdir("../../")
     else:
         print("Patch directory not found or is empty-> skipping")
     
-
+    cmd_generate_spec(args,configs)
     do_build_rpm(args, configs)
 
 
     # STAGE2 (generate build outputs)
-        # apply patches
-        # build module
+        # apply patches -> done
+        # build module -> done
         # generate greylist and write into rpm/SOURCES
         # add new files into spec
         
