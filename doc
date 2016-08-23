@@ -21,33 +21,30 @@ Prepare sources:
 
 Generate Spec:
     Command need prapered module.config file
-    On config base create spec files for new rpm
-    1) Check if spec already exist, when yes write 
-       warning and continue
-    2) Create spec in rpm/SPECS directory with values defined in donfig
+    Command will create new spec file based on module.config file
+    1) Check if spec already exist, when yes write warning and continue
+    2) Add patches from src/patches directory into spec
+    3) Create spec in rpm/SPECS directory with values defined in config
 
 Build rpm:
     3 stages command:
         Stage 1) Prepare source
-            a) Generate module.files & makefile
+            a) Generate module.files & makefile(when no present in user source)
             b) Pack source in src and write it into rpm/SOURCES
             c) Copy module.files & makefile & patch into rpm/SOURCES
-            d) Add new files into spec (patches)
 
         Stage 2) Generate build outputs for final rpm
-            a) Apply patches
+            a) Copy patches
             b) Build module
             c) Generate greylist & module.symvers and write into rpm/SOURCES
-            d) Add new files into spes (greylist, symvers)
 
         Stage 3) Build rpm
             # stage driven by specfile
-            a) Apply patches
-            b) Build module
-            c) Sign module (when it is supported by infrastructure)
-            d) Run depmod
-            e) Run find-requires, find-provides
-            f) Write final rpm, srpm
+            a) Build module
+            b) Sign module (when it is supported by infrastructure)
+            c) Run depmod
+            d) Run find-requires, find-provides
+            e) Write final rpm, srpm
 
 Build ISO:
     1) Collect rpms/srpms for all arches

@@ -209,13 +209,11 @@ def cmd_build_rpm(args, configs):
 
     do_build_rpm(args, configs)
 
+    # Stage 2) Generate build outputs for final rpm
+    #   a) Copy patches
+    #   b) Build module
+    #   c) Generate greylist & module.symvers and write into rpm/SOURCES
 
-    # STAGE2 (generate build outputs)
-        # apply patches -> done
-        # build module -> done
-        # generate greylist and write into rpm/SOURCES
-        # add new files into spec
-        
     # STAGE3 (build rpm with rpmbuild -ba & rpmbuild -ba firmware)
         # here begin work driven by specfile
         # apply patches
