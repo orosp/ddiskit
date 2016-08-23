@@ -7,7 +7,7 @@ Supported commands:
 Prepare sources:
     In current directory
     1) Write file "module.config" with config template
-    2) Create directory structure fot rpm build
+    2) Create directory structure for rpm build
        .
        ├─── rpm
            ├── BUILD
@@ -16,7 +16,8 @@ Prepare sources:
            ├── SOURCES
            ├── SPECS
            └── SRPMS
-    3) Create directory src for module source code
+    3) Create directory "src" for module source code
+    4) Create directory "patches" for patches
 
 Generate Spec:
     Command need prapered module.config file
@@ -31,12 +32,13 @@ Build rpm:
             a) Generate module.files & makefile
             b) Pack source in src and write it into rpm/SOURCES
             c) Copy module.files & makefile & patch into rpm/SOURCES
+            d) Add new files into spec (patches)
 
-        Stage 2) Generate build outputs
+        Stage 2) Generate build outputs for final rpm
             a) Apply patches
             b) Build module
             c) Generate greylist & module.symvers and write into rpm/SOURCES
-            d) Add new files into spes
+            d) Add new files into spes (greylist, symvers)
 
         Stage 3) Build rpm
             # stage driven by specfile

@@ -9,11 +9,12 @@
 
 Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 Source1:	%{kmod_name}.files
-#Source2:	symbols.greylist-{arch}
-#Source3:	symbols.symvers-{arch}
+#%{SOURCE_GREYLISTS}
+#%{SOURCE_SYMVERS}
+#%{SOURCE_PATCHES}
 
-%define __find_requires %_sourcedir/find-requires.ksyms
-%define __find_provides %_sourcedir/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
+%define __find_requires /usr/lib/rpm/redhat/find-requires.ksyms
+%define __find_provides /usr/lib/rpm/redhat/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
 
 Name:		%{kmod_name}-%{kmod_vendor}
 Version:	%{kmod_driver_version}
@@ -23,8 +24,8 @@ Group:		System/Kernel
 License:	GPLv2
 URL:		http://www.kernel.org/
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-BuildRequires:	%kernel_module_package_buildreqs
-ExclusiveArch:  i686 x86_64 s390x ppc64
+BuildRequires:	kernel-devel = %kmod_kernel_version kmod redhat-rpm-configs
+ExclusiveArch:	%{KERNEL_ARCH}
 
 %global flavors_to_build default
 %global kernel_source() /usr/src/kernels/%{kernel_version}.$(arch)
@@ -81,8 +82,8 @@ fi
 set -- *
 mkdir source
 mv "$@" source/
-#cp %{SOURCE2} source/
-#cp %{SOURCE3} source/
+#%{SOURCE_GREYLISTS_CP}
+#%{SOURCE_SYMVERS_CP}
 mkdir obj
 
 %build

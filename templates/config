@@ -27,6 +27,8 @@ module_version = 0.99
 module_build_dir = drivers/module_name
 # target kernel version
 kernel_version = uname -r
+# target kernel exclusive arch
+kernel_arch = x86_64 ppc64 ppc64le
 # module summary in spec file
 summary = Example module for Driver Update Program
 # module description in spec file

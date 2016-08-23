@@ -9,6 +9,7 @@
 # General Public License version 2 (GPLv2).
 import os
 import sys
+import shutil
 import tarfile
 from datetime import datetime
 from pprint import pprint
@@ -172,14 +173,25 @@ def cmd_build_rpm(args, configs):
         tar = tarfile.open(archive, "w:bz2")
         os.chdir(src_root)
         for files in os.listdir("."):
-            tar.add(files, arcname=nvv + "/" + files, recursive=True)
+            if "patches" not in files:
+                tar.add(files, arcname=nvv + "/" + files, recursive=True)
         tar.close()
         os.chdir("..")
     except Exception as e:
         print(str(e))
     else:
         print("OK")
-    # TODO: copy patches into rpm/SOURCES/
+    
+    if os.path.isdir(src_root + "patches") and os.listdir(src_root + "patches"):
+        print("Found directory with patches")
+        os.chdir(src_root + "patches")
+        for files in os.listdir("."):
+            shutil.copyfile(files, "../../rpm/SOURCES/" + files)
+            print("  Copying: " + files)
+        os.chdir("../../")
+    else:
+        print("Patch directory not found or is empty-> skipping")
+    
 
     do_build_rpm(args, configs)
 
