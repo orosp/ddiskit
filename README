@@ -1,0 +1,46 @@
+Usage Examle:
+Step 1)
+    poros@holly$ ddiskit prepare_sources
+    Writing new config file (module.config)... File Exist
+    Creating directory structure for RPM build ... OK
+    Creating directory for source code ... OK
+    Done
+    Your module source code put in src directory.
+
+Step 2)
+    Copy your code into src directory
+    
+    poros@holly$ tree src
+    src
+    ├── drivers
+    │   └── net
+    │       └── ethernet
+    │           └── broadcom
+    │               ├── Makefile
+    │               ├── tg3.c
+    │               └── tg3.h
+    └── patches
+        ├── 0001-test.patch
+        └── 0002-test.patch
+
+    Note1: Please, respect kernel tradicional directories!
+    Note2: Code in src could be patched or you can use additional
+           patches. Additional patches just copy into "patches" directory.
+
+Step 3)
+    poros@holly$ ddiskit generate_spec
+    File Exist rpm/SPECS/tg3.spec!
+    Generating new spec file ... OK
+    Found directory with patches:
+        Copying: 0001-test.patch
+        Copying: 0002-test.patch
+    Writing spec rpm/SPECS/tg3.spec ... OK
+    Done
+
+Step 4)
+    poros@holly$ ddiskit build_rpm
+    
+    Note1: Before this step, optionaly can check spec file in rpm/SPEC/ directory
+
+Step 5)
+    poros@holly$ ddiskit build_iso
