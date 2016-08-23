@@ -39,7 +39,6 @@ def do_build_rpm(args, configs):
         cmd +=  " --define \"_topdir " + os.getcwd() + "/rpm\""
         cmd +=  " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
     os.system(cmd)
-    print("Done")
 
 def cmd_prepare_sources(args, configs):
     try:
@@ -75,7 +74,6 @@ def cmd_prepare_sources(args, configs):
         print(e.strerror)
     else:
         print("OK")
-    print("Done")
     print("Your module source code put in src directory.")
 
 def cmd_generate_spec(args, configs):
@@ -91,12 +89,30 @@ def cmd_generate_spec(args, configs):
             fin.close()
     except IOError as e:
         print(e.strerror)
+
+    src_root = "src/"
+    configs["spec_file"]["source_patches"] = ""
+    configs["spec_file"]["source_patches_do"] = ""
+    if os.path.isdir(src_root + "patches") and os.listdir(src_root + "patches"):
+        print("Found directory with patches, adding into spec file:")
+        os.chdir(src_root + "patches")
+        index = 0
+        configs["spec_file"]["source_patches"] = "# Source code patches"
+        for files in os.listdir("."):
+            print("  Patch" + str(index) + ": " + files)
+            configs["spec_file"]["source_patches"] = \
+              configs["spec_file"]["source_patches"] + "\nPatch" + str(index) + ":\t" + files
+            configs["spec_file"]["source_patches_do"] = \
+              configs["spec_file"]["source_patches_do"] + "\n%patch" + str(index) + " -p1" 
+            index = index + 1
+        os.chdir("../../")
+    else:
+        print("Patch directory not found or empty-> skipping")
+
     print("Generating new spec file ... ", end="")
-
     read_data = apply_config(read_data, configs)
-
     print("OK")
-    print("Writing spec rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
+    print("Writing spec into rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
     try:
         with open("rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec", 'w') as fout:
             fout.write(read_data)
@@ -105,7 +121,6 @@ def cmd_generate_spec(args, configs):
         print(e.strerror)
     else:
         print("OK")
-    print("Done")
 
 def cmd_build_rpm(args, configs):
     if len(configs) == 0:
@@ -182,26 +197,16 @@ def cmd_build_rpm(args, configs):
     else:
         print("OK")
 
-    configs["spec_file"]["source_patches_do"] = ""
-    configs["spec_file"]["source_patches"] = ""
     if os.path.isdir(src_root + "patches") and os.listdir(src_root + "patches"):
-        print("Found directory with patches")
+        print("Copying patches into rpm/SOURCES:")
         os.chdir(src_root + "patches")
-        index = 0
-        configs["spec_file"]["source_patches"] = "# Source code patches"
         for files in os.listdir("."):
             shutil.copyfile(files, "../../rpm/SOURCES/" + files)
             print("  Copying: " + files)
-            configs["spec_file"]["source_patches"] = \
-              configs["spec_file"]["source_patches"] + "\nPatch" + str(index) + ":\t" + files
-            configs["spec_file"]["source_patches_do"] = \
-              configs["spec_file"]["source_patches_do"] + "\n%patch" + str(index) + " -p1" 
-            index = index + 1
         os.chdir("../../")
     else:
-        print("Patch directory not found or is empty-> skipping")
-    
-    cmd_generate_spec(args,configs)
+        print("Patch directory not found or empty-> skipping")
+
     do_build_rpm(args, configs)
 
 
