@@ -109,9 +109,7 @@ def cmd_generate_spec(args, configs):
     else:
         print("Patch directory not found or empty-> skipping")
 
-    print("Generating new spec file ... ", end="")
     read_data = apply_config(read_data, configs)
-    print("OK")
     print("Writing spec into rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
     try:
         with open("rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec", 'w') as fout:
@@ -167,15 +165,12 @@ def cmd_build_rpm(args, configs):
 
         read_data = apply_config(read_data, configs)
         print("Makefile not found -> Using generic version")
-        print("  Writing " + src_root + saved_root + "/Makefile file ... ", end="")
         try:
             with open(src_root + saved_root + "/Makefile", 'w') as fout:
                 fout.write(read_data)
                 fout.close()
         except IOError as e:
             print(e.strerror)
-        else:
-            print("OK")
     else:
         print("Checking makefile ... OK")
 
