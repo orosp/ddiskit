@@ -1,4 +1,0 @@
-%defattr(644,root,root,755)
-/lib/modules/%2-%1
-/etc/depmod.d/%{MODULE_NAME}.conf
-/usr/share/doc/kmod-%{MODULE_NAME}/greylist.txt

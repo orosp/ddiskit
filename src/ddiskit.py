@@ -126,24 +126,6 @@ def cmd_build_rpm(args, configs):
         print(" not found, use \"ddiskit prepare_sources\" for create")
         sys.exit(1)
 
-    try:
-        with open('../templates/files', 'r') as fin:
-            read_data = fin.read()
-            fin.close()
-    except IOError as e:
-        print(e.strerror)
-    print("Writing rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".files file ... ", end="")
-
-    read_data = apply_config(read_data, configs)
-
-    try:
-        with open("rpm/SOURCES/" + configs["spec_file"]["module_name"] + ".files", 'w') as fout:
-            fout.write(read_data)
-            fout.close()
-    except IOError as e:
-        print(e.strerror)
-    print("OK")
-
     # check Makefile
     saved_root = ""
     makefile_found = False

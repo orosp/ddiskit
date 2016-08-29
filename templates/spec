@@ -8,7 +8,6 @@
 %{!?dist: %define dist .%{RPM_DIST}}
 
 Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
-Source1:	%{kmod_name}.files
 #%{SOURCE_GREYLISTS}
 #%{SOURCE_SYMVERS}
 %{SOURCE_PATCHES}
