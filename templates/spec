@@ -5,7 +5,7 @@
 %define kernel_version		%{KERNEL_VERSION}
 %define kmod_kbuild_dir		%{MODULE_BUILD_DIR}
 
-%{!?dist: %define dist %{RPM_DIST}}
+%{!?dist: %define dist .%{RPM_DIST}}
 
 Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 Source1:	%{kmod_name}.files
@@ -32,10 +32,10 @@ ExclusiveArch:	%{KERNEL_ARCH}
 
 %global kernel_next_release	%(expr %{kernel_release} + 1)
 
-%global filelist %(cat %{SOURCE1} | sed -e "s/\-%1//g" | sed -e "s/%2/%{kverrel}/g")
+%global filelist %(cat %{SOURCE1} | sed -e "s/\-%1//g" | sed -e "s/%2/%{kernel_version}/g")
 
 %global _use_internal_dependency_generator 0
-Provides:	kernel-modules = %kverrel
+Provides:	kernel-modules = %kernel_version
 Provides:	%{kmod_name}-kmod = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires(post):	/usr/sbin/depmod
 Requires(postun):	/usr/sbin/depmod
@@ -50,10 +50,10 @@ Obsoletes:	kmod-%{kmod_name}
 # The %post, %preun and %postun hooks are copied from kmodtool
 %post
 if [ -e "/boot/System.map-%{verrel}" ]; then
-    /usr/sbin/depmod -aeF "/boot/System.map-%{kverrel}" "%{kverrel}" > /dev/null || :
+    /usr/sbin/depmod -aeF "/boot/System.map-%{kernel_version}" "%{kernel_version}" > /dev/null || :
 fi
 
-modules=( $(find /lib/modules/%{kverrel}/extra/%{kmod_name} | grep '\.ko$') )
+modules=( $(find /lib/modules/%{kernel_version}.%{arch}/extra/%{kmod_name} | grep '\.ko$') )
 if [ -x "/sbin/weak-modules" ]; then
     printf '%s\n' "${modules[@]}" \
     | /sbin/weak-modules --add-modules
@@ -63,8 +63,8 @@ fi
 rpm -ql kmod-%{kmod_name}-%{kmod_vendor}-%{kmod_version}-%{kmod_release}.$(arch) | grep '\.ko$' > /var/run/rpm-kmod-%{kmod_name}-modules
 
 %postun
-if [ -e "/boot/System.map-%{kverrel}" ]; then
-    /usr/sbin/depmod -aeF "/boot/System.map-%{kverrel}" "%{kverrel}" > /dev/null || :
+if [ -e "/boot/System.map-%{kernel_version}" ]; then
+    /usr/sbin/depmod -aeF "/boot/System.map-%{kernel_version}" "%{kernel_version}.$(arch)" > /dev/null || :
 fi
 
 modules=( $(cat /var/run/rpm-kmod-%{kmod_name}-modules) )
