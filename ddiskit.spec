@@ -18,7 +18,7 @@ An python module which provides a convenient example.
 
 %package -n python3-%{srcname}
 Summary:        %{sum}
-%{?python_provide:%python_provide python3-%{srcname}}
+%{?python_provide:%python_provide python-%{srcname}}
 
 %description -n python3-%{srcname}
 An python module which provides a convenient example.
