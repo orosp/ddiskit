@@ -105,7 +105,9 @@ for flavor in %flavors_to_build; do
 	find obj/$flavor/%{kmod_kbuild_dir} -name "*.ko" -type f -exec chmod u+x '{}' +
 done
 
-%{SOURCE2} %{name} %{kernel_verrel} obj > source/depmod.conf
+for modules in $( find obj -name "*.ko" -type f | sed 's|^.*/\([^/]*\)\.ko$|\1|' | sort -u ) ; do
+	echo "override $modules $(echo %{kernel_version} | sed 's/\.[^\.]*$//').* weak-updates/$modules" >> source/depmod.conf
+done
 
 greylist=source/symbols.greylist-%{_target_cpu}
 if [ -f $greylist ]; then
