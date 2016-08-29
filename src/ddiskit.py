@@ -75,6 +75,14 @@ def cmd_prepare_sources(args, configs):
     else:
         print("OK")
     print("Your module source code put in src directory.")
+    print("Creating directory for final iso files ... ", end="")
+    try:
+        if not os.path.exists("iso"):
+            os.makedirs("iso")
+    except OSError as e:
+        print(e.strerror)
+    else:
+        print("OK")
 
 def cmd_generate_spec(args, configs):
     if len(configs) == 0:
@@ -202,7 +210,23 @@ def cmd_build_rpm(args, configs):
         # write rpm, srpm
 
 def cmd_build_iso(args, configs):
-    # Collect rpms/srpms for all arches
+    rpm_files = []
+    for content in args.filelist:
+       try:
+           if os.path.isfile(content):
+               print("Including: " + str(content))
+           elif os.path.exists(content):
+               print("Listing content: " + str(content))
+               for root, dirs, files in os.walk(content):
+                   for file in files:
+                       if configs["global"]["include_srpm"] != "True" and ".src." in str(file):
+                           print ("Source rpms are disabled by config. Skipping: " + str(root)+"/"+str(file))
+                       else:
+                           print ("Including: " + str(root)+"/"+str(file))
+                           rpm_files.append(str(root)+"/"+str(file))
+       except OSError as e:
+           print(e.strerror)
+ 
     # Prepare iso filesystem
     # Prepare repository
     # Add rpms/srpms into repository

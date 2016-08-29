@@ -52,6 +52,9 @@ def parse_cli():
     # parser for the "build_iso" command
     parser_build_iso = cmdparsers.add_parser('build_iso', help='Build iso')
     parser_build_iso.add_argument("-c", "--config", default='module.config', help="Config file")
+    parser_build_iso.add_argument("-i", "--isofile", default='dd.iso', help="Output file name")
+    parser_build_iso.add_argument("filelist", nargs="*", default=["rpm/RPMS/", "rpm/SRPMS/"], help="RPM list, separated by space and can use directory path")
+    
     parser_build_iso.set_defaults(func=ddiskit.cmd_build_iso)
 
     args = root_parser.parse_args()
