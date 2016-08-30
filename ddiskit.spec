@@ -1,7 +1,7 @@
 %global srcname ddiskit
 %global Tool for create Driver Update Disc
 
-Name:           python-%{srcname}
+Name:           python3-%{srcname}
 Version:        3.0
 Release:        1%{?dist}
 Summary:        %{sum}
@@ -11,14 +11,13 @@ URL:            %{srcname}
 Source0:        %{srcname}-%{version}.tar.gz
 
 BuildArch:      noarch
-BuildRequires:  python3-devel
-Requires:	kernel-devel redhat-rpm-config
+BuildRequires:  python%{python3_pkgversion}-devel
+BuildRequires:  python%{python3_pkgversion}-setuptools
+Requires:       kernel-devel redhat-rpm-config kmod createrepo
 %description
 An python module which provides a convenient example.
-
-%package -n python3-%{srcname}
 Summary:        %{sum}
-%{?python_provide:%python_provide python-%{srcname}}
+%{?python_provide:%python_provide python3-%{srcname}}
 
 %description -n python3-%{srcname}
 An python module which provides a convenient example.
@@ -33,13 +32,9 @@ An python module which provides a convenient example.
 %install
 %py3_install
 
-%check
-%{__python3} setup.py test
-
 %files -n python3-%{srcname}
 %license COPYING
-%doc README.rst
+%doc README
 %{python3_sitelib}/*
-%{_bindir}/ddiskit
 
 %changelog
