@@ -8,11 +8,22 @@
 # This software may be freely redistributed under the terms of the GNU
 # General Public License version 2 (GPLv2).
 import os
+import re
 import sys
 import shutil
 import tarfile
+import tempfile
 from datetime import datetime
 from pprint import pprint
+from subprocess import PIPE, Popen
+
+def command(cmd):
+    process = Popen(
+        args=cmd,
+        stdout=PIPE,
+        shell=True
+    )
+    return process.communicate()[0].decode()
 
 def apply_config(data, configs):
     # apply global configs
@@ -210,25 +221,70 @@ def cmd_build_rpm(args, configs):
         # write rpm, srpm
 
 def cmd_build_iso(args, configs):
+    arch_list = []
     rpm_files = []
     for content in args.filelist:
-       try:
-           if os.path.isfile(content):
-               print("Including: " + str(content))
-           elif os.path.exists(content):
-               print("Listing content: " + str(content))
-               for root, dirs, files in os.walk(content):
-                   for file in files:
-                       if configs["global"]["include_srpm"] != "True" and ".src." in str(file):
-                           print ("Source rpms are disabled by config. Skipping: " + str(root)+"/"+str(file))
-                       else:
-                           print ("Including: " + str(root)+"/"+str(file))
-                           rpm_files.append(str(root)+"/"+str(file))
-       except OSError as e:
-           print(e.strerror)
- 
-    # Prepare iso filesystem
-    # Prepare repository
-    # Add rpms/srpms into repository
-    # Write repository into iso
-    print("cmd_build_iso")
+        try:
+            if os.path.isfile(content):
+                arch = command('rpm -q --qf "%{ARCH}" -p '+ str(root)+"/"+str(file))
+                if arch not in arch_list:
+                    arch_list.append(arch)
+                    rpm_files.append(str(root)+"/"+str(file))
+                print("Including: " + str(content))
+            elif os.path.exists(content):
+                print("Listing content: " + str(content))
+                for root, dirs, files in os.walk(content):
+                    for file in files:
+                        if configs["global"]["include_srpm"] != "True" and ".src." in str(file):
+                            print ("Source rpms are disabled by config. Skipping: " + str(root)+"/"+str(file))
+                        else:
+                            print ("Including: " + str(root)+"/"+str(file))
+                            arch = command('rpm -q --qf "%{ARCH}" -p '+ str(root)+"/"+str(file))
+                            arch = re.sub(r'i[0-9]86', 'i386', arch, flags=re.IGNORECASE)
+                            if arch not in arch_list:
+                                arch_list.append(arch)
+                            rpm_files.append(str(root)+"/"+str(file))
+        except OSError as e:
+            print(e.strerror)
+
+    dir_tmp = tempfile.mkdtemp()
+    saved_umask = os.umask(0o077)
+    tmp_dirs = ["disk", "disk/rpms", "disk/src", "greylists"]
+    try:
+        for dir in tmp_dirs:
+            if not os.path.exists(dir_tmp+"/"+dir):
+                os.makedirs(dir_tmp+"/"+dir)
+    except OSError as e:
+        print(e.strerror)
+
+    for arch in arch_list:
+        if not os.path.exists(dir_tmp+"/disk/rpms/"+arch):
+            os.makedirs(dir_tmp+"/disk/rpms/"+arch)
+
+    for file in rpm_files:
+        if ".src." in file:
+            shutil.copyfile(file, dir_tmp+"/disk/src/"+os.path.basename(file))
+        else:
+            for arch in arch_list:
+                if '.'+arch+'.' in os.path.basename(re.sub(r'i[0-9]86', 'i386', file, flags=re.IGNORECASE)):
+                    shutil.copyfile(file, dir_tmp+"/disk/rpms/"+arch+"/"+os.path.basename(file))
+                       
+    for arch in arch_list:
+        print (command('createrepo --pretty '+dir_tmp+"/disk/rpms/"+arch))
+        
+    try:
+        with open(dir_tmp+"/disk/rhdd3", 'w') as fout:
+            fout.write("Driver Update Disk version 3")
+            fout.close()
+    except IOError as e:
+        print(e.strerror)
+            
+    print (command('mkisofs -V OEMDRV -R -uid 0 -gid 0 -dir-mode 0555 -file-mode 0444 -o '+args.isofile+' '+dir_tmp+'/disk'))
+    os.umask(saved_umask)    
+        
+    for root, dirs, files in os.walk(dir_tmp, topdown=False):
+        for file in files:
+            os.remove(os.path.join(root, file))
+        for dir in dirs:
+            os.rmdir(os.path.join(root, dir))
+    os.rmdir(dir_tmp)
