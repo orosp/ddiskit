@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import sys
-from setuptools import setup, Command
+from setuptools import setup
 
 setup(
     name = "ddiskit",
@@ -12,5 +12,10 @@ setup(
     url = "http://git.engineering.redhat.com/git/users/poros/ddiskit.git/",
     packages = ['ddiskit'],
     package_dir={'ddiskit': 'src/'},
-    data_files = [('/etc/bash_completion.d', ['ddiskit.bash'])],
+    entry_points={
+        'console_scripts': [
+            'ddiskit=ddiskit.ddiskit:main',
+        ],
+    },
+
 )
