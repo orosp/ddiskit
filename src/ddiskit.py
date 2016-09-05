@@ -28,17 +28,18 @@ def command(cmd):
     return process.communicate()[0].decode()
 
 def apply_config(data, configs):
-    # apply global configs
-    for key in configs["global"]:
-        data = data.replace("%{" + key.upper() + "}", configs["global"][key])
+    # apply configs on configs
+    for section in ["global", "spec_file", "firmware_spec_file"]:
+        for key in configs[section]:
+            for section2 in ["global", "spec_file", "firmware_spec_file"]:
+                for key2 in configs[section2]:
+                    configs[section2][key2] = \
+                      configs[section2][key2].replace("{" + key + "}", configs[section][key])
 
-    # apply spec configs
-    for key in configs["spec_file"]:
-        data = data.replace("%{" + key.upper() + "}", configs["spec_file"][key])
-
-    # apply firmawe spec configs
-    for key in configs["firmware_spec_file"]:
-        data = data.replace("%{" + key.upper() + "}", configs["firmware_spec_file"][key])
+    # apply all configs on specfile template
+    for section in ["global", "spec_file", "firmware_spec_file"]:
+        for key in configs[section]:
+            data = data.replace("%{" + key.upper() + "}", configs[section][key])
 
     # generic keys for spec
     data = data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))

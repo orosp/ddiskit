@@ -10,13 +10,16 @@ module_author_email = poros@redhat.com
 include_srpm = True
 # Include rebuginfo rpm into final iso
 include_debuginfo = True
+# request signature for ko files
+# feature works only with redhat infrastructure, otherwise will be ignored
+request_signature = True
 
 # config values for driver spec file
 [spec_file]
 # kernel module name
 module_name = template
-# rpm file name expression. Can use eny variable from this config
-rpm_name = kmod-{dud_vendor}-{module_name}
+# rpm file name expression. Can use any variable from this config file
+rpm_name = kmod-{module_vendor}-{module_name}
 # rpm_release_version
 module_rpm_release = 1
 # rpm_dist
@@ -36,9 +39,6 @@ description = Example module for Driver Update Program
 # dependencies on other modules based on rpm name
 # when creating DUD with firmware, dependency will by added automatically
 dependencies = 
-# request signature for ko files
-# feature works only with redhat infrastructure, otherwise will be ignored
-request_signature = True
 
 # config values for firmware spec file
 [firmware_spec_file]
@@ -47,8 +47,8 @@ request_signature = True
 # firmware will be everytime in single rpm, never try mix
 # firmware with driver into single rpm!
 firmware_name = 
-# firmware rpm file name xpression
-firmware_rpm_name = kmod-{dud_vendor}-{module_name}-firmware
+# firmware rpm file name expression
+firmware_rpm_name = {rpm_name}-firmware
 # firmware version
 firmware_version = 
 # coma separated file list

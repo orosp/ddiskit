@@ -15,7 +15,7 @@ Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 %define __find_requires /usr/lib/rpm/redhat/find-requires.ksyms
 %define __find_provides /usr/lib/rpm/redhat/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
 
-Name:		%{kmod_name}-%{kmod_vendor}
+Name:		%{RPM_NAME}
 Version:	%{kmod_driver_version}
 Release:	%{kmod_rpm_release}%{?dist}
 Summary:	%{SUMMARY}
