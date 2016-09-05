@@ -78,7 +78,7 @@ fi
 /usr/share/doc/kmod-%{MODULE_NAME}/greylist.txt
 
 %prep
-%setup
+%setup -n %{MODULE_NAME}-%{MODULE_VENDOR}-%{MODULE_VERSION}
 %{SOURCE_PATCHES_DO}
 set -- *
 mkdir source
