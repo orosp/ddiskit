@@ -28,16 +28,23 @@ def command(cmd):
     return process.communicate()[0].decode()
 
 def apply_config(data, configs):
+    # if have no firmware -> remove all firmware defintions from spec file
+    if configs["spec_file"]["firmware_include"] != "True":
+        data = re.sub(r'^%{FIRMWARE_BEGIN}.*?%{FIRMWARE_END}$', '', data, flags=re.DOTALL | re.M)
+    else:
+        data = data.replace("%{FIRMWARE_BEGIN}\n", "")
+        data = data.replace("%{FIRMWARE_END}\n", "")
+
     # apply configs on configs
-    for section in ["global", "spec_file", "firmware_spec_file"]:
+    for section in ["global", "spec_file"]:
         for key in configs[section]:
-            for section2 in ["global", "spec_file", "firmware_spec_file"]:
+            for section2 in ["global", "spec_file"]:
                 for key2 in configs[section2]:
                     configs[section2][key2] = \
                       configs[section2][key2].replace("{" + key + "}", configs[section][key])
 
     # apply all configs on specfile template
-    for section in ["global", "spec_file", "firmware_spec_file"]:
+    for section in ["global", "spec_file"]:
         for key in configs[section]:
             data = data.replace("%{" + key.upper() + "}", configs[section][key])
 
@@ -81,9 +88,11 @@ def cmd_prepare_sources(args, configs):
     else:
         print("OK")
     print("Creating directory for source code ... ", end="")
+    dir_list = ["src", "src/patches", "src/firmware"]
     try:
-        if not os.path.exists("src"):
-            os.makedirs("src")
+        for dirs in dir_list:
+            if not os.path.exists(dirs):
+                os.makedirs(dirs)
     except OSError as e:
         print(e.strerror)
     else:
@@ -187,7 +196,7 @@ def cmd_build_rpm(args, configs):
         tar = tarfile.open(archive, "w:bz2")
         os.chdir(src_root)
         for files in os.listdir("."):
-            if "patches" not in files:
+            if "patches" not in files and "firmware" not in files:
                 tar.add(files, arcname=nvv + "/" + files, recursive=True)
         tar.close()
         os.chdir("..")
