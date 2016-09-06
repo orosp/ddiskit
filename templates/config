@@ -46,7 +46,7 @@ dependencies =
 # If you need firmware on final system in subdirectory, create same directory structure
 #   inside src/firmware directory
 # enable firmware sub-package
-firmware_include = Flase
+firmware_include = True
 # firmware package version
 firmware_version = 0.99fw
 # firmware summary in spec file

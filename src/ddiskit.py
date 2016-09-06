@@ -140,6 +140,23 @@ def cmd_generate_spec(args, configs):
     else:
         print("Patch directory not found or empty-> skipping")
 
+    if os.path.isdir(src_root + "firmware") and os.listdir(src_root + "firmware"):
+        if configs["spec_file"]["firmware_include"] != "True":
+            print ("\n  WARNING: Firmware directory contain files, but firmware package is disabled by config!!!\n")
+        else:
+            configs["spec_file"]["firmware_files"] = ""
+            print("Found directory with firmware, adding into spec file:")
+            for root, dirs, files in os.walk(src_root + "firmware/"):
+                for file in files:
+                    file_root = root.replace(src_root + "firmware/", "")
+                    if len(file_root) > 0:
+                        file_root = file_root + "/"
+                    print("  Firmware: " + file_root + str(file))
+                    configs["spec_file"]["firmware_files"] = \
+                        configs["spec_file"]["firmware_files"] + "/usr/lib/firmware/" + file_root + str(file) + "\n"
+    else:
+        print("Firmware directory not found or empty-> skipping")
+
     read_data = apply_config(read_data, configs)
     print("Writing spec into rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
     try:
@@ -215,22 +232,24 @@ def cmd_build_rpm(args, configs):
     else:
         print("Patch directory not found or empty-> skipping")
 
+    if os.path.isdir(src_root + "firmware") and os.listdir(src_root + "firmware"):
+        print("Copying firmware into rpm/SOURCES:")
+        os.chdir(src_root)
+        for root, dirs, files in os.walk("firmware"):
+            for dir in dirs:
+                if not os.path.isdir("../rpm/SOURCES/" + root + "/" + dir):
+                    os.makedirs("../rpm/SOURCES/" + root + "/" + dir)
+            for file in files:
+                print("  Copying: " + root + "/" + file)
+                shutil.copyfile(root + "/" + file, "../rpm/SOURCES/" + root + "/" + file)
+        os.chdir("../")
+    else:
+        print("Firmware directory not found or empty-> skipping")
+
     do_build_rpm(args, configs)
 
-    # Stage 2) Generate build outputs for final rpm
-    #   a) Copy patches
-    #   b) Build module
-    #   c) Generate greylist & module.symvers and write into rpm/SOURCES
-
-    # STAGE3 (build rpm with rpmbuild -ba & rpmbuild -ba firmware)
-        # here begin work driven by specfile
-        # apply patches
-        # build module
-        # sign module
-        # run depmod
-        # run find requires
-        # run find provides
-        # write rpm, srpm
+    # TODO: Generate greylist & module.symvers and write into rpm/SOURCES
+    # TODO: Sign module
 
 def cmd_build_iso(args, configs):
     arch_list = []

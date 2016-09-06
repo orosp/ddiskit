@@ -27,13 +27,15 @@ BuildRequires:	kernel-devel = %kmod_kernel_version kmod redhat-rpm-config
 ExclusiveArch:	%{KERNEL_ARCH}
 %{FIRMWARE_BEGIN}
 
-%package -n %{FIRMWARE_RPM_NAME}
-Summary:       %{FIRMWARE_SUMMARY}
-Provides:      firmware(%{kmod_name}) = %{kmod_firmware_version}
-Provides:      kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
-%description -n kmod-%{kmod_name}-firmware
+%package -n %{kmod_name}-firmware
+Summary:	%{FIRMWARE_SUMMARY}
+Provides:	firmware(%{kmod_name}) = %{kmod_firmware_version}
+Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
+%description -n  %{kmod_name}-firmware
 %{kmod_name} - driver update firmware
-%files -n kmod-%{kmod_name}-firmware -f %{SOURCE(firmware)}
+%files -n %{kmod_name}-firmware
+%defattr(644,root,root,755)
+%{FIRMWARE_FILES}
 
 %{FIRMWARE_END}
 %global flavors_to_build default
