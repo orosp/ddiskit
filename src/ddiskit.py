@@ -153,7 +153,7 @@ def cmd_generate_spec(args, configs):
                         file_root = file_root + "/"
                     print("  Firmware: " + file_root + str(file))
                     configs["spec_file"]["firmware_files"] = \
-                        configs["spec_file"]["firmware_files"] + "/usr/lib/firmware/" + file_root + str(file) + "\n"
+                        configs["spec_file"]["firmware_files"] + "/lib/firmware/" + file_root + str(file) + "\n"
     else:
         print("Firmware directory not found or empty-> skipping")
 
@@ -213,7 +213,11 @@ def cmd_build_rpm(args, configs):
         tar = tarfile.open(archive, "w:bz2")
         os.chdir(src_root)
         for files in os.listdir("."):
-            if "patches" not in files and "firmware" not in files:
+            if "patches" in files or "rpm" in files:
+                continue
+            if "firmware" in files and os.path.isdir("firmware") and os.listdir("patches"):
+                tar.add(files, arcname=nvv + "/lib/" + files, recursive=True)
+            else:
                 tar.add(files, arcname=nvv + "/" + files, recursive=True)
         tar.close()
         os.chdir("..")
@@ -231,20 +235,6 @@ def cmd_build_rpm(args, configs):
         os.chdir("../../")
     else:
         print("Patch directory not found or empty-> skipping")
-
-    if os.path.isdir(src_root + "firmware") and os.listdir(src_root + "firmware"):
-        print("Copying firmware into rpm/SOURCES:")
-        os.chdir(src_root)
-        for root, dirs, files in os.walk("firmware"):
-            for dir in dirs:
-                if not os.path.isdir("../rpm/SOURCES/" + root + "/" + dir):
-                    os.makedirs("../rpm/SOURCES/" + root + "/" + dir)
-            for file in files:
-                print("  Copying: " + root + "/" + file)
-                shutil.copyfile(root + "/" + file, "../rpm/SOURCES/" + root + "/" + file)
-        os.chdir("../")
-    else:
-        print("Firmware directory not found or empty-> skipping")
 
     do_build_rpm(args, configs)
 

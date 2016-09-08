@@ -25,19 +25,6 @@ URL:		http://www.kernel.org/
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildRequires:	kernel-devel = %kmod_kernel_version kmod redhat-rpm-config
 ExclusiveArch:	%{KERNEL_ARCH}
-%{FIRMWARE_BEGIN}
-
-%package -n %{kmod_name}-firmware
-Summary:	%{FIRMWARE_SUMMARY}
-Provides:	firmware(%{kmod_name}) = %{kmod_firmware_version}
-Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
-%description -n  %{kmod_name}-firmware
-%{kmod_name} - driver update firmware
-%files -n %{kmod_name}-firmware
-%defattr(644,root,root,755)
-%{FIRMWARE_FILES}
-
-%{FIRMWARE_END}
 %global flavors_to_build default
 %global kernel_source() /usr/src/kernels/%{kmod_kernel_version}.$(arch)
 
@@ -55,7 +42,19 @@ Obsoletes:	kmod-%{kmod_name}
 
 %description
 %{DESCRIPTION}
+%{FIRMWARE_BEGIN}
 
+%package -n %{kmod_name}-firmware
+Summary:	%{FIRMWARE_SUMMARY}
+Provides:	firmware(%{kmod_name}) = %{kmod_firmware_version}
+Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
+%description -n  %{kmod_name}-firmware
+%{kmod_name} - driver update firmware
+%files -n %{kmod_name}-firmware
+%defattr(644,root,root,755)
+%{FIRMWARE_FILES}
+
+%{FIRMWARE_END}
 # The %post, %preun and %postun hooks are copied from kmodtool
 %post
 if [ -e "/boot/System.map-%{verrel}" ]; then
@@ -127,13 +126,7 @@ if [ -f $greylist ]; then
 else
 	touch source/symbols.greylist
 fi
-%{FIRMWARE_BEGIN}
 
-if [ -d source/firmware ]; then
-	make -C source/firmware
-fi
-
-%{FIRMWARE_END}
 %install
 export INSTALL_MOD_PATH=$RPM_BUILD_ROOT
 export INSTALL_MOD_DIR=extra/%{name}
@@ -149,10 +142,11 @@ install -m 644 -D source/symbols.greylist $RPM_BUILD_ROOT/usr/share/doc/kmod-%{k
 %{FIRMWARE_BEGIN}
 
 if [ -d source/firmware ]; then
-	make -C source/firmware INSTALL_PATH=$RPM_BUILD_ROOT INSTALL_DIR=updates install
+    install -m 644 -d source/firmware $RPM_BUILD_ROOT/lib/
 fi
 
 %{FIRMWARE_END}
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
