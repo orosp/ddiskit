@@ -140,13 +140,8 @@ done
 install -m 644 -D source/depmod.conf $RPM_BUILD_ROOT/etc/depmod.d/%{kmod_name}.conf
 install -m 644 -D source/symbols.greylist $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.txt
 %{FIRMWARE_BEGIN}
-
-if [ -d source/firmware ]; then
-    install -m 644 -d source/firmware $RPM_BUILD_ROOT/lib/
-fi
-
+%{FIRMWARE_FILES_INSTALL}
 %{FIRMWARE_END}
-
 %clean
 rm -rf $RPM_BUILD_ROOT
 

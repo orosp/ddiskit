@@ -145,6 +145,7 @@ def cmd_generate_spec(args, configs):
             print ("\n  WARNING: Firmware directory contain files, but firmware package is disabled by config!!!\n")
         else:
             configs["spec_file"]["firmware_files"] = ""
+            configs["spec_file"]["firmware_files_install"] = ""
             print("Found directory with firmware, adding into spec file:")
             for root, dirs, files in os.walk(src_root + "firmware/"):
                 for file in files:
@@ -154,6 +155,9 @@ def cmd_generate_spec(args, configs):
                     print("  Firmware: " + file_root + str(file))
                     configs["spec_file"]["firmware_files"] = \
                         configs["spec_file"]["firmware_files"] + "/lib/firmware/" + file_root + str(file) + "\n"
+                    configs["spec_file"]["firmware_files_install"] = \
+                        configs["spec_file"]["firmware_files_install"] + "install -m 644 -D source/firmware/" + \
+                        file_root + str(file) + " $RPM_BUILD_ROOT/lib/firmware/" + file_root + str(file) + "\n"
     else:
         print("Firmware directory not found or empty-> skipping")
 
