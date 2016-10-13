@@ -239,15 +239,12 @@ def cmd_build_rpm(args, configs):
         os.chdir("../../")
     else:
         print("Patch directory not found or empty-> skipping")
-
     do_build_rpm(args, configs)
-
-    # TODO: Generate greylist & module.symvers and write into rpm/SOURCES
-    # TODO: Sign module
 
 def cmd_build_iso(args, configs):
     arch_list = []
     rpm_files = []
+    rpm_greylist = []
     for content in args.filelist:
         try:
             if os.path.isfile(content):
@@ -293,20 +290,22 @@ def cmd_build_iso(args, configs):
             for arch in arch_list:
                 if '.'+arch+'.' in os.path.basename(re.sub(r'i[0-9]86', 'i386', file, flags=re.IGNORECASE)):
                     shutil.copyfile(file, dir_tmp+"/disk/rpms/"+arch+"/"+os.path.basename(file))
-                       
+                    print (command('rpm2cpio '+file+' | cpio -i --quiet --to-stdout greylist.'+arch))
+                    #rpm_greylist.append(extract_greylist(file))
+
     for arch in arch_list:
         print (command('createrepo --pretty '+dir_tmp+"/disk/rpms/"+arch))
-        
+
     try:
         with open(dir_tmp+"/disk/rhdd3", 'w') as fout:
             fout.write("Driver Update Disk version 3")
             fout.close()
     except IOError as e:
         print(e.strerror)
-            
+
     print (command('mkisofs -V OEMDRV -R -uid 0 -gid 0 -dir-mode 0555 -file-mode 0444 -o '+args.isofile+' '+dir_tmp+'/disk'))
-    os.umask(saved_umask)    
-        
+    os.umask(saved_umask)
+
     for root, dirs, files in os.walk(dir_tmp, topdown=False):
         for file in files:
             os.remove(os.path.join(root, file))
@@ -373,4 +372,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

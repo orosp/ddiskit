@@ -8,8 +8,6 @@
 %{!?dist: %define dist .%{RPM_DIST}}
 
 Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
-#%{SOURCE_GREYLISTS}
-#%{SOURCE_SYMVERS}
 %{SOURCE_PATCHES}
 
 %define __find_requires /usr/lib/rpm/redhat/find-requires.ksyms
@@ -88,7 +86,8 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{kmod_kernel_version}.%(arch)
 /etc/depmod.d/%{MODULE_NAME}.conf
-/usr/share/doc/kmod-%{MODULE_NAME}/greylist.txt
+/usr/share/doc/kmod-%{MODULE_NAME}/greylist.%(arch)
+/usr/share/doc/kmod-%{MODULE_NAME}/Module.symvers-%(arch)
 
 %prep
 %setup -n %{MODULE_NAME}-%{MODULE_VENDOR}-%{MODULE_VERSION}
@@ -96,8 +95,6 @@ fi
 set -- *
 mkdir source
 mv "$@" source/
-#%{SOURCE_GREYLISTS_CP}
-#%{SOURCE_SYMVERS_CP}
 mkdir obj
 
 %build
@@ -106,9 +103,8 @@ for flavor in %flavors_to_build; do
 	cp -r source obj/$flavor
 
 	# update symvers file if existing
-	symvers=source/Module.symvers-%{_target_cpu}
-	if [ -e $symvers ]; then
-		cp $symvers obj/$flavor/%{kmod_kbuild_dir}/Module.symvers
+	if [ -e source/Module.symvers-%{_target_cpu} ]; then
+		cp source/Module.symvers-%{_target_cpu} obj/$flavor/%{kmod_kbuild_dir}/Module.symvers
 	fi
 
 	make -C %{kernel_source $flavor} M=$PWD/obj/$flavor/%{kmod_kbuild_dir} \
@@ -122,13 +118,6 @@ for modules in $( find obj -name "*.ko" -type f | sed 's|^.*/\([^/]*\)\.ko$|\1|'
 	echo "override $modules $(echo %{kmod_kernel_version} | sed 's/\.[^\.]*$//').* weak-updates/$modules" >> source/depmod.conf
 done
 
-greylist=source/symbols.greylist-%{_target_cpu}
-if [ -f $greylist ]; then
-	cp $greylist source/symbols.greylist
-else
-	touch source/symbols.greylist
-fi
-
 %install
 export INSTALL_MOD_PATH=$RPM_BUILD_ROOT
 export INSTALL_MOD_DIR=extra/%{name}
@@ -140,7 +129,12 @@ for flavor in %flavors_to_build ; do
 done
 
 install -m 644 -D source/depmod.conf $RPM_BUILD_ROOT/etc/depmod.d/%{kmod_name}.conf
-install -m 644 -D source/symbols.greylist $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.txt
+if [ -f source/greylist.%{_target_cpu} ]; then
+	install -m 644 -D source/greylist.%{_target_cpu} $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.%{_target_cpu}
+fi
+if [ -e source/Module.symvers-%{_target_cpu} ]; then
+	install -m 644 -D source/Module.symvers-%{_target_cpu} $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/Module.symvers-%{_target_cpu}
+fi
 %{FIRMWARE_BEGIN}
 %{FIRMWARE_FILES_INSTALL}
 %{FIRMWARE_END}
