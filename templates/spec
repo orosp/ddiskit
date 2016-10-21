@@ -86,7 +86,7 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{kmod_kernel_version}.%(arch)
 /etc/depmod.d/%{MODULE_NAME}.conf
-/usr/share/doc/kmod-%{MODULE_NAME}/greylist.%(arch)
+/usr/share/doc/kmod-%{MODULE_NAME}/greylist.txt
 /usr/share/doc/kmod-%{MODULE_NAME}/Module.symvers-%(arch)
 
 %prep
@@ -101,6 +101,7 @@ mkdir obj
 for flavor in %flavors_to_build; do
 	rm -rf obj/$flavor
 	cp -r source obj/$flavor
+	whitelist="/lib/modules/kabi-current/kabi_whitelist_%{_target_cpu}"
 
 	# update symvers file if existing
 	if [ -e source/Module.symvers-%{_target_cpu} ]; then
@@ -116,6 +117,14 @@ done
 
 for modules in $( find obj -name "*.ko" -type f | sed 's|^.*/\([^/]*\)\.ko$|\1|' | sort -u ) ; do
 	echo "override $modules $(echo %{kmod_kernel_version} | sed 's/\.[^\.]*$//').* weak-updates/$modules" >> source/depmod.conf
+	# update greylist
+	if [[ -e $whitelist ]]; then
+		nm -u obj/$flavor/%{kmod_kbuild_dir}/$modules.ko | sed 's/.*U //' |  sed 's/^\.//' | sort -u | while read -r symbol; do
+			grep -q "^	$symbol\$" $whitelist || echo "$symbol" >> source/greylist.txt
+		done
+	else
+		echo "ERROR: Whitelist for the current arch ($arch) not found."
+	fi
 done
 
 %install
@@ -129,8 +138,8 @@ for flavor in %flavors_to_build ; do
 done
 
 install -m 644 -D source/depmod.conf $RPM_BUILD_ROOT/etc/depmod.d/%{kmod_name}.conf
-if [ -f source/greylist.%{_target_cpu} ]; then
-	install -m 644 -D source/greylist.%{_target_cpu} $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.%{_target_cpu}
+if [ -f source/greylist.txt ]; then
+	install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.txt
 fi
 if [ -e source/Module.symvers-%{_target_cpu} ]; then
 	install -m 644 -D source/Module.symvers-%{_target_cpu} $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/Module.symvers-%{_target_cpu}
