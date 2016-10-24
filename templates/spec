@@ -55,12 +55,8 @@ Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
 %{FIRMWARE_FILES}
 
 %{FIRMWARE_END}
-# The %post, %preun and %postun hooks are copied from kmodtool
-%post
-if [ -e "/boot/System.map-%{verrel}" ]; then
-    /usr/sbin/depmod -aeF "/boot/System.map-%{kmod_kernel_version}" "%{kmod_kernel_version}" > /dev/null || :
-fi
 
+%post
 modules=( $(find /lib/modules/%{kmod_kernel_version}.%{arch}/extra/%{kmod_name} | grep '\.ko$') )
 if [ -x "/sbin/weak-modules" ]; then
     printf '%s\n' "${modules[@]}" \
@@ -71,10 +67,6 @@ fi
 rpm -ql kmod-%{kmod_name}-%{kmod_vendor}-%{kmod_version}-%{kmod_release}.$(arch) | grep '\.ko$' > /var/run/rpm-kmod-%{kmod_name}-modules
 
 %postun
-if [ -e "/boot/System.map-%{kmod_kernel_version}" ]; then
-    /usr/sbin/depmod -aeF "/boot/System.map-%{kmod_kernel_version}" "%{kmod_kernel_version}.%(arch)" > /dev/null || :
-fi
-
 modules=( $(cat /var/run/rpm-kmod-%{kmod_name}-modules) )
 rm /var/run/rpm-kmod-%{kmod_name}-modules
 if [ -x "/sbin/weak-modules" ]; then
@@ -103,11 +95,6 @@ for flavor in %flavors_to_build; do
 	cp -r source obj/$flavor
 	whitelist="/lib/modules/kabi-current/kabi_whitelist_%{_target_cpu}"
 
-	# update symvers file if existing
-	if [ -e source/Module.symvers-%{_target_cpu} ]; then
-		cp source/Module.symvers-%{_target_cpu} obj/$flavor/%{kmod_kbuild_dir}/Module.symvers
-	fi
-
 	make -C %{kernel_source $flavor} M=$PWD/obj/$flavor/%{kmod_kbuild_dir} \
 		NOSTDINC_FLAGS="-I $PWD/obj/$flavor/include"
 
@@ -116,11 +103,13 @@ for flavor in %flavors_to_build; do
 done
 
 for modules in $( find obj -name "*.ko" -type f | sed 's|^.*/\([^/]*\)\.ko$|\1|' | sort -u ) ; do
+	# update depmod.conf
 	echo "override $modules $(echo %{kmod_kernel_version} | sed 's/\.[^\.]*$//').* weak-updates/$modules" >> source/depmod.conf
+
 	# update greylist
 	if [[ -e $whitelist ]]; then
 		nm -u obj/$flavor/%{kmod_kbuild_dir}/$modules.ko | sed 's/.*U //' |  sed 's/^\.//' | sort -u | while read -r symbol; do
-			grep -q "^	$symbol\$" $whitelist || echo "$symbol" >> source/greylist.txt
+			grep -q "^\s*$symbol\$" $whitelist || echo "$symbol" >> source/greylist.txt
 		done
 	else
 		echo "ERROR: Whitelist for the current arch ($arch) not found."
