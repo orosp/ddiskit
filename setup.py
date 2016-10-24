@@ -12,10 +12,12 @@ setup(
     url = "http://git.engineering.redhat.com/git/users/poros/ddiskit.git/",
     packages = ['ddiskit'],
     package_dir={'ddiskit': 'src/'},
+    data_files = [('/etc/bash_completion.d', ['ddiskit.bash']),
+                  ('/usr/share/ddiskit/templates/spec', ['templates/spec']),
+                  ('/usr/share/ddiskit/templates/config', ['templates/config'])],
     entry_points={
         'console_scripts': [
             'ddiskit=ddiskit.ddiskit:main',
         ],
     },
-
 )

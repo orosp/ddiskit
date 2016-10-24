@@ -67,7 +67,7 @@ def cmd_prepare_sources(args, configs):
         if os.path.isfile(args.config):
             print("File Exist")
         else:
-            with open('../templates/config', 'r') as fin:
+            with open('/usr/share/ddiskit/templates/config', 'r') as fin:
                 read_data = fin.read()
             fin.close()
             fout = open(args.config, 'w')
@@ -115,7 +115,7 @@ def cmd_generate_spec(args, configs):
     if os.path.isfile("rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"):
         print("File Exist rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec!")
     try:
-        with open('../templates/spec', 'r') as fin:
+        with open('/usr/share/ddiskit/templates/spec', 'r') as fin:
             read_data = fin.read()
             fin.close()
     except IOError as e:
