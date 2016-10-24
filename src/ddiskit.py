@@ -190,21 +190,7 @@ def cmd_build_rpm(args, configs):
     saved_root = saved_root.replace(src_root, "")
 
     if not makefile_found:
-        try:
-            with open('../templates/makefile', 'r') as fin:
-                read_data = fin.read()
-                fin.close()
-        except IOError as e:
-            print(e.strerror)
-
-        read_data = apply_config(read_data, configs)
-        print("Makefile not found -> Using generic version")
-        try:
-            with open(src_root + saved_root + "/Makefile", 'w') as fout:
-                fout.write(read_data)
-                fout.close()
-        except IOError as e:
-            print(e.strerror)
+        print("Makefile not found -> Please create one in " + src_root + saved_root)
     else:
         print("Checking makefile ... OK")
 
@@ -271,7 +257,7 @@ def cmd_build_iso(args, configs):
 
     dir_tmp = tempfile.mkdtemp()
     saved_umask = os.umask(0o077)
-    tmp_dirs = ["disk", "disk/rpms", "disk/src", "greylists"]
+    tmp_dirs = ["disk", "disk/rpms", "disk/src"]
     try:
         for dir in tmp_dirs:
             if not os.path.exists(dir_tmp+"/"+dir):
@@ -290,8 +276,18 @@ def cmd_build_iso(args, configs):
             for arch in arch_list:
                 if '.'+arch+'.' in os.path.basename(re.sub(r'i[0-9]86', 'i386', file, flags=re.IGNORECASE)):
                     shutil.copyfile(file, dir_tmp+"/disk/rpms/"+arch+"/"+os.path.basename(file))
-                    print (command('rpm2cpio '+file+' | cpio -i --quiet --to-stdout greylist.'+arch))
-                    #rpm_greylist.append(extract_greylist(file))
+                    for symbol in command('rpm2cpio '+file+' | cpio -i --quiet --to-stdout *greylist.txt').split():
+                        if symbol not in rpm_greylist:
+                            rpm_greylist.append(symbol)
+    rpm_greylist.sort()
+
+    try:
+        with open(dir_tmp+"/disk/greylist", 'w') as fout:
+            for symbol in rpm_greylist:
+                fout.write(symbol+"\n")
+            fout.close()
+    except IOError as e:
+        print(e.strerror)
 
     for arch in arch_list:
         print (command('createrepo --pretty '+dir_tmp+"/disk/rpms/"+arch))
@@ -303,7 +299,7 @@ def cmd_build_iso(args, configs):
     except IOError as e:
         print(e.strerror)
 
-    print (command('mkisofs -V OEMDRV -R -uid 0 -gid 0 -dir-mode 0555 -file-mode 0444 -o '+args.isofile+' '+dir_tmp+'/disk'))
+    print (command('mkisofs -V OEMDRV -input-charset UTF-8 -R -uid 0 -gid 0 -dir-mode 0555 -file-mode 0444 -o '+args.isofile+' '+dir_tmp+'/disk'))
     os.umask(saved_umask)
 
     for root, dirs, files in os.walk(dir_tmp, topdown=False):
