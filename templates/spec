@@ -130,8 +130,8 @@ install -m 644 -D source/depmod.conf $RPM_BUILD_ROOT/etc/depmod.d/%{kmod_name}.c
 if [ -f source/greylist.txt ]; then
 	install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.txt
 fi
-if [ -e source/Module.symvers-%{_target_cpu} ]; then
-	install -m 644 -D source/Module.symvers-%{_target_cpu} $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/Module.symvers-%{_target_cpu}
+if [ -e obj/$flavor/%{kmod_kbuild_dir}/Module.symvers ]; then
+	install -m 644 -D obj/$flavor/%{kmod_kbuild_dir}/Module.symvers $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/Module.symvers-%{_target_cpu}
 fi
 %{FIRMWARE_BEGIN}
 %{FIRMWARE_FILES_INSTALL}
