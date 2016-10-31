@@ -230,7 +230,6 @@ def cmd_build_rpm(args, configs):
 def cmd_build_iso(args, configs):
     arch_list = []
     rpm_files = []
-    rpm_greylist = []
     for content in args.filelist:
         try:
             if os.path.isfile(content):
@@ -278,18 +277,6 @@ def cmd_build_iso(args, configs):
             for arch in arch_list:
                 if '.'+arch+'.' in os.path.basename(re.sub(r'i[0-9]86', 'i386', file, flags=re.IGNORECASE)):
                     shutil.copyfile(file, dir_tmp+"/disk/rpms/"+arch+"/"+os.path.basename(file))
-                    for symbol in command('rpm2cpio '+file+' | cpio -i --quiet --to-stdout *greylist.txt').split():
-                        if symbol not in rpm_greylist:
-                            rpm_greylist.append(symbol)
-    rpm_greylist.sort()
-
-    try:
-        with open(dir_tmp+"/disk/greylist", 'w') as fout:
-            for symbol in rpm_greylist:
-                fout.write(symbol+"\n")
-            fout.close()
-    except IOError as e:
-        print(e.strerror)
 
     for arch in arch_list:
         print (command('createrepo --pretty '+dir_tmp+"/disk/rpms/"+arch))
