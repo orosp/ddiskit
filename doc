@@ -5,7 +5,7 @@ Supported commands:
     build_iso           Build iso
 
 Prepare sources:
-    In current directory
+    In current directory commad will make:
     1) Write file "module.config" with config template
     2) Create directory structure for rpm build
        .
@@ -18,37 +18,49 @@ Prepare sources:
            └── SRPMS
     3) Create directory "src" for module source code
     4) Create directory "patches" for patches
+    5) Create directory "firmware" for firmware binary files
+    6) Create directory "iso" for final iso image
 
 Generate Spec:
-    Command need prapered module.config file
-    Command will create new spec file based on module.config file
-    1) Check if spec already exist, when yes write warning and continue
+    Steps required by user:
+      Before generate spec run prepare_sources command
+      Edit module.config file
+
+    Command will make:
+    1) Check if spec already exist, when yes write warning and continue!!!
     2) Add patches from src/patches directory into spec
-    3) Create spec in rpm/SPECS directory with values defined in config
+    3) Add firmwares from src/firmware directory into spec
+    4) Create spec in rpm/SPECS directory with values defined in config
 
-Build rpm:
-    3 stages command:
-        Stage 1) Prepare source
-            a) Generate module.files & makefile(when no present in user source)
-            b) Pack source in src and write it into rpm/SOURCES
-            c) Copy module.files & makefile & patch into rpm/SOURCES
+Build RPM:
+    Steps required by user:
+      Successfully done generate_spec command
 
-        Stage 2) Generate build outputs for final rpm
-            a) Copy patches
-            b) Build module
-            c) Generate greylist & module.symvers and write into rpm/SOURCES
+    Command will make:
+      1) Stage1: Prepare source
+        a) Check makefile
+        b) Pack source code from src into source archive
+        c) Pack firmware files from firmware and add into source archive
+        d) Write source archive into rpm/SOURCES
+        e) Copy patches from patches into rpm/SOURCES
 
-        Stage 3) Build rpm
-            # stage driven by specfile
-            a) Build module
-            b) Sign module (when it is supported by infrastructure)
-            c) Run depmod
-            d) Run find-requires, find-provides
-            e) Write final rpm, srpm
+      2) Stage2: Build SRPMs and RPMs
+        a) Just run rpmbuild
+        Steps in spec file:
+          a) Build modules
+          b) Generate depmod.conf
+          c) Generate greylist.txt
+          d) Install modules, depmod.conf, greylist.txt, Module.symvers-%{_target_cpu}
+          e) Run find-requires, find-provides
+          f) Post phase: call weak-modules --add-modules
+          g) Write final rpm, srpm
 
 Build ISO:
     1) Collect rpms/srpms for all arches
+       NOTE: srpms will be skiiped if it is not enabled in config!
     2) Prepare iso filesystem
-    3) Prepare repository
+    3) Extract greylist.txt files from all rpms
+    4) Prepare repository
     4) Add rpms/srpms into repository
     5) Write repository into iso
+    6) Cleanup temp directories
