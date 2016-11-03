@@ -89,7 +89,7 @@ def cmd_prepare_sources(args, configs):
             with open('/usr/share/ddiskit/templates/config', 'r') as fin:
                 read_data = fin.read()
             fin.close()
-            fout = open(args.config, 'w')
+            fout = open(args.config, 'w+')
             fout.write(read_data)
             fout.close()
             print("OK")
