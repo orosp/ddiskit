@@ -94,7 +94,7 @@ def cmd_prepare_sources(args, configs):
             fout.close()
             print("OK")
     except IOError as err:
-        print(err.strerror+" /usr/share/ddiskit/templates/config")
+        print(str(err))
         sys.exit(1)
 
     print("Creating directory structure for RPM build ... ", end="")
@@ -104,7 +104,7 @@ def cmd_prepare_sources(args, configs):
             if not os.path.exists(dirs):
                 os.makedirs(dirs)
     except OSError as err:
-        print(err.strerror)
+        print(str(err))
     else:
         print("OK")
     print("Creating directory for source code ... ", end="")
@@ -114,7 +114,7 @@ def cmd_prepare_sources(args, configs):
             if not os.path.exists(dirs):
                 os.makedirs(dirs)
     except OSError as err:
-        print(err.strerror)
+        print(str(err))
     else:
         print("OK")
     print("Your module source code put in src directory.")
@@ -123,7 +123,7 @@ def cmd_prepare_sources(args, configs):
         if not os.path.exists("iso"):
             os.makedirs("iso")
     except OSError as err:
-        print(err.strerror)
+        print(str(err))
     else:
         print("OK")
 
@@ -144,7 +144,7 @@ def cmd_generate_spec(args, configs):
             read_data = fin.read()
             fin.close()
     except IOError as err:
-        print(err.strerror+" /usr/share/ddiskit/templates/spec")
+        print(str(err))
         sys.exit(1)
 
     src_root = "src/"
@@ -194,7 +194,7 @@ def cmd_generate_spec(args, configs):
             fout.write(read_data)
             fout.close()
     except IOError as err:
-        print(err.strerror)
+        print(str(err))
     else:
         print("OK")
 
@@ -291,7 +291,7 @@ def cmd_build_iso(args, configs):
                                 arch_list.append(arch)
                             rpm_files.append(str(root)+"/"+str(file))
         except OSError as err:
-            print(err.strerror)
+            print(str(err))
 
     dir_tmp = tempfile.mkdtemp()
     saved_umask = os.umask(0o077)
@@ -301,7 +301,7 @@ def cmd_build_iso(args, configs):
             if not os.path.exists(dir_tmp+"/"+dirs):
                 os.makedirs(dir_tmp+"/"+dirs)
     except OSError as err:
-        print(err.strerror)
+        print(str(err))
 
     for arch in arch_list:
         if not os.path.exists(dir_tmp+"/disk/rpms/"+arch):
@@ -323,7 +323,7 @@ def cmd_build_iso(args, configs):
             fout.write("Driver Update Disk version 3")
             fout.close()
     except IOError as err:
-        print(err.strerror)
+        print(str(err))
 
     print(command('mkisofs -V OEMDRV -input-charset UTF-8 -R -uid 0 -gid 0 -dir-mode 0555 -file-mode 0444 -o '+args.isofile+' '+dir_tmp+'/disk'))
     os.umask(saved_umask)
