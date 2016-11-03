@@ -62,6 +62,30 @@ def apply_config(data, configs):
     data = data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))
     return data
 
+def check_config(configs):
+    """
+    Check config and repair non-critic fails
+    :param configs: config for check
+    :return: Fixed config or None
+    """
+    config_critic = False
+    print("Checking config ... ")
+    for section in ["global", "spec_file"]:
+        for key in configs[section]:
+            if key == "module_build_dir":
+                if configs[section][key][0] == "/":
+                    configs[section][key] = configs[section][key][1:]
+                    print("WARNING: Trailing \"/\" in module_build_dir, fixing ... OK")
+            if "ENTER_" in configs[section][key]:
+                if key == "firmware_version" and configs["spec_file"]["firmware_include"] == "False":
+                    continue
+                print("FAIL: key:"+key+" value:"+configs[section][key]+ " is default value")
+                config_critic = True
+    if config_critic:
+        print("Unrecoverable FAIL, please check your config file and run ddiskit again.")
+        return None
+    return configs
+
 def do_build_rpm(args, configs):
     """
     Second stage for build rpm
@@ -222,6 +246,7 @@ def cmd_build_rpm(args, configs):
 
     if not makefile_found:
         print("Makefile not found -> Please create one in " + src_root + saved_root)
+        sys.exit(1)
     else:
         print("Checking makefile ... OK")
 
@@ -395,7 +420,9 @@ def parse_cli():
 def main():
     args = parse_cli()
     if args.config != "" and os.path.isfile(args.config):
-        configs = parse_config(args.config)
+        configs = check_config(parse_config(args.config))
+        if configs == None:
+            sys.exit(1)
         args.func(args, configs)
     else:
         args.func(args, None)
