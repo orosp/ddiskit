@@ -21,7 +21,7 @@ Group:		System/Kernel
 License:	GPLv2
 URL:		http://www.kernel.org/
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-BuildRequires:	kernel-devel = %kmod_kernel_version kmod redhat-rpm-config
+BuildRequires:	kernel-devel = %kmod_kernel_version kmod redhat-rpm-config kernel-abi-whitelists
 ExclusiveArch:	%{KERNEL_ARCH}
 %global flavors_to_build default
 %global kernel_source() /usr/src/kernels/%{kmod_kernel_version}.$(arch)
@@ -112,7 +112,8 @@ for modules in $( find obj -name "*.ko" -type f | sed 's|^.*/\([^/]*\)\.ko$|\1|'
 			grep -q "^\s*$symbol\$" $whitelist || echo "$symbol" >> source/greylist.txt
 		done
 	else
-		echo "ERROR: Whitelist for the current arch ($arch) not found."
+		touch source/greylist.txt
+		echo "ERROR: Whitelist for the current arch (%{_target_cpu}) not found."
 	fi
 done
 
