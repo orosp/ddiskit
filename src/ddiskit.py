@@ -241,6 +241,7 @@ def cmd_build_rpm(args, configs):
     :param args: argument parser arguments
     :param configs: configs readed from cfg file
     """
+    warning = False
     if len(configs) == 0:
         print(args.config, end="")
         print(" not found, use \"ddiskit prepare_sources\" for create")
@@ -274,8 +275,13 @@ def cmd_build_rpm(args, configs):
         for files in os.listdir("."):
             if "patches" in files or "rpm" in files:
                 continue
-            if "firmware" in files and os.path.isdir("firmware") and os.listdir("patches"):
-                tar.add(files, arcname=nvv + "/lib/" + files, recursive=True)
+            if "firmware" in files:
+                if os.path.isdir("firmware") and os.listdir("firmware"):
+                    if configs["spec_file"]["firmware_include"] != "True":
+                        warning = True
+                        print("\n  WARNING: Firmware directory contain files, but firmware package is disabled by config!!!")
+                    else:
+                        tar.add(files, arcname=nvv + "/lib/" + files, recursive=True)
             else:
                 tar.add(files, arcname=nvv + "/" + files, recursive=True)
         tar.close()
@@ -283,7 +289,8 @@ def cmd_build_rpm(args, configs):
     except Exception as err:
         print(str(err))
     else:
-        print("OK")
+        if not warning:
+            print("OK")
 
     if os.path.isdir(src_root + "patches") and os.listdir(src_root + "patches"):
         print("Copying patches into rpm/SOURCES:")
@@ -293,7 +300,7 @@ def cmd_build_rpm(args, configs):
             print("  Copying: " + files)
         os.chdir("../../")
     else:
-        print("Patch directory not found or empty-> skipping")
+        print("Patch directory not found or empty -> skipping")
     do_build_rpm(args, configs)
 
 def cmd_build_iso(args, configs):
