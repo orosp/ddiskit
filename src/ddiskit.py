@@ -72,18 +72,31 @@ def check_config(configs):
     print("Checking config ... ")
     for section in ["global", "spec_file"]:
         for key in configs[section]:
-            if key == "module_build_dir":
-                if configs[section][key][0] == "/":
-                    configs[section][key] = configs[section][key][1:]
-                    print("WARNING: Trailing \"/\" in module_build_dir, fixing ... OK")
             if "ENTER_" in configs[section][key]:
                 if key == "firmware_version" and configs["spec_file"]["firmware_include"] == "False":
                     continue
-                print("FAIL: key:"+key+" value:"+configs[section][key]+ " is default value")
-                config_critic = True
+                else:
+                    print("FAIL: key: "+key+" value: "+configs[section][key]+ " is default value")
+                    config_critic = True
+            elif key == "kernel_version":
+                if re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}\.el[0-9]$', configs[section][key]):
+                    continue
+                elif re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}(\.[0-9]{1,3})+\.el[0-9]$', configs[section][key]):
+                    print("WARNING: You are using z-stream kernel version!!! You shouldn't use it.")
+                    print("         If you don't have good reason for it, please use y-stream kernel version")
+                    continue
+                else:
+                    print("FAIL: key: "+key+" value: "+configs[section][key]+ " this is not valid kernel version")
+                    print("      Valid version is for example 3.10.0-123.el7")
+                    config_critic = True
+            elif key == "module_build_dir":
+                if configs[section][key][0] == "/":
+                    configs[section][key] = configs[section][key][1:]
+                    print("WARNING: Begining \"/\" in module_build_dir, fixing ... OK")
     if config_critic:
         print("Unrecoverable FAIL, please check your config file and run ddiskit again.")
         return None
+    print("Config check ... done")
     return configs
 
 def do_build_rpm(args, configs):
