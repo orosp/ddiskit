@@ -58,8 +58,19 @@ def apply_config(data, configs):
         for key in configs[section]:
             data = data.replace("%{" + key.upper() + "}", configs[section][key])
 
-    # generic keys for spec
+    # generic keys code
+    # date of creation
     data = data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))
+    
+    # kernel_requires
+    if re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}\.el[0-9]$', configs["spec_file"]["kernel_version"]):
+        kernel_version = re.split(r'[\.-]', configs["spec_file"]["kernel_version"])
+        kernel_version_str = kernel_version[0]+"."+kernel_version[1]+"."+kernel_version[2]+"-"
+        kernel_requires = "Requires:	kernel >= "+kernel_version_str+str(kernel_version[3])+"."+kernel_version[4]+"\n"
+        kernel_requires += "Requires:	kernel < "+kernel_version_str+str(int(kernel_version[3])+1)+"."+kernel_version[4]
+    elif re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}(\.[0-9]{1,3})+\.el[0-9]$', configs["spec_file"]["kernel_version"]):
+        kernel_requires = "Requires:	kernel = "+configs["spec_file"]["kernel_version"]
+    data = data.replace("%{KERNEL_REQUIRES}", kernel_requires)
     return data
 
 def check_config(configs):

@@ -26,15 +26,12 @@ ExclusiveArch:	%{KERNEL_ARCH}
 %global flavors_to_build default
 %global kernel_source() /usr/src/kernels/%{kmod_kernel_version}.$(arch)
 
-%global kernel_next_release	%(expr %{kernel_release} + 1)
-
 %global _use_internal_dependency_generator 0
 Provides:	kernel-modules = %kmod_kernel_version
 Provides:	%{kmod_name}-kmod = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires(post):	/usr/sbin/depmod
 Requires(postun):	/usr/sbin/depmod
-Requires:	kernel >= %{kmod_kernel_version}-%{kernel_release}
-Requires:	kernel <= %{kmod_kernel_version}-%{kernel_next_release}
+%{KERNEL_REQUIRES}
 Conflicts:	%{kmod_name}-kmod
 Obsoletes:	kmod-%{kmod_name}
 
