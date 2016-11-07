@@ -61,7 +61,7 @@ if [ -x "/sbin/weak-modules" ]; then
 fi
 
 %preun
-rpm -ql kmod-%{kmod_name}-%{kmod_vendor}-%{kmod_version}-%{kmod_release}.$(arch) | grep '\.ko$' > /var/run/rpm-kmod-%{kmod_name}-modules
+rpm -ql %{RPM_NAME}-%{kmod_driver_version}-%{kmod_rpm_release}%{?dist}.$(arch) | grep '\.ko$' > /var/run/rpm-kmod-%{kmod_name}-modules
 
 %postun
 modules=( $(cat /var/run/rpm-kmod-%{kmod_name}-modules) )
