@@ -312,7 +312,6 @@ def cmd_build_iso(args, configs):
     arch_list = []
     rpm_files = []
     for content in args.filelist:
-        print(content)
         try:
             if os.path.isfile(content):
                 arch = command('rpm -q --qf "%{ARCH}" -p '+ str(root)+"/"+str(file))
@@ -324,7 +323,7 @@ def cmd_build_iso(args, configs):
                 print("Listing content: " + str(content))
                 for root, dirs, files in os.walk(content):
                     for file in files:
-                        if configs["global"]["include_srpm"] != "True" and ".src." in str(file):
+                        if configs and configs["global"]["include_srpm"] != "True" and ".src." in str(file):
                             print("Source rpms are disabled by config. Skipping: " + str(root)+"/"+str(file))
                         elif "debuginfo" in str(file):
                             print("Debuginfo not supported. Skipping: " + str(root)+"/"+str(file))
