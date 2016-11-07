@@ -54,7 +54,7 @@ Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
 %{FIRMWARE_END}
 
 %post
-modules=( $(find /lib/modules/%{kmod_kernel_version}.%{arch}/extra/%{kmod_name} | grep '\.ko$') )
+modules=( $(find /lib/modules/%{kmod_kernel_version}.%(arch)/extra/kmod-%{kmod_vendor}-%{kmod_name} | grep '\.ko$') )
 if [ -x "/sbin/weak-modules" ]; then
     printf '%s\n' "${modules[@]}" \
     | /sbin/weak-modules --add-modules
