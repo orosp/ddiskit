@@ -104,6 +104,10 @@ def check_config(configs):
                 if configs[section][key][0] == "/":
                     configs[section][key] = configs[section][key][1:]
                     print("WARNING: Begining \"/\" in module_build_dir, fixing ... OK")
+                if configs[section][key][-1] == "/":
+                    configs[section][key] = configs[section][key][0:-1]
+                    print("WARNING: Trailing \"/\" in module_build_dir, fixing ... OK")
+
     if config_critic:
         print("Unrecoverable FAIL, please check your config file and run ddiskit again.")
         return None

@@ -10,6 +10,7 @@
 Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 %{SOURCE_PATCHES}
 
+%define findpat %( echo "%""P" )
 %define __find_requires /usr/lib/rpm/redhat/find-requires.ksyms
 %define __find_provides /usr/lib/rpm/redhat/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
 
@@ -99,17 +100,17 @@ for flavor in %flavors_to_build; do
 	find obj/$flavor/%{kmod_kbuild_dir} -name "*.ko" -type f -exec chmod u+x '{}' +
 done
 
-for modules in $( find obj -name "*.ko" -type f | sed 's|^.*/\([^/]*\)\.ko$|\1|' | sort -u ) ; do
+for modules in $( find obj/$flavor/%{kmod_kbuild_dir} -name "*.ko" -type f -printf "%{findpat}\n" | sed 's|\.ko$||' | sort -u ) ; do
 	# update depmod.conf
-	echo "override $modules $(echo %{kmod_kernel_version} | sed 's/\.[^\.]*$//').* weak-updates/$modules" >> source/depmod.conf
+	echo "override $(echo $modules | sed 's/.*\///') $(echo %{kmod_kernel_version} | sed 's/\.[^\.]*$//').* weak-updates/$modules" >> source/depmod.conf
 
 	# update greylist
 	if [[ -e $whitelist ]]; then
 		nm -u obj/$flavor/%{kmod_kbuild_dir}/$modules.ko | sed 's/.*U //' |  sed 's/^\.//' | sort -u | while read -r symbol; do
-			grep -q "^\s*$symbol\$" $whitelist || echo "$symbol" >> source/greylist.txt
+			grep -q "^\s*$symbol\$" $whitelist || echo "$symbol" >> source/greylist
 		done
 	else
-		touch source/greylist.txt
+		touch source/greylist
 		echo "ERROR: Whitelist for the current arch (%{_target_cpu}) not found."
 	fi
 done
@@ -125,7 +126,8 @@ for flavor in %flavors_to_build ; do
 done
 
 install -m 644 -D source/depmod.conf $RPM_BUILD_ROOT/etc/depmod.d/%{kmod_name}.conf
-if [ -f source/greylist.txt ]; then
+if [ -f source/greylist ]; then
+	sort -u source/greylist | uniq > source/greylist.txt
 	install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.txt
 fi
 if [ -e obj/$flavor/%{kmod_kbuild_dir}/Module.symvers ]; then
