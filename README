@@ -1,15 +1,16 @@
 Usage Examle:
 Step 1)
-    poros@holly$ ddiskit prepare_sources
-    Writing new config file (module.config)... File Exist
+    $ ddiskit prepare_sources
+    Writing new config file (module.config)... OK
     Creating directory structure for RPM build ... OK
     Creating directory for source code ... OK
     Your module source code put in src directory.
+    Creating directory for final iso files ... OK
 
 Step 2)
     Copy your code into src directory
     
-    poros@holly$ tree src
+    $ tree src
     src
     ├── drivers
     │   └── net
@@ -27,17 +28,20 @@ Step 2)
            patches. Additional patches just copy into "patches" directory.
 
 Step 3)
-    poros@holly$ ddiskit generate_spec
-    Found directory with patches, adding into spec file:
+    $ ddiskit generate_spec
+      Checking config ... 
+      Config check ... done
+      File Exist rpm/SPECS/tg3.spec!
+      Found directory with patches, adding into spec file:
         Patch0: 0001-test.patch
         Patch1: 0002-test.patch
-    Generating new spec file ... OK
-    Writing spec rpm/SPECS/tg3.spec ... OK
+      Firmware directory not found or empty-> skipping
+      Writing spec into rpm/SPECS/tg3.spec ... OK
 
 Step 4)
-    poros@holly$ ddiskit build_rpm
+    $ ddiskit build_rpm
     
-    Note1: Before this step, optionaly can check spec file in rpm/SPEC/ directory
+    NOTE: Before this step, optionaly can check spec file in rpm/SPEC/ directory
 
 Step 5)
-    poros@holly$ ddiskit build_iso
+    $ ddiskit build_iso
