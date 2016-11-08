@@ -135,4 +135,4 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * %{DATE} %{MODULE_AUTHOR} <%{MODULE_AUTHOR_EMAIL}> %{MODULE_VERSION}
-- Template for Driver Update module
+- %{SUMMARY}
