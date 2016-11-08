@@ -97,7 +97,7 @@ def check_config(configs):
                     print("         If you don't have good reason for it, please use y-stream kernel version")
                     continue
                 else:
-                    print("FAIL: key: "+key+" value: "+configs[section][key]+ " this is not valid kernel version")
+                    print("FAIL: Invalid kernel version in config file: "+configs[section][key])
                     print("      Valid version is for example 3.10.0-123.el7")
                     config_critic = True
             elif key == "module_build_dir":
