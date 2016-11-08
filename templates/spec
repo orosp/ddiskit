@@ -105,15 +105,11 @@ for modules in $( find obj/$flavor/%{kmod_kbuild_dir} -name "*.ko" -type f -prin
 	echo "override $(echo $modules | sed 's/.*\///') $(echo %{kmod_kernel_version} | sed 's/\.[^\.]*$//').* weak-updates/$modules" >> source/depmod.conf
 
 	# update greylist
-	if [[ -e $whitelist ]]; then
-		nm -u obj/$flavor/%{kmod_kbuild_dir}/$modules.ko | sed 's/.*U //' |  sed 's/^\.//' | sort -u | while read -r symbol; do
-			grep -q "^\s*$symbol\$" $whitelist || echo "$symbol" >> source/greylist
-		done
-	else
-		touch source/greylist
-		echo "ERROR: Whitelist for the current arch (%{_target_cpu}) not found."
-	fi
+	nm -u obj/$flavor/%{kmod_kbuild_dir}/$modules.ko | sed 's/.*U //' |  sed 's/^\.//' | sort -u | while read -r symbol; do
+		grep -q "^\s*$symbol\$" $whitelist || echo "$symbol" >> source/greylist
+	done
 done
+sort -u source/greylist | uniq > source/greylist.txt
 
 %install
 export INSTALL_MOD_PATH=$RPM_BUILD_ROOT
@@ -126,10 +122,8 @@ for flavor in %flavors_to_build ; do
 done
 
 install -m 644 -D source/depmod.conf $RPM_BUILD_ROOT/etc/depmod.d/%{kmod_name}.conf
-if [ -f source/greylist ]; then
-	sort -u source/greylist | uniq > source/greylist.txt
-	install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.txt
-fi
+install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.txt
+
 if [ -e obj/$flavor/%{kmod_kbuild_dir}/Module.symvers ]; then
 	install -m 644 -D obj/$flavor/%{kmod_kbuild_dir}/Module.symvers $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/Module.symvers-%{_target_cpu}
 fi
