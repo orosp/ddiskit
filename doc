@@ -19,7 +19,6 @@ Prepare sources:
     3) Create directory "src" for module source code
     4) Create directory "patches" for patches
     5) Create directory "firmware" for firmware binary files
-    6) Create directory "iso" for final iso image
 
 Generate Spec:
     Steps required by user:
@@ -57,7 +56,7 @@ Build RPM:
 
 Build ISO:
     1) Collect rpms/srpms for all arches
-       NOTE: srpms will be skiiped if it is not enabled in config!
+       NOTE: srpms will be skiped if it is not enabled in config!
     2) Prepare iso filesystem
     3) Prepare repository
     4) Add rpms/srpms into repository

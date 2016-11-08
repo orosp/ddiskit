@@ -170,14 +170,6 @@ def cmd_prepare_sources(args, configs):
     else:
         print("OK")
     print("Your module source code put in src directory.")
-    print("Creating directory for final iso files ... ", end="")
-    try:
-        if not os.path.exists("iso"):
-            os.makedirs("iso")
-    except OSError as err:
-        print(str(err))
-    else:
-        print("OK")
 
 def cmd_generate_spec(args, configs):
     """
