@@ -231,6 +231,15 @@ def cmd_generate_spec(args, configs):
     else:
         print("Firmware directory not found or empty-> skipping")
 
+    source_fail = False
+    for arch in configs["spec_file"]["kernel_arch"].split():
+       if not os.path.isdir("/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+arch):
+           print("WARNING: kernel source code not found: "+"/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+arch+"/")
+           source_fail = True
+    if source_fail:
+        print("         Probably will not possible to compile all rpms on this system")
+        print("         For fix install kernel-devel-"+configs["spec_file"]["kernel_version"]+" package")
+
     read_data = apply_config(read_data, configs)
     print("Writing spec into rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
     try:
