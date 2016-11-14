@@ -284,7 +284,7 @@ def cmd_build_rpm(args, configs):
         configs["global"]["module_vendor"] + "-" + \
         configs["spec_file"]["module_version"]
     archive = "rpm/SOURCES/" + nvv + ".tar.bz2"
-    print("Writing archive " + archive + " ... ", end="")
+    print("Writing archive " + archive + " ... ", end="", flush=True)
     try:
         tar = tarfile.open(archive, "w:bz2")
         os.chdir(src_root)
