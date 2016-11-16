@@ -8,8 +8,6 @@ module_author = ENTER_AUTHOR
 module_author_email = ENTER_AUTHOR_EMAIL
 # Include srpm files into final iso
 include_srpm = True
-# Include rebuginfo rpm into final iso
-include_debuginfo = True
 
 # config values for driver spec file
 [spec_file]
