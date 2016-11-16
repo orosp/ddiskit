@@ -226,7 +226,7 @@ def cmd_generate_spec(args, configs):
                     configs["spec_file"]["firmware_files"] = \
                         configs["spec_file"]["firmware_files"] + "/lib/firmware/" + file_root + str(file) + "\n"
                     configs["spec_file"]["firmware_files_install"] = \
-                        configs["spec_file"]["firmware_files_install"] + "install -m 644 -D source/firmware/" + \
+                        configs["spec_file"]["firmware_files_install"] + "install -m 644 -D source/lib/firmware/" + \
                         file_root + str(file) + " $RPM_BUILD_ROOT/lib/firmware/" + file_root + str(file) + "\n"
     else:
         print("Firmware directory not found or empty-> skipping")
