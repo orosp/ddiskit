@@ -134,6 +134,17 @@ def do_build_rpm(args, configs):
         cmd += " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
     os.system(cmd)
 
+def do_build_srpm(args, configs):
+    """
+    Second stage for build rpm (here build only srpm)
+    :param args: unused (required for unify callback interface)
+    :param configs: configs readed from cfg file
+    """
+    print("Start SRPM build ... ")
+    cmd = "rpmbuild --define \"_topdir " + os.getcwd() + "/rpm\""
+    cmd += " -bs " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
+    os.system(cmd)
+
 def cmd_prepare_sources(args, configs):
     """
     CMD prepare_sources callback
