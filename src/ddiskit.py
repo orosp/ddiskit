@@ -71,6 +71,13 @@ def apply_config(data, configs):
     elif re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}(\.[0-9]{1,3})+\.el[0-9]$', configs["spec_file"]["kernel_version"]):
         kernel_requires = "Requires:	kernel = "+configs["spec_file"]["kernel_version"]
     data = data.replace("%{KERNEL_REQUIRES}", kernel_requires)
+    
+    # module_requires
+    if "dependencies" in configs["spec_file"] and configs["spec_file"]["dependencies"] != "":
+        module_requires = "Requires:	"+configs["spec_file"]["dependencies"]
+        data = data.replace("%{MODULE_REQUIRES}", module_requires)
+    else:
+        data = data.replace("%{MODULE_REQUIRES}\n", "")
     return data
 
 def check_config(configs):

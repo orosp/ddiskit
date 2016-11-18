@@ -33,6 +33,7 @@ Provides:	%{kmod_name}-kmod = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires(post):	/usr/sbin/depmod
 Requires(postun):	/usr/sbin/depmod
 %{KERNEL_REQUIRES}
+%{MODULE_REQUIRES}
 # if there are multiple kmods for the same driver from different vendors,
 # they should coflict with each other.
 Conflicts:	%{kmod_name}-kmod
