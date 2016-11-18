@@ -79,7 +79,6 @@ fi
 /lib/modules/%{kmod_kernel_version}.%(arch)
 /etc/depmod.d/%{MODULE_NAME}.conf
 /usr/share/doc/kmod-%{MODULE_NAME}/greylist.txt
-/usr/share/doc/kmod-%{MODULE_NAME}/Module.symvers-%(arch)
 
 %prep
 %setup -n %{MODULE_NAME}-%{MODULE_VENDOR}-%{MODULE_VERSION}
