@@ -121,17 +121,16 @@ def check_config(configs):
     print("Config check ... done")
     return configs
 
-def do_build_rpm(args, configs):
+def do_build_rpm(args, configs, arch):
     """
     Second stage for build rpm
     :param args: unused (required for unify callback interface)
     :param configs: configs readed from cfg file
     """
-    print("Start RPM build ... ")
-    for arch in ["x86_64"]:
-        cmd = "rpmbuild --target " + arch
-        cmd += " --define \"_topdir " + os.getcwd() + "/rpm\""
-        cmd += " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
+    print("Start RPM build for "+arch+" ... ")
+    cmd = "rpmbuild --target " + arch
+    cmd += " --define \"_topdir " + os.getcwd() + "/rpm\""
+    cmd += " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
     os.system(cmd)
 
 def do_build_srpm(args, configs):
@@ -335,7 +334,10 @@ def cmd_build_rpm(args, configs):
         os.chdir("../../")
     else:
         print("Patch directory not found or empty -> skipping")
-    do_build_rpm(args, configs)
+    if os.uname().machine in configs["spec_file"]["kernel_arch"]:
+        do_build_rpm(args, configs, os.uname().machine)
+    else:
+        do_build_srpm(args, configs)
 
 def cmd_build_iso(args, configs):
     """
