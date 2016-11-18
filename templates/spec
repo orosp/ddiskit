@@ -24,7 +24,6 @@ URL:		http://www.kernel.org/
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildRequires:	kernel-devel = %kmod_kernel_version kmod redhat-rpm-config kernel-abi-whitelists
 ExclusiveArch:	%{KERNEL_ARCH}
-%global flavors_to_build default
 %global kernel_source() /usr/src/kernels/%{kmod_kernel_version}.$(arch)
 
 %global _use_internal_dependency_generator 0
@@ -89,24 +88,20 @@ mv "$@" source/
 mkdir obj
 
 %build
-for flavor in %flavors_to_build; do
-	rm -rf obj/$flavor
-	cp -r source obj/$flavor
-
-	make -C %{kernel_source $flavor} M=$PWD/obj/$flavor/%{kmod_kbuild_dir} \
-		NOSTDINC_FLAGS="-I $PWD/obj/$flavor/include"
-
-	# mark modules executable so that strip-to-file can strip them
-	find obj/$flavor/%{kmod_kbuild_dir} -name "*.ko" -type f -exec chmod u+x '{}' +
-done
+rm -rf obj
+cp -r source obj
+make -C %{kernel_source} M=$PWD/obj/%{kmod_kbuild_dir} \
+	NOSTDINC_FLAGS="-I $PWD/obj/include"
+# mark modules executable so that strip-to-file can strip them
+find obj/%{kmod_kbuild_dir} -name "*.ko" -type f -exec chmod u+x '{}' +
 
 whitelist="/lib/modules/kabi-current/kabi_whitelist_%{_target_cpu}"
-for modules in $( find obj/$flavor/%{kmod_kbuild_dir} -name "*.ko" -type f -printf "%{findpat}\n" | sed 's|\.ko$||' | sort -u ) ; do
+for modules in $( find obj/%{kmod_kbuild_dir} -name "*.ko" -type f -printf "%{findpat}\n" | sed 's|\.ko$||' | sort -u ) ; do
 	# update depmod.conf
 	echo "override $(echo $modules | sed 's/.*\///') $(echo %{kmod_kernel_version} | sed 's/\.[^\.]*$//').* weak-updates/$modules" >> source/depmod.conf
 
 	# update greylist
-	nm -u obj/$flavor/%{kmod_kbuild_dir}/$modules.ko | sed 's/.*U //' |  sed 's/^\.//' | sort -u | while read -r symbol; do
+	nm -u obj/%{kmod_kbuild_dir}/$modules.ko | sed 's/.*U //' |  sed 's/^\.//' | sort -u | while read -r symbol; do
 		grep -q "^\s*$symbol\$" $whitelist || echo "$symbol" >> source/greylist
 	done
 done
@@ -115,12 +110,10 @@ sort -u source/greylist | uniq > source/greylist.txt
 %install
 export INSTALL_MOD_PATH=$RPM_BUILD_ROOT
 export INSTALL_MOD_DIR=extra/%{name}
-for flavor in %flavors_to_build ; do
-	make -C %{kernel_source $flavor} modules_install \
-		M=$PWD/obj/$flavor/%{kmod_kbuild_dir}
-	# Cleanup unnecessary kernel-generated module dependency files.
-	find $INSTALL_MOD_PATH/lib/modules -iname 'modules.*' -exec rm {} \;
-done
+make -C %{kernel_source} modules_install \
+	M=$PWD/obj/%{kmod_kbuild_dir}
+# Cleanup unnecessary kernel-generated module dependency files.
+find $INSTALL_MOD_PATH/lib/modules -iname 'modules.*' -exec rm {} \;
 
 install -m 644 -D source/depmod.conf $RPM_BUILD_ROOT/etc/depmod.d/%{kmod_name}.conf
 install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_name}/greylist.txt
