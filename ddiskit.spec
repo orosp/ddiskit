@@ -23,16 +23,19 @@ Ddiskit is a little framework for easy creating proper Driver Update Disc.
 %autosetup -n %{srcname}-%{version}
 
 %build
-%py2_build
+%{__python} setup.py build
 
 %install
-%py2_install
+%{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT
+
+%check
+%{__python} setup.py test
 
 %files -n python-%{srcname}
 %defattr(-,root,root,-)
 %doc README
 %license COPYING
-%{python3_sitelib}/*
+%{python_sitelib}/*
 %{_bindir}/ddiskit
 %{_sysconfdir}/bash_completion.d/ddiskit.bash
 %{_datadir}/ddiskit/templates/spec
