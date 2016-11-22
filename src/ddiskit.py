@@ -305,7 +305,7 @@ def cmd_build_rpm(args, configs):
         configs["global"]["module_vendor"] + "-" + \
         configs["spec_file"]["module_version"]
     archive = "rpm/SOURCES/" + nvv + ".tar.bz2"
-    print("Writing archive " + archive + " ... ", end="", flush=True)
+    print("Writing archive " + archive + " ... ", end="")
     try:
         tar = tarfile.open(archive, "w:bz2")
         os.chdir(src_root)
@@ -338,8 +338,8 @@ def cmd_build_rpm(args, configs):
         os.chdir("../../")
     else:
         print("Patch directory not found or empty -> skipping")
-    if os.uname().machine in configs["spec_file"]["kernel_arch"]:
-        do_build_rpm(args, configs, os.uname().machine)
+    if os.uname()[4] in configs["spec_file"]["kernel_arch"]:
+        do_build_rpm(args, configs, os.uname()[4])
     else:
         do_build_srpm(args, configs)
         print("Because you are not on target architecture, building only SRPM")
