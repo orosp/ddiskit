@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 #
 # ddiskit - Red Hat tool for create Driver Update Disk
 #

@@ -1,34 +1,34 @@
 %global srcname ddiskit
 %global Tool for create Driver Update Disc
 
-Name:           python3-%{srcname}
+Name:           python-%{srcname}
 Version:        3.0
 Release:        1%{?dist}
 Summary:        %{sum}
 
-License:        GPLv3
+License:        GPLv2
 URL:            %{srcname}
 Source0:        %{srcname}-%{version}.tar.gz
 
 BuildArch:      noarch
-BuildRequires:  python%{python3_pkgversion}-devel
-BuildRequires:  python%{python3_pkgversion}-setuptools
+BuildRequires:  python-devel
+BuildRequires:  python-setuptools
 Requires:       kernel-devel redhat-rpm-config kmod createrepo
 Summary:        %{sum}
 
-%description -n python3-%{srcname}
+%description -n python-%{srcname}
 Ddiskit is a little framework for easy creating proper Driver Update Disc.
 
 %prep
 %autosetup -n %{srcname}-%{version}
 
 %build
-%py3_build
+%py2_build
 
 %install
-%py3_install
+%py2_install
 
-%files -n python3-%{srcname}
+%files -n python-%{srcname}
 %defattr(-,root,root,-)
 %doc README
 %license COPYING

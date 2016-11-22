@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 #
 # ddiskit - Red Hat tool for create Driver Update Disk
 #
@@ -7,6 +7,7 @@
 #
 # This software may be freely redistributed under the terms of the GNU
 # General Public License version 2 (GPLv2).
+from __future__ import print_function
 import os
 import re
 import sys
@@ -14,9 +15,12 @@ import shutil
 import tarfile
 import argparse
 import tempfile
-import configparser
 from datetime import datetime
 from subprocess import PIPE, Popen
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 def command(cmd):
     """
