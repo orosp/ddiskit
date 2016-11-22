@@ -65,7 +65,7 @@ def apply_config(data, configs):
     # generic keys code
     # date of creation
     data = data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))
-    
+
     # kernel_requires
     if re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}\.el[0-9]$', configs["spec_file"]["kernel_version"]):
         kernel_version = re.split(r'[\.-]', configs["spec_file"]["kernel_version"])
@@ -75,7 +75,7 @@ def apply_config(data, configs):
     elif re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}(\.[0-9]{1,3})+\.el[0-9]$', configs["spec_file"]["kernel_version"]):
         kernel_requires = "Requires:	kernel = "+configs["spec_file"]["kernel_version"]
     data = data.replace("%{KERNEL_REQUIRES}", kernel_requires)
-    
+
     # module_requires
     if "dependencies" in configs["spec_file"] and configs["spec_file"]["dependencies"] != "":
         module_requires = "Requires:	"+configs["spec_file"]["dependencies"]
@@ -254,9 +254,9 @@ def cmd_generate_spec(args, configs):
 
     source_fail = False
     for arch in configs["spec_file"]["kernel_arch"].split():
-       if not os.path.isdir("/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+arch):
-           print("WARNING: kernel source code not found: "+"/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+arch+"/")
-           source_fail = True
+        if not os.path.isdir("/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+arch):
+            print("WARNING: kernel source code not found: "+"/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+arch+"/")
+            source_fail = True
     if source_fail:
         print("         Probably will not possible to compile all rpms on this system")
         print("         For fix install kernel-devel-"+configs["spec_file"]["kernel_version"]+" package")
@@ -342,7 +342,7 @@ def cmd_build_rpm(args, configs):
         do_build_rpm(args, configs, os.uname().machine)
     else:
         do_build_srpm(args, configs)
-        print("Because you are not on target architecture, building only SRPM")        
+        print("Because you are not on target architecture, building only SRPM")
 
 def cmd_build_iso(args, configs):
     """
@@ -482,7 +482,7 @@ def main():
     args = parse_cli()
     if args.config != "" and os.path.isfile(args.config):
         configs = check_config(parse_config(args.config))
-        if configs == None:
+        if configs is None:
             sys.exit(1)
         args.func(args, configs)
     else:
