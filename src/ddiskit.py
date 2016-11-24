@@ -198,7 +198,7 @@ def cmd_generate_spec(args, configs):
     :param args: argument parser arguments
     :param configs: configs readed from cfg file
     """
-    if len(configs) == 0:
+    if configs is None or len(configs) == 0:
         print(args.config, end="")
         print(" not found, use \"ddiskit prepare_sources\" for create")
         sys.exit(1)
@@ -279,7 +279,7 @@ def cmd_build_rpm(args, configs):
     :param configs: configs readed from cfg file
     """
     warning = False
-    if len(configs) == 0:
+    if configs is None or len(configs) == 0:
         print(args.config, end="")
         print(" not found, use \"ddiskit prepare_sources\" for create")
         sys.exit(1)
