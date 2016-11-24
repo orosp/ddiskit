@@ -338,8 +338,15 @@ def cmd_build_rpm(args, configs):
         os.chdir("../../")
     else:
         print("Patch directory not found or empty -> skipping")
-    if os.uname()[4] in configs["spec_file"]["kernel_arch"]:
-        do_build_rpm(args, configs, os.uname()[4])
+
+    build_arch = os.uname()[4]
+    if build_arch in configs["spec_file"]["kernel_arch"]:
+        if not os.path.isdir("/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+build_arch):
+            print("WARNING: kernel source code not found: "+"/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+build_arch+"/")
+            print("         Building SRPM only")
+            do_build_srpm(args, configs)
+        else:
+            do_build_rpm(args, configs, build_arch)
     else:
         do_build_srpm(args, configs)
         print("Because you are not on target architecture, building only SRPM")
