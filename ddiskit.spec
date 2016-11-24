@@ -13,7 +13,7 @@ Source0:        %{srcname}-%{version}.tar.gz
 BuildArch:      noarch
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
-Requires:       kernel-devel redhat-rpm-config kmod createrepo
+Requires:       kernel-devel redhat-rpm-config kmod createrepo genisoimage
 Summary:        %{sum}
 
 %description -n python-%{srcname}
