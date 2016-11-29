@@ -27,7 +27,7 @@ ExclusiveArch:	%{KERNEL_ARCH}
 %global kernel_source() /usr/src/kernels/%{kmod_kernel_version}.$(arch)
 
 %global _use_internal_dependency_generator 0
-Provides:	kernel-modules = %kmod_kernel_version
+Provides:	kernel-modules = %kmod_kernel_version.%{_target_cpu}
 Provides:	%{kmod_name}-kmod = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires(post):	/usr/sbin/depmod
 Requires(postun):	/usr/sbin/depmod
