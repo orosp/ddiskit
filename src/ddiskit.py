@@ -6,7 +6,7 @@
 # Copyright (C) 2016 Red Hat, Inc.
 #
 # This software may be freely redistributed under the terms of the GNU
-# General Public License version 2 (GPLv2).
+# General Public License version 3 (GPLv3).
 from __future__ import print_function
 import os
 import re
