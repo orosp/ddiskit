@@ -69,9 +69,9 @@ def apply_config(data, configs):
     # kernel_requires
     if re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}\.el[0-9]$', configs["spec_file"]["kernel_version"]):
         kernel_version = re.split(r'[\.-]', configs["spec_file"]["kernel_version"])
-        kernel_version_str = kernel_version[0]+"."+kernel_version[1]+"."+kernel_version[2]+"-"
-        kernel_requires = "Requires:	kernel >= "+kernel_version_str+str(kernel_version[3])+"."+kernel_version[4]+"\n"
-        kernel_requires += "Requires:	kernel < "+kernel_version_str+str(int(kernel_version[3])+1)+"."+kernel_version[4]
+        kernel_version_str = "%s.%s.%s-" % (kernel_version[0], kernel_version[1], kernel_version[2])
+        kernel_requires = "Requires:	kernel >= %s%s.%s\n" % (kernel_version_str, kernel_version[3], kernel_version[4])
+        kernel_requires += "Requires:	kernel < %s%s.%s" % (kernel_version_str, int(kernel_version[3])+1, kernel_version[4])
     elif re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}(\.[0-9]{1,3})+\.el[0-9]$', configs["spec_file"]["kernel_version"]):
         kernel_requires = "Requires:	kernel = "+configs["spec_file"]["kernel_version"]
     data = data.replace("%{KERNEL_REQUIRES}", kernel_requires)
