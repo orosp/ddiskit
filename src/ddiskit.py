@@ -212,6 +212,8 @@ def cmd_generate_spec(args, configs):
         print(str(err))
         sys.exit(1)
 
+    cwd = os.getcwd()
+
     src_root = "src/"
     configs["spec_file"]["source_patches"] = ""
     configs["spec_file"]["source_patches_do"] = ""
@@ -227,9 +229,10 @@ def cmd_generate_spec(args, configs):
             configs["spec_file"]["source_patches_do"] = \
               configs["spec_file"]["source_patches_do"] + "\n%patch" + str(index) + " -p1"
             index = index + 1
-        os.chdir("../../")
     else:
         print("Patch directory not found or empty-> skipping")
+
+    os.chdir(cwd)
 
     if os.path.isdir(src_root + "firmware") and os.listdir(src_root + "firmware"):
         if configs["spec_file"]["firmware_include"] != "True":
@@ -306,6 +309,9 @@ def cmd_build_rpm(args, configs):
         configs["spec_file"]["module_version"]
     archive = "rpm/SOURCES/" + nvv + ".tar.bz2"
     print("Writing archive " + archive + " ... ", end="")
+
+    cwd = os.getcwd()
+
     try:
         tar = tarfile.open(archive, "w:bz2")
         os.chdir(src_root)
@@ -322,12 +328,13 @@ def cmd_build_rpm(args, configs):
             else:
                 tar.add(files, arcname=nvv + "/" + files, recursive=True)
         tar.close()
-        os.chdir("..")
     except Exception as err:
         print(str(err))
     else:
         if not warning:
             print("OK")
+
+    os.chdir(cwd)
 
     if os.path.isdir(src_root + "patches") and os.listdir(src_root + "patches"):
         print("Copying patches into rpm/SOURCES:")
@@ -335,9 +342,10 @@ def cmd_build_rpm(args, configs):
         for files in os.listdir("."):
             shutil.copyfile(files, "../../rpm/SOURCES/" + files)
             print("  Copying: " + files)
-        os.chdir("../../")
     else:
         print("Patch directory not found or empty -> skipping")
+
+    os.chdir(cwd)
 
     build_arch = os.uname()[4]
     if build_arch in configs["spec_file"]["kernel_arch"]:
