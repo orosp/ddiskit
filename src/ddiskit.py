@@ -379,6 +379,8 @@ def cmd_build_iso(args, configs):
                 print("Listing content: " + str(content))
                 for root, dirs, files in os.walk(content):
                     for file in files:
+                        if not file.endswith(".rpm"):
+                            continue
                         if configs and configs["global"]["include_srpm"] != "True" and ".src." in str(file):
                             print("Source rpms are disabled by config. Skipping: " + str(root)+"/"+str(file))
                         elif "debuginfo" in str(file):
