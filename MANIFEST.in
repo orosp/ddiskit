@@ -1,3 +1,4 @@
 include ddiskit.bash
 include templates/spec
 include templates/config
+include COPYING
