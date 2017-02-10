@@ -14,7 +14,6 @@ BuildArch:      noarch
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
 Requires:       kernel-devel redhat-rpm-config kmod createrepo genisoimage
-Summary:        %{sum}
 
 %description -n python-%{srcname}
 Ddiskit is a little framework for easy creating proper Driver Update Disc.
