@@ -3,7 +3,7 @@
 
 Name:           python-%{srcname}
 Version:        3.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        %{sum}
 
 License:        GPLv2
@@ -41,6 +41,9 @@ Ddiskit is a little framework for easy creating proper Driver Update Disc.
 %{_datadir}/ddiskit/templates/config
 
 %changelog
+* Mon Feb 13 2017 Petr Oros <poros@redhat.com> - 3.0-2
+- Bump version after few important fixes
+
 * Mon Sep 5 2016 Petr Oros <poros@redhat.com> - 3.0-1
 - Initial package.
 
