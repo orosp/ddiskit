@@ -35,12 +35,12 @@ dependencies =
 summary = Example module for Driver Update Program
 # module description in spec file
 description = Example module for Driver Update Program
-# optional: upstream commit from wich the code was taken
+# optional: upstream commit from which the code was taken
 git_hash = ENTER_GIT_HASH
 
 # firmware section
 # If you want have firmware in your dup package, you can just enable it here
-# Firmware file copy into src/firmware directory. All files will be added automaticaly
+# Firmware file copy into src/firmware directory. All files will be added automatically
 # If you need firmware on final system in subdirectory, create same directory structure
 #   inside src/firmware directory
 # enable firmware sub-package
