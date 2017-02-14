@@ -428,6 +428,16 @@ def cmd_build_iso(args, configs):
     except IOError as err:
         print(str(err))
 
+    if args.isofile is None:
+        # Try to use info from config for constructing file name
+        try:
+            args.isofile = "dd-" + configs["spec_file"]["module_name"] + "-" + \
+                configs["spec_file"]["module_version"] + "-" + \
+                configs["spec_file"]["module_rpm_release"] + "." + \
+                configs["spec_file"]["rpm_dist"] + ".iso"
+        except TypeError:
+            args.isofile = "dd.iso"
+
     print(command('mkisofs -V OEMDRV -input-charset UTF-8 -R -uid 0 -gid 0 -dir-mode 0555 -file-mode 0444 -o '+args.isofile+' '+dir_tmp+'/disk'))
     os.umask(saved_umask)
 
@@ -485,7 +495,7 @@ def parse_cli():
     # parser for the "build_iso" command
     parser_build_iso = cmdparsers.add_parser('build_iso', help='Build iso')
     parser_build_iso.add_argument("-c", "--config", default='module.config', help="Config file")
-    parser_build_iso.add_argument("-i", "--isofile", default='dd.iso', help="Output file name")
+    parser_build_iso.add_argument("-i", "--isofile", default=None, help="Output file name")
     parser_build_iso.add_argument("filelist", nargs="*", default=["rpm/RPMS/", "rpm/SRPMS/"], help="RPM list, separated by space and can use directory path")
     parser_build_iso.set_defaults(func=cmd_build_iso)
 
