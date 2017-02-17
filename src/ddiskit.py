@@ -8,12 +8,13 @@
 # This software may be freely redistributed under the terms of the GNU
 # General Public License version 3 (GPLv3).
 from __future__ import print_function
+
+import argparse
 import os
 import re
-import sys
 import shutil
+import sys
 import tarfile
-import argparse
 import tempfile
 from datetime import datetime
 from subprocess import PIPE, Popen
