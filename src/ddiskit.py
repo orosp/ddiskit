@@ -23,6 +23,7 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
+
 def command(cmd):
     """
     Execute shell command and return stdout string
@@ -35,6 +36,7 @@ def command(cmd):
         shell=True
     )
     return process.communicate()[0].decode()
+
 
 def apply_config(data, configs):
     """
@@ -85,6 +87,7 @@ def apply_config(data, configs):
         data = data.replace("%{MODULE_REQUIRES}\n", "")
     return data
 
+
 def check_config(configs):
     """
     Check config and repair non-critic fails
@@ -126,6 +129,7 @@ def check_config(configs):
     print("Config check ... done")
     return configs
 
+
 def do_build_rpm(args, configs, arch):
     """
     Second stage for build rpm
@@ -138,6 +142,7 @@ def do_build_rpm(args, configs, arch):
     cmd += " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
     os.system(cmd)
 
+
 def do_build_srpm(args, configs):
     """
     Second stage for build rpm (here build only srpm)
@@ -148,6 +153,7 @@ def do_build_srpm(args, configs):
     cmd = "rpmbuild --define \"_topdir " + os.getcwd() + "/rpm\""
     cmd += " -bs " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
     os.system(cmd)
+
 
 def cmd_prepare_sources(args, configs):
     """
@@ -192,6 +198,7 @@ def cmd_prepare_sources(args, configs):
     else:
         print("OK")
     print("Your module source code put in src directory.")
+
 
 def cmd_generate_spec(args, configs):
     """
@@ -276,6 +283,7 @@ def cmd_generate_spec(args, configs):
     else:
         print("OK")
 
+
 def cmd_build_rpm(args, configs):
     """
     CMD build_rpm callback
@@ -359,6 +367,7 @@ def cmd_build_rpm(args, configs):
     else:
         do_build_srpm(args, configs)
         print("Because you are not on target architecture, building only SRPM")
+
 
 def cmd_build_iso(args, configs):
     """
@@ -449,6 +458,7 @@ def cmd_build_iso(args, configs):
             os.rmdir(os.path.join(root, cdir))
     os.rmdir(dir_tmp)
 
+
 def parse_config(filename):
     """
     Parser for config file
@@ -467,6 +477,7 @@ def parse_config(filename):
         print(str(err))
         sys.exit(1)
     return configs
+
 
 def parse_cli():
     """
@@ -506,6 +517,7 @@ def parse_cli():
         sys.exit(1)
     return args
 
+
 def main():
     args = parse_cli()
     if args.config != "" and os.path.isfile(args.config):
@@ -515,6 +527,7 @@ def main():
         args.func(args, configs)
     else:
         args.func(args, None)
+
 
 if __name__ == "__main__":
     main()
