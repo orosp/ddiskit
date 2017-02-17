@@ -272,8 +272,10 @@ def cmd_generate_spec(args, configs):
 
     source_fail = False
     for arch in configs["spec_file"]["kernel_arch"].split():
-        if not os.path.isdir("/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+arch):
-            print("WARNING: kernel source code not found: "+"/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+arch+"/")
+        kernel_dir = "/usr/src/kernels/" + \
+            configs["spec_file"]["kernel_version"] + "." + arch
+        if not os.path.isdir(kernel_dir):
+            print("WARNING: kernel source code not found: " + kernel_dir)
             source_fail = True
     if source_fail:
         print("         Probably will not possible to compile all rpms on this system")
@@ -364,9 +366,11 @@ def cmd_build_rpm(args, configs):
     os.chdir(cwd)
 
     build_arch = os.uname()[4]
+    kernel_dir = "/usr/src/kernels/" + \
+        configs["spec_file"]["kernel_version"] + "." + build_arch
     if build_arch in configs["spec_file"]["kernel_arch"]:
-        if not os.path.isdir("/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+build_arch):
-            print("WARNING: kernel source code not found: "+"/usr/src/kernels/"+configs["spec_file"]["kernel_version"]+"."+build_arch+"/")
+        if not os.path.isdir(kernel_dir):
+            print("WARNING: kernel source code not found: %s" % kernel_dir)
             print("         Building SRPM only")
             do_build_srpm(args, configs)
         else:
