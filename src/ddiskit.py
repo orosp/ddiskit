@@ -23,6 +23,13 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
+kernel_nvr_re = r"[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}"
+kernel_z_part_re = r"(\.[0-9]{1,3})+"
+kernel_dist_re = r"\.el[0-9]"
+
+kernel_y_re = "^%s%s$" % (kernel_nvr_re, kernel_dist_re)
+kernel_z_re = "^%s%s%s$" % (kernel_nvr_re, kernel_z_part_re, kernel_dist_re)
+
 
 def command(cmd):
     """
@@ -70,12 +77,12 @@ def apply_config(data, configs):
     data = data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))
 
     # kernel_requires
-    if re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}\.el[0-9]$', configs["spec_file"]["kernel_version"]):
+    if re.match(kernel_y_re, configs["spec_file"]["kernel_version"]):
         kernel_version = re.split(r'[\.-]', configs["spec_file"]["kernel_version"])
         kernel_version_str = "%s.%s.%s-" % (kernel_version[0], kernel_version[1], kernel_version[2])
         kernel_requires = "Requires:	kernel >= %s%s.%s\n" % (kernel_version_str, kernel_version[3], kernel_version[4])
         kernel_requires += "Requires:	kernel < %s%s.%s" % (kernel_version_str, int(kernel_version[3])+1, kernel_version[4])
-    elif re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}(\.[0-9]{1,3})+\.el[0-9]$', configs["spec_file"]["kernel_version"]):
+    elif re.match(kernel_z_re, configs["spec_file"]["kernel_version"]):
         kernel_requires = "Requires:	kernel = "+configs["spec_file"]["kernel_version"]
     data = data.replace("%{KERNEL_REQUIRES}", kernel_requires)
 
@@ -105,9 +112,9 @@ def check_config(configs):
                     print("FAIL: key: "+key+" value: "+configs[section][key]+ " is default value")
                     config_critic = True
             elif key == "kernel_version":
-                if re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}\.el[0-9]$', configs[section][key]):
+                if re.match(kernel_y_re, configs[section][key]):
                     continue
-                elif re.match(r'^[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}(\.[0-9]{1,3})+\.el[0-9]$', configs[section][key]):
+                elif re.match(kernel_z_re, configs[section][key]):
                     print("WARNING: You are using z-stream kernel version!!! You shouldn't use it.")
                     print("         If you don't have good reason for it, please use y-stream kernel version")
                     continue
