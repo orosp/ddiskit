@@ -115,7 +115,7 @@ def check_config(configs):
                 if re.match(kernel_y_re, configs[section][key]):
                     continue
                 elif re.match(kernel_z_re, configs[section][key]):
-                    print("WARNING: You are using z-stream kernel version!!! You shouldn't use it.")
+                    print("WARNING: You are using z-stream kernel version! You shouldn't use it.")
                     print("         If you don't have good reason for it, please use y-stream kernel version")
                     continue
                 else:
@@ -251,7 +251,7 @@ def cmd_generate_spec(args, configs):
 
     if os.path.isdir(src_root + "firmware") and os.listdir(src_root + "firmware"):
         if configs["spec_file"]["firmware_include"] != "True":
-            print("\n  WARNING: Firmware directory contain files, but firmware package is disabled by config!!!\n")
+            print("\n  WARNING: Firmware directory contain files, but firmware package is disabled by config!\n")
         else:
             configs["spec_file"]["firmware_files"] = ""
             configs["spec_file"]["firmware_files_install"] = ""
@@ -340,7 +340,7 @@ def cmd_build_rpm(args, configs):
                 if os.path.isdir("firmware") and os.listdir("firmware"):
                     if configs["spec_file"]["firmware_include"] != "True":
                         warning = True
-                        print("\n  WARNING: Firmware directory contain files, but firmware package is disabled by config!!!")
+                        print("\n  WARNING: Firmware directory contain files, but firmware package is disabled by config!")
                     else:
                         tar.add(files, arcname=nvv + "/lib/" + files, recursive=True)
             else:
