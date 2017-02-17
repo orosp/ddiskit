@@ -54,7 +54,8 @@ def apply_config(data, configs):
     """
     # no firmware? -> remove all firmware defintions from spec file
     if configs["spec_file"]["firmware_include"] != "True":
-        data = re.sub(r'^%{FIRMWARE_BEGIN}.*?%{FIRMWARE_END}$', '', data, flags=re.DOTALL | re.M)
+        data = re.sub(r'^%{FIRMWARE_BEGIN}.*?%{FIRMWARE_END}$', '', data,
+                      flags=re.DOTALL | re.M)
     else:
         data = data.replace("%{FIRMWARE_BEGIN}\n", "")
         data = data.replace("%{FIRMWARE_END}\n", "")
@@ -65,30 +66,40 @@ def apply_config(data, configs):
             for section2 in ["global", "spec_file"]:
                 for key2 in configs[section2]:
                     configs[section2][key2] = \
-                      configs[section2][key2].replace("{" + key + "}", configs[section][key])
+                        configs[section2][key2].replace("{" + key + "}",
+                                                        configs[section][key])
 
     # apply all configs on specfile template
     for section in ["global", "spec_file"]:
         for key in configs[section]:
-            data = data.replace("%{" + key.upper() + "}", configs[section][key])
+            data = data.replace("%{" + key.upper() + "}",
+                                configs[section][key])
 
     # generic keys code
     # date of creation
-    data = data.replace("%{DATE}", datetime.__format__(datetime.now(), "%a %b %d %Y"))
+    data = data.replace("%{DATE}", datetime.__format__(datetime.now(),
+                        "%a %b %d %Y"))
 
     # kernel_requires
     if re.match(kernel_y_re, configs["spec_file"]["kernel_version"]):
-        kernel_version = re.split(r'[\.-]', configs["spec_file"]["kernel_version"])
-        kernel_version_str = "%s.%s.%s-" % (kernel_version[0], kernel_version[1], kernel_version[2])
-        kernel_requires = "Requires:	kernel >= %s%s.%s\n" % (kernel_version_str, kernel_version[3], kernel_version[4])
-        kernel_requires += "Requires:	kernel < %s%s.%s" % (kernel_version_str, int(kernel_version[3])+1, kernel_version[4])
+        kernel_version = re.split(r'[\.-]',
+                                  configs["spec_file"]["kernel_version"])
+        kernel_version_str = "%s.%s.%s-" % (kernel_version[0],
+                                            kernel_version[1],
+                                            kernel_version[2])
+        kernel_requires = "Requires:	kernel >= %s%s.%s\n" % \
+            (kernel_version_str, kernel_version[3], kernel_version[4])
+        kernel_requires += "Requires:	kernel < %s%s.%s" % \
+            (kernel_version_str, int(kernel_version[3]) + 1, kernel_version[4])
     elif re.match(kernel_z_re, configs["spec_file"]["kernel_version"]):
-        kernel_requires = "Requires:	kernel = "+configs["spec_file"]["kernel_version"]
+        kernel_requires = "Requires:	kernel = " + \
+            configs["spec_file"]["kernel_version"]
     data = data.replace("%{KERNEL_REQUIRES}", kernel_requires)
 
     # module_requires
-    if "dependencies" in configs["spec_file"] and configs["spec_file"]["dependencies"] != "":
-        module_requires = "Requires:	"+configs["spec_file"]["dependencies"]
+    if "dependencies" in configs["spec_file"] and \
+            configs["spec_file"]["dependencies"] != "":
+        module_requires = "Requires:	" + configs["spec_file"]["dependencies"]
         data = data.replace("%{MODULE_REQUIRES}", module_requires)
     else:
         data = data.replace("%{MODULE_REQUIRES}\n", "")
@@ -106,32 +117,40 @@ def check_config(configs):
     for section in ["global", "spec_file"]:
         for key in configs[section]:
             if "ENTER_" in configs[section][key]:
-                if key == "firmware_version" and configs["spec_file"]["firmware_include"] == "False":
+                if key == "firmware_version" and \
+                        configs["spec_file"]["firmware_include"] == "False":
                     continue
                 else:
-                    print("FAIL: key: "+key+" value: "+configs[section][key]+ " is default value")
+                    print("FAIL: key: %s value: %s is default value" %
+                          (key, configs[section][key]))
                     config_critic = True
             elif key == "kernel_version":
                 if re.match(kernel_y_re, configs[section][key]):
                     continue
                 elif re.match(kernel_z_re, configs[section][key]):
-                    print("WARNING: You are using z-stream kernel version! You shouldn't use it.")
-                    print("         If you don't have good reason for it, please use y-stream kernel version")
+                    print("WARNING: You are using z-stream kernel version! " +
+                          "You shouldn't use it.")
+                    print("         If you don't have good reason for it, " +
+                          "please use y-stream kernel version")
                     continue
                 else:
-                    print("FAIL: Invalid kernel version in config file: "+configs[section][key])
+                    print("FAIL: Invalid kernel version in config file: " +
+                          configs[section][key])
                     print("      Valid version is for example 3.10.0-123.el7")
                     config_critic = True
             elif key == "module_build_dir":
                 if configs[section][key][0] == "/":
                     configs[section][key] = configs[section][key][1:]
-                    print("WARNING: Leading \"/\" in module_build_dir, fixing ... OK")
+                    print("WARNING: Leading \"/\" in module_build_dir, " +
+                          "fixing ... OK")
                 if configs[section][key][-1] == "/":
                     configs[section][key] = configs[section][key][0:-1]
-                    print("WARNING: Trailing \"/\" in module_build_dir, fixing ... OK")
+                    print("WARNING: Trailing \"/\" in module_build_dir, " +
+                          "fixing ... OK")
 
     if config_critic:
-        print("Unrecoverable FAIL, please check your config file and run ddiskit again.")
+        print("Unrecoverable FAIL, please check your config file and run " +
+              "ddiskit again.")
         return None
     print("Config check ... done")
     return configs
@@ -146,7 +165,8 @@ def do_build_rpm(args, configs, arch):
     print("Start RPM build for "+arch+" ... ")
     cmd = "rpmbuild --target " + arch
     cmd += " --define \"_topdir " + os.getcwd() + "/rpm\""
-    cmd += " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
+    cmd += " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + \
+        ".spec"
     os.system(cmd)
 
 
@@ -158,7 +178,8 @@ def do_build_srpm(args, configs):
     """
     print("Start SRPM build ... ")
     cmd = "rpmbuild --define \"_topdir " + os.getcwd() + "/rpm\""
-    cmd += " -bs " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
+    cmd += " -bs " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + \
+        ".spec"
     os.system(cmd)
 
 
@@ -185,7 +206,8 @@ def cmd_prepare_sources(args, configs):
         sys.exit(1)
 
     print("Creating directory structure for RPM build ... ", end="")
-    dir_list = ["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS", "rpm/SOURCES", "rpm/SPECS", "rpm/SRPMS"]
+    dir_list = ["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS", "rpm/SOURCES",
+                "rpm/SPECS", "rpm/SRPMS"]
     try:
         for dirs in dir_list:
             if not os.path.exists(dirs):
@@ -234,7 +256,8 @@ def cmd_generate_spec(args, configs):
     src_root = "src/"
     configs["spec_file"]["source_patches"] = ""
     configs["spec_file"]["source_patches_do"] = ""
-    if os.path.isdir(src_root + "patches") and os.listdir(src_root + "patches"):
+    if os.path.isdir(src_root + "patches") and \
+            os.listdir(src_root + "patches"):
         print("Found directory with patches, adding into spec file:")
         os.chdir(src_root + "patches")
         index = 0
@@ -242,18 +265,22 @@ def cmd_generate_spec(args, configs):
         for files in os.listdir("."):
             print("  Patch" + str(index) + ": " + files)
             configs["spec_file"]["source_patches"] = \
-              configs["spec_file"]["source_patches"] + "\nPatch" + str(index) + ":\t" + files
+                configs["spec_file"]["source_patches"] + \
+                "\nPatch" + str(index) + ":\t" + files
             configs["spec_file"]["source_patches_do"] = \
-              configs["spec_file"]["source_patches_do"] + "\n%patch" + str(index) + " -p1"
+                configs["spec_file"]["source_patches_do"] + "\n%patch" + \
+                str(index) + " -p1"
             index = index + 1
     else:
         print("Patch directory not found or empty-> skipping")
 
     os.chdir(cwd)
 
-    if os.path.isdir(src_root + "firmware") and os.listdir(src_root + "firmware"):
+    if os.path.isdir(src_root + "firmware") and \
+            os.listdir(src_root + "firmware"):
         if configs["spec_file"]["firmware_include"] != "True":
-            print("\n  WARNING: Firmware directory contain files, but firmware package is disabled by config!\n")
+            print("\n  WARNING: Firmware directory contain files, but " +
+                  "firmware package is disabled by config!\n")
         else:
             configs["spec_file"]["firmware_files"] = ""
             configs["spec_file"]["firmware_files_install"] = ""
@@ -265,10 +292,14 @@ def cmd_generate_spec(args, configs):
                         file_root = file_root + "/"
                     print("  Firmware: " + file_root + str(file))
                     configs["spec_file"]["firmware_files"] = \
-                        configs["spec_file"]["firmware_files"] + "/lib/firmware/" + file_root + str(file) + "\n"
+                        configs["spec_file"]["firmware_files"] + \
+                        "/lib/firmware/" + file_root + str(file) + "\n"
                     configs["spec_file"]["firmware_files_install"] = \
-                        configs["spec_file"]["firmware_files_install"] + "install -m 644 -D source/lib/firmware/" + \
-                        file_root + str(file) + " $RPM_BUILD_ROOT/lib/firmware/" + file_root + str(file) + "\n"
+                        configs["spec_file"]["firmware_files_install"] + \
+                        "install -m 644 -D source/lib/firmware/" + \
+                        file_root + str(file) + \
+                        " $RPM_BUILD_ROOT/lib/firmware/" + file_root + \
+                        str(file) + "\n"
     else:
         print("Firmware directory not found or empty-> skipping")
 
@@ -280,8 +311,10 @@ def cmd_generate_spec(args, configs):
             print("WARNING: kernel source code not found: " + kernel_dir)
             source_fail = True
     if source_fail:
-        print("         Probably will not possible to compile all rpms on this system")
-        print("         For fix install kernel-devel-"+configs["spec_file"]["kernel_version"]+" package")
+        print("         Probably will not possible to compile all rpms on " +
+              "this system")
+        print("         For fix install kernel-devel-" +
+              configs["spec_file"]["kernel_version"] + " package")
 
     read_data = apply_config(read_data, configs)
     print("Writing spec into %s ... " % spec_path, end="")
@@ -319,7 +352,8 @@ def cmd_build_rpm(args, configs):
     saved_root = saved_root.replace(src_root, "")
 
     if not makefile_found:
-        print("Makefile not found -> Please create one in " + src_root + saved_root)
+        print("Makefile not found -> Please create one in " + src_root +
+              saved_root)
         sys.exit(1)
     else:
         print("Checking makefile ... OK")
@@ -342,9 +376,12 @@ def cmd_build_rpm(args, configs):
                 if os.path.isdir("firmware") and os.listdir("firmware"):
                     if configs["spec_file"]["firmware_include"] != "True":
                         warning = True
-                        print("\n  WARNING: Firmware directory contain files, but firmware package is disabled by config!")
+                        print("\n  WARNING: Firmware directory contain " +
+                              "files, but firmware package is disabled by " +
+                              "config!")
                     else:
-                        tar.add(files, arcname=nvv + "/lib/" + files, recursive=True)
+                        tar.add(files, arcname=nvv + "/lib/" + files,
+                                recursive=True)
             else:
                 tar.add(files, arcname=nvv + "/" + files, recursive=True)
         tar.close()
@@ -356,7 +393,8 @@ def cmd_build_rpm(args, configs):
 
     os.chdir(cwd)
 
-    if os.path.isdir(src_root + "patches") and os.listdir(src_root + "patches"):
+    if os.path.isdir(src_root + "patches") and \
+            os.listdir(src_root + "patches"):
         print("Copying patches into rpm/SOURCES:")
         os.chdir(src_root + "patches")
         for files in os.listdir("."):
@@ -404,18 +442,24 @@ def cmd_build_iso(args, configs):
                     for file in files:
                         if not file.endswith(".rpm"):
                             continue
-                        if configs and configs["global"]["include_srpm"] != "True" and ".src." in str(file):
-                            print("Source rpms are disabled by config. Skipping: " + str(root)+"/"+str(file))
+                        if configs and \
+                                configs["global"]["include_srpm"] != "True" \
+                                and ".src." in str(file):
+                            print("Source rpms are disabled by config. " +
+                                  "Skipping: " + str(root) + "/" + str(file))
                         elif "debuginfo" in str(file):
                             # TODO
-                            print("Debuginfo is not supported. Skipping: " + str(root)+"/"+str(file))
+                            print("Debuginfo is not supported. Skipping: " +
+                                  str(root) + "/" + str(file))
                         else:
-                            print("Including: " + str(root)+"/"+str(file))
-                            arch = command('rpm -q --qf "%{ARCH}" -p '+ str(root)+"/"+str(file))
-                            arch = re.sub(r'i[0-9]86', 'i386', arch, flags=re.IGNORECASE)
+                            print("Including: " + str(root) + "/" + str(file))
+                            arch = command('rpm -q --qf "%{ARCH}" -p ' +
+                                           str(root) + "/" + str(file))
+                            arch = re.sub(r'i[0-9]86', 'i386', arch,
+                                          flags=re.IGNORECASE)
                             if arch not in arch_list:
                                 arch_list.append(arch)
-                            rpm_files.append(str(root)+"/"+str(file))
+                            rpm_files.append(str(root) + "/" + str(file))
         except OSError as err:
             print(str(err))
 
@@ -424,28 +468,32 @@ def cmd_build_iso(args, configs):
     tmp_dirs = ["disk", "disk/rpms", "disk/src"]
     try:
         for dirs in tmp_dirs:
-            if not os.path.exists(dir_tmp+"/"+dirs):
-                os.makedirs(dir_tmp+"/"+dirs)
+            if not os.path.exists(dir_tmp + "/" + dirs):
+                os.makedirs(dir_tmp + "/" + dirs)
     except OSError as err:
         print(str(err))
 
     for arch in arch_list:
-        if not os.path.exists(dir_tmp+"/disk/rpms/"+arch):
-            os.makedirs(dir_tmp+"/disk/rpms/"+arch)
+        if not os.path.exists(dir_tmp + "/disk/rpms/" + arch):
+            os.makedirs(dir_tmp + "/disk/rpms/" + arch)
 
     for file in rpm_files:
         if ".src." in file:
-            shutil.copyfile(file, dir_tmp+"/disk/src/"+os.path.basename(file))
+            shutil.copyfile(file, dir_tmp + "/disk/src/" +
+                            os.path.basename(file))
         else:
             for arch in arch_list:
-                if '.'+arch+'.' in os.path.basename(re.sub(r'i[0-9]86', 'i386', file, flags=re.IGNORECASE)):
-                    shutil.copyfile(file, dir_tmp+"/disk/rpms/"+arch+"/"+os.path.basename(file))
+                if '.' + arch + '.' in \
+                        os.path.basename(re.sub(r'i[0-9]86', 'i386', file,
+                                         flags=re.IGNORECASE)):
+                    shutil.copyfile(file, dir_tmp + "/disk/rpms/" + arch +
+                                    "/" + os.path.basename(file))
 
     for arch in arch_list:
-        print(command('createrepo --pretty '+dir_tmp+"/disk/rpms/"+arch))
+        print(command('createrepo --pretty ' + dir_tmp + "/disk/rpms/" + arch))
 
     try:
-        with open(dir_tmp+"/disk/rhdd3", 'w') as fout:
+        with open(dir_tmp + "/disk/rhdd3", 'w') as fout:
             fout.write("Driver Update Disk version 3")
             fout.close()
     except IOError as err:
@@ -454,14 +502,17 @@ def cmd_build_iso(args, configs):
     if args.isofile is None:
         # Try to use info from config for constructing file name
         try:
-            args.isofile = "dd-" + configs["spec_file"]["module_name"] + "-" + \
+            args.isofile = "dd-" + \
+                configs["spec_file"]["module_name"] + "-" + \
                 configs["spec_file"]["module_version"] + "-" + \
                 configs["spec_file"]["module_rpm_release"] + "." + \
                 configs["spec_file"]["rpm_dist"] + ".iso"
         except TypeError:
             args.isofile = "dd.iso"
 
-    print(command('mkisofs -V OEMDRV -input-charset UTF-8 -R -uid 0 -gid 0 -dir-mode 0555 -file-mode 0444 -o '+args.isofile+' '+dir_tmp+'/disk'))
+    print(command('mkisofs -V OEMDRV -input-charset UTF-8 -R -uid 0 -gid 0 ' +
+                  '-dir-mode 0555 -file-mode 0444 -o ' + args.isofile + ' ' +
+                  dir_tmp + '/disk'))
     os.umask(saved_umask)
 
     for root, dirs, files in os.walk(dir_tmp, topdown=False):
@@ -497,31 +548,47 @@ def parse_cli():
     Commandline argument parser
     :return: commandline arguments
     """
-    root_parser = argparse.ArgumentParser(prog='ddiskit', description='Red Hat tool for create Driver Update Disk')
-    root_parser.add_argument("-v", "--verbosity", action="count", default=0, help="Increase output verbosity")
+    root_parser = argparse.ArgumentParser(prog='ddiskit',
+                                          description='Red Hat tool for ' +
+                                          'create Driver Update Disk')
+    root_parser.add_argument("-v", "--verbosity", action="count", default=0,
+                             help="Increase output verbosity")
 
-    cmdparsers = root_parser.add_subparsers(title='Commands', help='main ddiskit commands')
+    cmdparsers = root_parser.add_subparsers(title='Commands',
+                                            help='main ddiskit commands')
 
     # parser for the "prepare_sources" command
-    parser_prepare_sources = cmdparsers.add_parser('prepare_sources', help='Prepare sources')
-    parser_prepare_sources.add_argument("-c", "--config", default='module.config', help="Config file")
+    parser_prepare_sources = cmdparsers.add_parser('prepare_sources',
+                                                   help='Prepare sources')
+    parser_prepare_sources.add_argument("-c", "--config",
+                                        default='module.config',
+                                        help="Config file")
     parser_prepare_sources.set_defaults(func=cmd_prepare_sources)
 
     # parser for the "generate_spec" command
-    parser_generate_spec = cmdparsers.add_parser('generate_spec', help='Generate spec file')
-    parser_generate_spec.add_argument("-c", "--config", default='module.config', help="Config file")
+    parser_generate_spec = cmdparsers.add_parser('generate_spec',
+                                                 help='Generate spec file')
+    parser_generate_spec.add_argument("-c", "--config",
+                                      default='module.config',
+                                      help="Config file")
     parser_generate_spec.set_defaults(func=cmd_generate_spec)
 
     # parser for the "build_rpm" command
     parser_build_rpm = cmdparsers.add_parser('build_rpm', help='Build rpm')
-    parser_build_rpm.add_argument("-c", "--config", default='module.config', help="Config file")
+    parser_build_rpm.add_argument("-c", "--config", default='module.config',
+                                  help="Config file")
     parser_build_rpm.set_defaults(func=cmd_build_rpm)
 
     # parser for the "build_iso" command
     parser_build_iso = cmdparsers.add_parser('build_iso', help='Build iso')
-    parser_build_iso.add_argument("-c", "--config", default='module.config', help="Config file")
-    parser_build_iso.add_argument("-i", "--isofile", default=None, help="Output file name")
-    parser_build_iso.add_argument("filelist", nargs="*", default=["rpm/RPMS/", "rpm/SRPMS/"], help="RPM list, separated by space and can use directory path")
+    parser_build_iso.add_argument("-c", "--config", default='module.config',
+                                  help="Config file")
+    parser_build_iso.add_argument("-i", "--isofile", default=None,
+                                  help="Output file name")
+    parser_build_iso.add_argument("filelist", nargs="*",
+                                  default=["rpm/RPMS/", "rpm/SRPMS/"],
+                                  help="RPM list, separated by space and " +
+                                  "can use directory path")
     parser_build_iso.set_defaults(func=cmd_build_iso)
 
     args = root_parser.parse_args()
