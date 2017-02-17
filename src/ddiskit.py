@@ -391,10 +391,10 @@ def cmd_build_iso(args, configs):
     for content in args.filelist:
         try:
             if os.path.isfile(content):
-                arch = command('rpm -q --qf "%{ARCH}" -p '+ str(root)+"/"+str(file))
+                arch = command('rpm -q --qf "%{ARCH}" -p ' + str(content))
                 if arch not in arch_list:
                     arch_list.append(arch)
-                    rpm_files.append(str(root)+"/"+str(file))
+                    rpm_files.append(str(content))
                 print("Including: " + str(content))
             elif os.path.exists(content):
                 print("Listing content: " + str(content))
