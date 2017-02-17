@@ -217,8 +217,10 @@ def cmd_generate_spec(args, configs):
         print(args.config, end="")
         print(" not found, use \"ddiskit prepare_sources\" for create")
         sys.exit(1)
-    if os.path.isfile("rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"):
-        print("File Exist rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec!")
+
+    spec_path = "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
+    if os.path.isfile(spec_path):
+        print("File Exist %s!" % spec_path)
     try:
         with open('/usr/share/ddiskit/templates/spec', 'r') as fin:
             read_data = fin.read()
@@ -282,9 +284,9 @@ def cmd_generate_spec(args, configs):
         print("         For fix install kernel-devel-"+configs["spec_file"]["kernel_version"]+" package")
 
     read_data = apply_config(read_data, configs)
-    print("Writing spec into rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec ... ", end="")
+    print("Writing spec into %s ... " % spec_path, end="")
     try:
-        with open("rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec", 'w') as fout:
+        with open(spec_path, 'w') as fout:
             fout.write(read_data)
             fout.close()
     except IOError as err:
