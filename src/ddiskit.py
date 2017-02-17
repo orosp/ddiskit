@@ -125,7 +125,7 @@ def check_config(configs):
             elif key == "module_build_dir":
                 if configs[section][key][0] == "/":
                     configs[section][key] = configs[section][key][1:]
-                    print("WARNING: Begining \"/\" in module_build_dir, fixing ... OK")
+                    print("WARNING: Leading \"/\" in module_build_dir, fixing ... OK")
                 if configs[section][key][-1] == "/":
                     configs[section][key] = configs[section][key][0:-1]
                     print("WARNING: Trailing \"/\" in module_build_dir, fixing ... OK")
