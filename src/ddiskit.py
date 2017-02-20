@@ -54,8 +54,8 @@ def apply_config(data, configs):
     """
     # no firmware? -> remove all firmware defintions from spec file
     if configs["spec_file"]["firmware_include"] != "True":
-        data = re.sub(r'^%{FIRMWARE_BEGIN}.*?%{FIRMWARE_END}$', '', data,
-                      flags=re.DOTALL | re.M)
+        data = re.sub(re.compile(r'^%{FIRMWARE_BEGIN}.*?%{FIRMWARE_END}$', \
+                      re.DOTALL | re.MULTILINE), '', data)
     else:
         data = data.replace("%{FIRMWARE_BEGIN}\n", "")
         data = data.replace("%{FIRMWARE_END}\n", "")
@@ -455,8 +455,8 @@ def cmd_build_iso(args, configs):
                             print("Including: " + str(root) + "/" + str(file))
                             arch = command('rpm -q --qf "%{ARCH}" -p ' +
                                            str(root) + "/" + str(file))
-                            arch = re.sub(r'i[0-9]86', 'i386', arch,
-                                          flags=re.IGNORECASE)
+                            arch = re.sub(re.compile(r'i[0-9]86', re.IGNORECASE), \
+                                          'i386', arch)
                             if arch not in arch_list:
                                 arch_list.append(arch)
                             rpm_files.append(str(root) + "/" + str(file))
@@ -484,8 +484,8 @@ def cmd_build_iso(args, configs):
         else:
             for arch in arch_list:
                 if '.' + arch + '.' in \
-                        os.path.basename(re.sub(r'i[0-9]86', 'i386', file, \
-                                         flags=re.IGNORECASE)):
+                        os.path.basename(re.sub(re.compile(r'i[0-9]86', \
+                                         re.IGNORECASE), 'i386', file)):
                     shutil.copyfile(file, dir_tmp + "/disk/rpms/" + arch +
                                     "/" + os.path.basename(file))
 
