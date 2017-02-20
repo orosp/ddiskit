@@ -77,7 +77,7 @@ def apply_config(data, configs):
 
     # generic keys code
     # date of creation
-    data = data.replace("%{DATE}", datetime.__format__(datetime.now(),
+    data = data.replace("%{DATE}", datetime.__format__(datetime.now(), \
                         "%a %b %d %Y"))
 
     # kernel_requires
@@ -484,7 +484,7 @@ def cmd_build_iso(args, configs):
         else:
             for arch in arch_list:
                 if '.' + arch + '.' in \
-                        os.path.basename(re.sub(r'i[0-9]86', 'i386', file,
+                        os.path.basename(re.sub(r'i[0-9]86', 'i386', file, \
                                          flags=re.IGNORECASE)):
                     shutil.copyfile(file, dir_tmp + "/disk/rpms/" + arch +
                                     "/" + os.path.basename(file))
