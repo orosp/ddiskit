@@ -13,6 +13,7 @@ Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 %define findpat %( echo "%""P" )
 %define __find_requires /usr/lib/rpm/redhat/find-requires.ksyms
 %define __find_provides /usr/lib/rpm/redhat/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
+%define sbindir %( if [ -x "/sbin/weak-modules" ]; then echo "/sbin"; else echo %{_sbindir}; fi )
 
 Name:		%{RPM_NAME}
 Version:	%{kmod_driver_version}
@@ -22,15 +23,15 @@ Group:		System/Kernel
 License:	GPLv2
 URL:		http://www.kernel.org/
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-BuildRequires:	kernel-devel = %kmod_kernel_version kmod redhat-rpm-config kernel-abi-whitelists
+BuildRequires:	kernel-devel = %kmod_kernel_version redhat-rpm-config kernel-abi-whitelists
 ExclusiveArch:	%{KERNEL_ARCH}
 %global kernel_source() /usr/src/kernels/%{kmod_kernel_version}.$(arch)
 
 %global _use_internal_dependency_generator 0
 Provides:	kernel-modules = %kmod_kernel_version.%{_target_cpu}
 Provides:	%{kmod_name}-kmod = %{?epoch:%{epoch}:}%{version}-%{release}
-Requires(post):	/usr/sbin/depmod
-Requires(postun):	/usr/sbin/depmod
+Requires(post):	%{sbindir}/weak-modules
+Requires(postun):	%{sbindir}/weak-modules
 %{KERNEL_REQUIRES}
 %{MODULE_REQUIRES}
 # if there are multiple kmods for the same driver from different vendors,
@@ -57,10 +58,7 @@ Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
 
 %post
 modules=( $(find /lib/modules/%{kmod_kernel_version}.%(arch)/extra/kmod-%{kmod_vendor}-%{kmod_name} | grep '\.ko$') )
-if [ -x "/sbin/weak-modules" ]; then
-    printf '%s\n' "${modules[@]}" \
-    | /sbin/weak-modules --add-modules
-fi
+printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --add-modules
 
 %preun
 rpm -ql %{RPM_NAME}-%{kmod_driver_version}-%{kmod_rpm_release}%{?dist}.$(arch) | grep '\.ko$' > /var/run/rpm-kmod-%{kmod_name}-modules
@@ -68,9 +66,7 @@ rpm -ql %{RPM_NAME}-%{kmod_driver_version}-%{kmod_rpm_release}%{?dist}.$(arch) |
 %postun
 modules=( $(cat /var/run/rpm-kmod-%{kmod_name}-modules) )
 rm /var/run/rpm-kmod-%{kmod_name}-modules
-if [ -x "/sbin/weak-modules" ]; then
-    printf '%s\n' "${modules[@]}" \
-    | /sbin/weak-modules --remove-modules
+printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --remove-modules
 fi
 
 %files
