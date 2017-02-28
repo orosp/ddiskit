@@ -408,7 +408,7 @@ def cmd_build_rpm(args, configs):
     build_arch = os.uname()[4]
     kernel_dir = "/usr/src/kernels/" + \
         configs["spec_file"]["kernel_version"] + "." + build_arch
-    if build_arch in configs["spec_file"]["kernel_arch"]:
+    if not args.srpm and build_arch in configs["spec_file"]["kernel_arch"]:
         if not os.path.isdir(kernel_dir):
             print("WARNING: kernel source code not found: %s" % kernel_dir)
             print("         Building SRPM only")
@@ -417,7 +417,9 @@ def cmd_build_rpm(args, configs):
             do_build_rpm(args, configs, build_arch)
     else:
         do_build_srpm(args, configs)
-        print("Because you are not on target architecture, building only SRPM")
+        if not args.srpm:
+            print("Because you are not on target architecture, " +
+                  "building only SRPM")
 
 
 def cmd_build_iso(args, configs):
@@ -580,6 +582,8 @@ def parse_cli():
     parser_build_rpm = cmdparsers.add_parser('build_rpm', help='Build rpm')
     parser_build_rpm.add_argument("-c", "--config", default='module.config',
                                   help="Config file")
+    parser_build_rpm.add_argument("-s", "--srpm", action='store_true',
+                                  default=False, help="Build src RPM")
     parser_build_rpm.set_defaults(func=cmd_build_rpm)
 
     # parser for the "build_iso" command
