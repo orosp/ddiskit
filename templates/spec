@@ -67,7 +67,6 @@ rpm -ql %{RPM_NAME}-%{kmod_driver_version}-%{kmod_rpm_release}%{?dist}.$(arch) |
 modules=( $(cat /var/run/rpm-kmod-%{kmod_name}-modules) )
 rm /var/run/rpm-kmod-%{kmod_name}-modules
 printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --remove-modules
-fi
 
 %files
 %defattr(644,root,root,755)
