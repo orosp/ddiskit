@@ -54,7 +54,7 @@ def apply_config(data, configs):
     """
     # no firmware? -> remove all firmware defintions from spec file
     if configs["spec_file"]["firmware_include"] != "True":
-        data = re.sub(re.compile(r'^%{FIRMWARE_BEGIN}.*?%{FIRMWARE_END}$', \
+        data = re.sub(re.compile(r'^%{FIRMWARE_BEGIN}.*?%{FIRMWARE_END}$',
                       re.DOTALL | re.MULTILINE), '', data)
     else:
         data = data.replace("%{FIRMWARE_BEGIN}\n", "")
@@ -77,7 +77,7 @@ def apply_config(data, configs):
 
     # generic keys code
     # date of creation
-    data = data.replace("%{DATE}", datetime.__format__(datetime.now(), \
+    data = data.replace("%{DATE}", datetime.__format__(datetime.now(),
                         "%a %b %d %Y"))
 
     # kernel_requires
@@ -455,8 +455,8 @@ def cmd_build_iso(args, configs):
                             print("Including: " + str(root) + "/" + str(file))
                             arch = command('rpm -q --qf "%{ARCH}" -p ' +
                                            str(root) + "/" + str(file))
-                            arch = re.sub(re.compile(r'i[0-9]86', re.IGNORECASE), \
-                                          'i386', arch)
+                            arch = re.sub(re.compile(r'i[0-9]86',
+                                          re.IGNORECASE), 'i386', arch)
                             if arch not in arch_list:
                                 arch_list.append(arch)
                             rpm_files.append(str(root) + "/" + str(file))
@@ -484,7 +484,7 @@ def cmd_build_iso(args, configs):
         else:
             for arch in arch_list:
                 if '.' + arch + '.' in \
-                        os.path.basename(re.sub(re.compile(r'i[0-9]86', \
+                        os.path.basename(re.sub(re.compile(r'i[0-9]86',
                                          re.IGNORECASE), 'i386', file)):
                     shutil.copyfile(file, dir_tmp + "/disk/rpms/" + arch +
                                     "/" + os.path.basename(file))
