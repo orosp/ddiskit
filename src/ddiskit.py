@@ -13,6 +13,7 @@ import argparse
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -39,8 +40,7 @@ def command(cmd):
     """
     process = Popen(
         args=cmd,
-        stdout=PIPE,
-        shell=True
+        stdout=PIPE
     )
     return process.communicate()[0].decode()
 
@@ -163,11 +163,11 @@ def do_build_rpm(args, configs, arch):
     :param configs: configs readed from cfg file
     """
     print("Start RPM build for "+arch+" ... ")
-    cmd = "rpmbuild --target " + arch
-    cmd += " --define \"_topdir " + os.getcwd() + "/rpm\""
-    cmd += " -ba " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + \
-        ".spec"
-    os.system(cmd)
+    cmd = ["rpmbuild", "--target", arch,
+           "--define", "_topdir " + os.getcwd() + "/rpm",
+           "-ba", "rpm/SPECS/%s.spec" % configs["spec_file"]["module_name"]]
+
+    subprocess.call(cmd)
 
 
 def do_build_srpm(args, configs):
@@ -177,10 +177,10 @@ def do_build_srpm(args, configs):
     :param configs: configs readed from cfg file
     """
     print("Start SRPM build ... ")
-    cmd = "rpmbuild --define \"_topdir " + os.getcwd() + "/rpm\""
-    cmd += " -bs " + "rpm/SPECS/" + configs["spec_file"]["module_name"] + \
-        ".spec"
-    os.system(cmd)
+    cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
+           "-bs", "rpm/SPECS/%s.spec" % configs["spec_file"]["module_name"]]
+
+    subprocess.call(cmd)
 
 
 def cmd_prepare_sources(args, configs):
@@ -431,7 +431,8 @@ def cmd_build_iso(args, configs):
     for content in args.filelist:
         try:
             if os.path.isfile(content):
-                arch = command('rpm -q --qf "%{ARCH}" -p ' + str(content))
+                arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p',
+                                str(content)])
                 if arch not in arch_list:
                     arch_list.append(arch)
                     rpm_files.append(str(content))
@@ -453,8 +454,8 @@ def cmd_build_iso(args, configs):
                                   str(root) + "/" + str(file))
                         else:
                             print("Including: " + str(root) + "/" + str(file))
-                            arch = command('rpm -q --qf "%{ARCH}" -p ' +
-                                           str(root) + "/" + str(file))
+                            arch = command(['rpm', '-q', '--qf', '%{ARCH}',
+                                            '-p', str(root) + "/" + str(file)])
                             arch = re.sub(re.compile(r'i[0-9]86',
                                           re.IGNORECASE), 'i386', arch)
                             if arch not in arch_list:
@@ -490,7 +491,8 @@ def cmd_build_iso(args, configs):
                                     "/" + os.path.basename(file))
 
     for arch in arch_list:
-        print(command('createrepo --pretty ' + dir_tmp + "/disk/rpms/" + arch))
+        print(command(['createrepo', '--pretty',
+                       dir_tmp + "/disk/rpms/" + arch]))
 
     try:
         with open(dir_tmp + "/disk/rhdd3", 'w') as fout:
@@ -510,9 +512,10 @@ def cmd_build_iso(args, configs):
         except TypeError:
             args.isofile = "dd.iso"
 
-    print(command('mkisofs -V OEMDRV -input-charset UTF-8 -R -uid 0 -gid 0 ' +
-                  '-dir-mode 0555 -file-mode 0444 -o ' + args.isofile + ' ' +
-                  dir_tmp + '/disk'))
+    print(command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8', '-R',
+                   '-uid', '0', '-gid', '0', '-dir-mode', '0555',
+                   '-file-mode', '0444', '-o', args.isofile,
+                   dir_tmp + '/disk']))
     os.umask(saved_umask)
 
     for root, dirs, files in os.walk(dir_tmp, topdown=False):
