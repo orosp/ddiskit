@@ -262,7 +262,7 @@ def cmd_generate_spec(args, configs):
         os.chdir(src_root + "patches")
         index = 0
         configs["spec_file"]["source_patches"] = "# Source code patches"
-        for files in os.listdir("."):
+        for files in sorted(os.listdir(".")):
             print("  Patch" + str(index) + ": " + files)
             configs["spec_file"]["source_patches"] = \
                 configs["spec_file"]["source_patches"] + \
