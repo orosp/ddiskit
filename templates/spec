@@ -29,14 +29,14 @@ ExclusiveArch:	%{KERNEL_ARCH}
 
 %global _use_internal_dependency_generator 0
 Provides:	kernel-modules = %kmod_kernel_version.%{_target_cpu}
-Provides:	%{kmod_name}-kmod = %{?epoch:%{epoch}:}%{version}-%{release}
+Provides:	kmod-%{kmod_name} = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires(post):	%{sbindir}/weak-modules
 Requires(postun):	%{sbindir}/weak-modules
 %{KERNEL_REQUIRES}
 %{MODULE_REQUIRES}
 # if there are multiple kmods for the same driver from different vendors,
 # they should coflict with each other.
-Conflicts:	%{kmod_name}-kmod
+Conflicts:	kmod-%{kmod_name}
 
 %description
 %{DESCRIPTION}
