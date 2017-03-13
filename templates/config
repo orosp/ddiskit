@@ -32,9 +32,9 @@ kernel_arch = x86_64 ppc64 ppc64le
 # when creating DUD with firmware, dependency will by added automatically
 dependencies = 
 # module summary in spec file
-summary = Example module for Driver Update Program
+summary = {module_name} module for Driver Update Program
 # module description in spec file
-description = Example module for Driver Update Program
+description = {module_name} module for Driver Update Program
 # optional: upstream commit from which the code was taken
 git_hash = ENTER_GIT_HASH
 
@@ -50,6 +50,6 @@ firmware_include = False
 # firmware package version
 firmware_version = ENTER_FIRMWARE_VERSION
 # firmware summary in spec file
-firmware_summary = Example firmware for Driver Update Program
+firmware_summary = {module_name} firmware for Driver Update Program
 # module description in spec file
-firmware_description = Example firmware for Driver Update Program
+firmware_description = {module_name} firmware for Driver Update Program
