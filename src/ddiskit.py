@@ -302,7 +302,7 @@ def cmd_generate_spec(args, configs):
                         "/lib/firmware/" + file_root + str(file) + "\n"
                     configs["spec_file"]["firmware_files_install"] = \
                         configs["spec_file"]["firmware_files_install"] + \
-                        "install -m 644 -D source/lib/firmware/" + \
+                        "install -m 644 -D source/firmware/" + \
                         file_root + str(file) + \
                         " $RPM_BUILD_ROOT/lib/firmware/" + file_root + \
                         str(file) + "\n"
@@ -385,11 +385,10 @@ def cmd_build_rpm(args, configs):
                         print("\n  WARNING: Firmware directory contain " +
                               "files, but firmware package is disabled by " +
                               "config!")
-                    else:
-                        tar.add(files, arcname=nvv + "/lib/" + files,
-                                recursive=True)
-            else:
-                tar.add(files, arcname=nvv + "/" + files, recursive=True)
+                        continue
+                else:
+                    continue
+            tar.add(files, arcname=nvv + "/" + files, recursive=True)
         tar.close()
     except Exception as err:
         print(str(err))
