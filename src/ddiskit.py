@@ -352,6 +352,16 @@ def filter_tar_info(args, nvv):
 
             return None
 
+        fn = os.path.basename(ti.name)
+
+        if ti.isfile() and ti.name.split("/")[0] != "firmware" and \
+                fn != "Kbuild" and fn != "Makefile" and \
+                not fn.endswith(".c") and not fn.endswith(".h"):
+            print("  Unexpected file: %s" % ti.name)
+
+            if args.tar_strict:
+                return None
+
         if args.verbosity >= 2:
             print("  Adding: %s" % ti.name)
 
@@ -623,6 +633,9 @@ def parse_cli():
     parser_build_rpm.add_argument("-a", "--tar-all", action='store_true',
                                   default=False,
                                   help="Tar all files, including hidden ones")
+    parser_build_rpm.add_argument("-e", "--tar-strict", action='store_true',
+                                  default=False,
+                                  help="Tar only expected files")
     parser_build_rpm.add_argument("-s", "--srpm", action='store_true',
                                   default=False, help="Build src RPM")
     parser_build_rpm.set_defaults(func=cmd_build_rpm)
