@@ -13,7 +13,6 @@ import argparse
 import os
 import re
 import shutil
-import subprocess
 import sys
 import tarfile
 import tempfile
@@ -32,7 +31,7 @@ kernel_y_re = "^%s%s$" % (kernel_nvr_re, kernel_dist_re)
 kernel_z_re = "^%s%s%s$" % (kernel_nvr_re, kernel_z_part_re, kernel_dist_re)
 
 
-def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2):
+def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2, capture_output=True):
     """
     Execute shell command and return stdout string
     :param cmd: Command
@@ -42,10 +41,12 @@ def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2):
         print("Executing command: %r" % cmd)
     process = Popen(
         args=cmd,
-        stdout=PIPE
+        stdout=PIPE if capture_output else None
     )
-    result = process.communicate()[0].decode()
-    if (args.verbosity >= res_print_lvl):
+    result = process.communicate()[0]
+    if capture_output:
+        result = result.decode()
+    if args.verbosity >= res_print_lvl and capture_output:
         print(result)
     return result
 
@@ -172,7 +173,7 @@ def do_build_rpm(args, configs, arch):
            "--define", "_topdir " + os.getcwd() + "/rpm",
            "-ba", "rpm/SPECS/%s.spec" % configs["spec_file"]["module_name"]]
 
-    subprocess.call(cmd)
+    command(cmd, args, capture_output=False)
 
 
 def do_build_srpm(args, configs):
@@ -185,7 +186,7 @@ def do_build_srpm(args, configs):
     cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
            "-bs", "rpm/SPECS/%s.spec" % configs["spec_file"]["module_name"]]
 
-    subprocess.call(cmd)
+    command(cmd, args, capture_output=False)
 
 
 def cmd_prepare_sources(args, configs):
@@ -500,7 +501,7 @@ def cmd_build_iso(args, configs):
 
     for arch in arch_list:
         command(['createrepo', '--pretty', dir_tmp + "/disk/rpms/" + arch],
-                args, res_print_lvl=0)
+                args, res_print_lvl=0, capture_output=False)
 
     try:
         with open(dir_tmp + "/disk/rhdd3", 'w') as fout:
@@ -523,7 +524,7 @@ def cmd_build_iso(args, configs):
     command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8', '-R',
              '-uid', '0', '-gid', '0', '-dir-mode', '0555',
              '-file-mode', '0444', '-o', args.isofile, dir_tmp + '/disk'],
-            args, res_print_lvl=0)
+            args, res_print_lvl=0, capture_output=False)
     os.umask(saved_umask)
 
     for root, dirs, files in os.walk(dir_tmp, topdown=False):
