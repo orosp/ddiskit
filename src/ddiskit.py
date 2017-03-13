@@ -376,9 +376,9 @@ def cmd_build_rpm(args, configs):
         tar = tarfile.open(archive, "w:bz2")
         os.chdir(src_root)
         for files in os.listdir("."):
-            if "patches" in files or "rpm" in files:
+            if "patches" == files or files.endswith(".rpm"):
                 continue
-            if "firmware" in files:
+            if "firmware" == files:
                 if os.path.isdir("firmware") and os.listdir("firmware"):
                     if configs["spec_file"]["firmware_include"] != "True":
                         warning = True
