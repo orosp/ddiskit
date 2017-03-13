@@ -39,10 +39,12 @@ description = Example module for Driver Update Program
 git_hash = ENTER_GIT_HASH
 
 # firmware section
-# If you want have firmware in your dup package, you can just enable it here
-# Firmware file copy into src/firmware directory. All files will be added automatically
-# If you need firmware on final system in subdirectory, create same directory structure
-#   inside src/firmware directory
+# If you want have firmware as a part of your DUP, you can just enable it here.
+# Copy firmware files into the src/firmware directory. All files will be added
+# automatically.
+# If you need that firmware will reside in a subdirectory of /lib/firmware on
+# the target system, just create the same directory structure inside
+# src/firmware directory.
 # enable firmware sub-package
 firmware_include = False
 # firmware package version
