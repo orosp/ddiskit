@@ -32,17 +32,22 @@ kernel_y_re = "^%s%s$" % (kernel_nvr_re, kernel_dist_re)
 kernel_z_re = "^%s%s%s$" % (kernel_nvr_re, kernel_z_part_re, kernel_dist_re)
 
 
-def command(cmd):
+def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2):
     """
     Execute shell command and return stdout string
     :param cmd: Command
     :return: String printed by cmd to stdout
     """
+    if (args.verbosity >= cmd_print_lvl):
+        print("Executing command: %r" % cmd)
     process = Popen(
         args=cmd,
         stdout=PIPE
     )
-    return process.communicate()[0].decode()
+    result = process.communicate()[0].decode()
+    if (args.verbosity >= res_print_lvl):
+        print(result)
+    return result
 
 
 def apply_config(data, configs):
@@ -434,7 +439,7 @@ def cmd_build_iso(args, configs):
         try:
             if os.path.isfile(content):
                 arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p',
-                                str(content)])
+                                str(content)], args)
                 if arch not in arch_list:
                     arch_list.append(arch)
                     rpm_files.append(str(content))
@@ -457,7 +462,8 @@ def cmd_build_iso(args, configs):
                         else:
                             print("Including: " + str(root) + "/" + str(file))
                             arch = command(['rpm', '-q', '--qf', '%{ARCH}',
-                                            '-p', str(root) + "/" + str(file)])
+                                            '-p', str(root) + "/" + str(file)],
+                                           args)
                             arch = re.sub(re.compile(r'i[0-9]86',
                                           re.IGNORECASE), 'i386', arch)
                             if arch not in arch_list:
@@ -493,8 +499,8 @@ def cmd_build_iso(args, configs):
                                     "/" + os.path.basename(file))
 
     for arch in arch_list:
-        print(command(['createrepo', '--pretty',
-                       dir_tmp + "/disk/rpms/" + arch]))
+        command(['createrepo', '--pretty', dir_tmp + "/disk/rpms/" + arch],
+                args, res_print_lvl=0)
 
     try:
         with open(dir_tmp + "/disk/rhdd3", 'w') as fout:
@@ -514,10 +520,10 @@ def cmd_build_iso(args, configs):
         except TypeError:
             args.isofile = "dd.iso"
 
-    print(command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8', '-R',
-                   '-uid', '0', '-gid', '0', '-dir-mode', '0555',
-                   '-file-mode', '0444', '-o', args.isofile,
-                   dir_tmp + '/disk']))
+    command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8', '-R',
+             '-uid', '0', '-gid', '0', '-dir-mode', '0555',
+             '-file-mode', '0444', '-o', args.isofile, dir_tmp + '/disk'],
+            args, res_print_lvl=0)
     os.umask(saved_umask)
 
     for root, dirs, files in os.walk(dir_tmp, topdown=False):
