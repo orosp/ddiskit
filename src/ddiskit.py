@@ -368,7 +368,7 @@ def cmd_build_rpm(args, configs):
         configs["global"]["module_vendor"] + "-" + \
         configs["spec_file"]["module_version"]
     archive = "rpm/SOURCES/" + nvv + ".tar.bz2"
-    print("Writing archive " + archive + " ... ", end="")
+    print("Writing archive " + archive + " ...")
 
     cwd = os.getcwd()
 
@@ -377,24 +377,30 @@ def cmd_build_rpm(args, configs):
         os.chdir(src_root)
         for files in os.listdir("."):
             if "patches" == files or files.endswith(".rpm"):
+                if args.verbosity >= 1:
+                    print("  Skipping: %s" % files)
                 continue
             if "firmware" == files:
                 if os.path.isdir("firmware") and os.listdir("firmware"):
                     if configs["spec_file"]["firmware_include"] != "True":
                         warning = True
-                        print("\n  WARNING: Firmware directory contains " +
+                        print("  WARNING: Firmware directory contains " +
                               "files, but firmware package is disabled by " +
                               "config!")
                         continue
                 else:
+                    if args.verbosity >= 1:
+                        print("  Skipping: %s" % files)
                     continue
             tar.add(files, arcname=nvv + "/" + files, recursive=True)
+            if args.verbosity >= 2:
+                print("  Adding: %s" % files)
         tar.close()
     except Exception as err:
         print(str(err))
     else:
         if not warning:
-            print("OK")
+            print("Finish writing archive.")
 
     os.chdir(cwd)
 
