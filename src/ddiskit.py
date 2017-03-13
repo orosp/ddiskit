@@ -16,6 +16,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
+import time
 from datetime import datetime
 from subprocess import PIPE, Popen
 try:
@@ -334,6 +335,20 @@ def cmd_generate_spec(args, configs):
         print("OK")
 
 
+def filter_tar_info(ti):
+    ti.mode = 0755 if ti.isdir() else 0644
+    ti.uname = "nobody"
+    ti.gname = "nobody"
+    ti.uid = 0
+    ti.gid = 0
+    ti.mtime = time.time()
+
+    if args.verbosity >= 2:
+        print("  Adding: %s" % ti.name)
+
+    return ti
+
+
 def cmd_build_rpm(args, configs):
     """
     CMD build_rpm callback
@@ -392,9 +407,8 @@ def cmd_build_rpm(args, configs):
                     if args.verbosity >= 1:
                         print("  Skipping: %s" % files)
                     continue
-            tar.add(files, arcname=nvv + "/" + files, recursive=True)
-            if args.verbosity >= 2:
-                print("  Adding: %s" % files)
+            tar.add(files, arcname=os.path.normpath(os.path.join(nvv, files)),
+                    filter=filter_tar_info)
         tar.close()
     except Exception as err:
         print(str(err))
