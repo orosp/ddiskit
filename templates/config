@@ -6,7 +6,7 @@ module_vendor = ENTER_VENDOR_NAME
 module_author = ENTER_AUTHOR
 # Driver Update Disc email
 module_author_email = ENTER_AUTHOR_EMAIL
-# Include srpm files into final iso
+# Include SRPM files into final ISO
 include_srpm = True
 
 # config values for driver spec file
