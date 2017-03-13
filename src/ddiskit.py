@@ -10,6 +10,7 @@
 from __future__ import print_function
 
 import argparse
+import functools
 import os
 import re
 import shutil
@@ -335,18 +336,30 @@ def cmd_generate_spec(args, configs):
         print("OK")
 
 
-def filter_tar_info(ti):
-    ti.mode = 0755 if ti.isdir() else 0644
-    ti.uname = "nobody"
-    ti.gname = "nobody"
-    ti.uid = 0
-    ti.gid = 0
-    ti.mtime = time.time()
+def filter_tar_info(args, nvv):
+    def filter_tar_info_args(ti, args, nvv):
+        ti.mode = 0755 if ti.isdir() else 0644
+        ti.uname = "nobody"
+        ti.gname = "nobody"
+        ti.uid = 0
+        ti.gid = 0
+        ti.mtime = time.time()
 
-    if args.verbosity >= 2:
-        print("  Adding: %s" % ti.name)
+        if not args.tar_all and \
+                any([x.startswith(".") for x in ti.name.split("/")]):
+            if args.verbosity >= 1:
+                print("  Skipping hidden file: %s" % ti.name)
 
-    return ti
+            return None
+
+        if args.verbosity >= 2:
+            print("  Adding: %s" % ti.name)
+
+        ti.name = os.path.join(nvv, ti.name)
+
+        return ti
+
+    return functools.partial(filter_tar_info_args, args=args, nvv=nvv)
 
 
 def cmd_build_rpm(args, configs):
@@ -407,8 +420,7 @@ def cmd_build_rpm(args, configs):
                     if args.verbosity >= 1:
                         print("  Skipping: %s" % files)
                     continue
-            tar.add(files, arcname=os.path.normpath(os.path.join(nvv, files)),
-                    filter=filter_tar_info)
+            tar.add(os.path.normpath(files), filter=filter_tar_info(args, nvv))
         tar.close()
     except Exception as err:
         print(str(err))
@@ -608,6 +620,9 @@ def parse_cli():
     parser_build_rpm = cmdparsers.add_parser('build_rpm', help='Build rpm')
     parser_build_rpm.add_argument("-c", "--config", default='module.config',
                                   help="Config file")
+    parser_build_rpm.add_argument("-a", "--tar-all", action='store_true',
+                                  default=False,
+                                  help="Tar all files, including hidden ones")
     parser_build_rpm.add_argument("-s", "--srpm", action='store_true',
                                   default=False, help="Build src RPM")
     parser_build_rpm.set_defaults(func=cmd_build_rpm)
