@@ -382,7 +382,7 @@ def cmd_build_rpm(args, configs):
                 if os.path.isdir("firmware") and os.listdir("firmware"):
                     if configs["spec_file"]["firmware_include"] != "True":
                         warning = True
-                        print("\n  WARNING: Firmware directory contain " +
+                        print("\n  WARNING: Firmware directory contains " +
                               "files, but firmware package is disabled by " +
                               "config!")
                         continue
