@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = "ddiskit",
-    version = "3.1",
+    version = "3.2",
     author = "Petr Oros",
     author_email = "poros@redhat.com",
     description = ("Red Hat tool for create Driver Update Disk"),

@@ -2,7 +2,7 @@
 %global Tool for create Driver Update Disc
 
 Name:           python-%{srcname}
-Version:        3.1
+Version:        3.2
 Release:        1%{?dist}
 Summary:        %{sum}
 
@@ -41,6 +41,9 @@ Ddiskit is a little framework for easy creating proper Driver Update Disc.
 %{_datadir}/ddiskit/templates/config
 
 %changelog
+* Tue Mar 14 2017 Petr Oros <poros@redhat.com> - 3.2-1
+- New upstream relese
+
 * Tue Feb 28 2017 Petr Oros <poros@redhat.com> - 3.1-1
 - New upstream relese
 
