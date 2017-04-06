@@ -23,7 +23,7 @@ rpm_name = kmod-{module_vendor}-{module_name}
 ## module_version
 module_version = ENTER_MODULE_VERSION
 ## rpm_release_version
-module_rpm_release = ENTER_RPM_RELEASE
+module_rpm_release = 1
 ## rpm_dist
 rpm_dist = ENTER_DIST_TAG
 ## module build dir
