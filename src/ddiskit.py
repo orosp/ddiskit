@@ -32,6 +32,8 @@ kernel_dist_re = r"\.el[0-9]"
 kernel_y_re = "^%s%s$" % (kernel_nvr_re, kernel_dist_re)
 kernel_z_re = "^%s%s%s$" % (kernel_nvr_re, kernel_z_part_re, kernel_dist_re)
 
+config_var_re = re.compile(r"{([^{}]*)}")
+
 
 def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2, capture_output=True):
     """
@@ -55,6 +57,134 @@ def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2, capture_output=True):
         if args.verbosity >= cmd_print_lvl:
             print("  Return code:", ret)
     return (ret, result)
+
+
+def config_get(configs, key, section="defaults", default=None,
+               max_subst_depth=8):
+    """
+    Retrieve a value from configuration dict and perform substitution on it.
+
+    So, let's reimplement ConfigParser's interpolation, in a better(tm) way.
+
+    There are three main differences:
+     * Syntax. ConfigParser uses %(name)s and ddiskit historically sticks with
+       {name}.
+     * Support for cross-section references, {section.name}.
+     * It doesn't fail on exceeding of substitution depth
+
+    :param configs:         Dict of dicts containing current configuration.
+    :param key:             Key to return value for. Can be in dot-less form
+                            (in this case value of "section" parameter is used)
+                            or in the form "section.key".
+    :param section:         Section where key is resides. By default it has
+                            value "defaults", which makes retrieving
+                            arguments/defaults less verbose:
+                            config_get(configs, "arg_name")
+    :param default:         Default value which is used in case section/key is
+                            absent.
+    :param max_subst_depth: Maximum number of substitution rounds performed.
+                            Providing value of 0 in this argument allows
+                            retrieving raw value.
+    :return:                Value of the requested key (or default), with
+                            substitution performed no more than max_subst_depth
+                            times.
+    """
+    def config_subst(m):
+        """
+        Callback for performing substitution in the configuration value.
+
+        :param m: Match object, containing information about substring matching
+                  variable substitution regex.
+        :return:  Value to substitute it with: configuration value in case it
+                  exists or unchanged value in case it does not.
+        """
+        key = map(str.lower, m.group(1).split('.', 1))
+
+        if len(key) == 1:
+            if section in configs and key[0] in configs[section]:
+                return configs[section][key[0]]
+        else:
+            if key[0] in configs and key[1] in configs[key[0]]:
+                return configs[key[0]][key[1]]
+
+        return m.group(0)
+
+    if key.find(".") >= 0:
+        section, key = key.split(".", 1)
+
+    val = default
+    section = section.lower()
+    key = key.lower()
+
+    if section in configs and key in configs[section]:
+        val = configs[section][key]
+
+    if not isinstance(val, str):
+        return val
+
+    while max_subst_depth > 0:
+        max_subst_depth -= 1
+        new_val, cnt = config_var_re.subn(config_subst, val)
+
+        if cnt == 0 or new_val == val:
+            break
+
+        val = new_val
+
+    return val
+
+
+def config_set(configs, key, val, section="defaults"):
+    """
+    Set value in configuration dict.
+
+    :param configs: Dict of dicts containing current configuration.
+    :param key:     Key to change. Can be in dot-less form (in this case value
+                    of "section" parameter is used) or in the "section.key"
+                    form.
+    :param val:     New value.
+    :param section: Section where key is resides. By default it has value
+                    "defaults", which makes updating arguments/defaults less
+                    verbose: config_set(configs, "arg_name", val)
+    :return:        Updated configuration dict.
+    """
+    if key.find(".") >= 0:
+        section, key = key.split(".", 1)
+
+    section = section.lower()
+    key = key.lower()
+
+    if section not in configs:
+        configs[section] = {}
+    if key not in configs[section]:
+        configs[section][key] = val
+
+    return configs
+
+
+def config_humble_set(configs, key, val, section="spec_file"):
+    """
+    Set value in case it is not set already. Used primarily for "spec_file"
+    section.
+
+    Implemented as a wrapper around config_get()/config_set(), which makes it
+    somewhat less efficient, but not too much.
+
+    :param configs: Dict of dicts containing current configuration.
+    :param key:     Key to change. Can be in dot-less form (in this case value
+                    of "section" parameter is used) or in the "section.key"
+                    form.
+    :param val:     New value.
+    :param section: Section where key is resides. By default it has value
+                    "spec_file", which makes providing fallback values for spec
+                    file less verbose:
+                    config_humble_set(configs, "arg_name", val)
+    :return:        Updated configuration dict.
+    """
+    if config_get(configs, key, section, max_subst_depth=0) is None:
+        config_set(configs, key, val, section)
+
+    return configs
 
 
 def apply_config(data, configs):
