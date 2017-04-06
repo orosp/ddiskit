@@ -55,7 +55,7 @@ default_config = {
 
 kernel_nvr_re = r"[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}"
 kernel_z_part_re = r"(\.[0-9]{1,3})+"
-kernel_dist_re = r"\.el[0-9]"
+kernel_dist_re = r"\.el([6-9]|[1-9][0-9])"
 
 kernel_y_re = "^%s%s$" % (kernel_nvr_re, kernel_dist_re)
 kernel_z_re = "^%s%s%s$" % (kernel_nvr_re, kernel_z_part_re, kernel_dist_re)
