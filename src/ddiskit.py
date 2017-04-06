@@ -279,20 +279,25 @@ def process_configs_for_spec(configs):
     return configs
 
 
-def apply_config(data, configs):
+def apply_config(data, configs, empty_is_nil=True):
     """
     Perform spec template substitution from configuration dict.
 
     Process spec file template by replacing existing tags by strings from
-    configuration dict.
+    configuration dict. Tags which exist end evaluate to empty string are
+    replaced with %{nil}, unless empty_is_nil argument is provided with False
+    value.
 
     :param data:         Input content with tags to replace.
     :param configs:      Configuration dicttionary.
+    :param empty_is_nil: Whether to replace tags with corresponding
+                         configuration values evaluated to empty string with
+                         %{nil}.
     :return:             Replaced content.
     """
     return spec_var_re.sub(lambda m: config_get(configs, m.group(1),
-                                                "spec_file", m.group(0)),
-                           data)
+                                                "spec_file", m.group(0)) or
+                           ("%{nil}" if empty_is_nil else ""), data)
 
 
 def check_config(configs):
