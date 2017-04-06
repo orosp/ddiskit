@@ -35,7 +35,7 @@ Requires(postun):	%{sbindir}/weak-modules
 %{KERNEL_REQUIRES}
 %{MODULE_REQUIRES}
 # if there are multiple kmods for the same driver from different vendors,
-# they should coflict with each other.
+# they should conflict with each other.
 Conflicts:	kmod-%{kmod_name}
 
 %description
