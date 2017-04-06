@@ -223,12 +223,9 @@ def apply_config(data, configs):
     :return: Replaced content
     """
     # no firmware? -> remove all firmware definitions from spec file
-    if configs["spec_file"]["firmware_include"] != "True":
-        data = re.sub(re.compile(r'^%{FIRMWARE_BEGIN}.*?%{FIRMWARE_END}$',
-                      re.DOTALL | re.MULTILINE), '', data)
-    else:
-        data = data.replace("%{FIRMWARE_BEGIN}\n", "")
-        data = data.replace("%{FIRMWARE_END}\n", "")
+    have_fw = config_get(configs, "spec_file.firmware_include") == "True"
+    config_set(configs, "spec_file.firmware_begin", "%%if %d" % int(have_fw))
+    config_set(configs, "spec_file.firmware_end", "%endif")
 
     # apply configs on configs
     for section in ["global", "spec_file"]:
