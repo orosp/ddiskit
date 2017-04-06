@@ -40,6 +40,7 @@ Driver Update Disks (DUD).
 %{_sysconfdir}/bash_completion.d/ddiskit.bash
 %{_datadir}/ddiskit/templates/spec
 %{_datadir}/ddiskit/templates/config
+%{_datadir}/ddiskit/ddiskit.config
 
 %changelog
 * Tue Mar 14 2017 Petr Oros <poros@redhat.com> - 3.2-1
