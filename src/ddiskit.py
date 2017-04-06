@@ -576,11 +576,34 @@ def cmd_build_iso(args, configs):
     os.rmdir(dir_tmp)
 
 
-def parse_config(filename):
+
+def apply_args(args, configs):
     """
-    Parser for config file
-    :param filename: input file
-    :return: parsed config
+    Puts command-line args as a values of "defaults" section of configuration
+    file, so it could be used for providing defaults when specific argument
+    is not provided.
+
+    :param args:    Namespace instance containing command line arguments, as
+                    returned by argparse.ArgumentParser.parse_args()
+    :param configs: Dict of dicts of configuration values.
+    :return:        Updated configs argument
+    """
+    if "defaults" not in configs:
+        configs["defaults"] = {}
+    configs["defaults"].update([(k, v) for k, v in args.__dict__.iteritems()
+                                if v is not None])
+
+    return configs
+
+
+def parse_config(filename, args):
+    """
+    Parse configuration file.
+
+    :param filename: Path to input file.
+    :param args:     Namespace instance containing command line arguments, as
+                     returned by argparse.ArgumentParser.parse_args()
+    :return:         Resulting configuration dict.
     """
     configs = {}
     cfgparser = configparser.SafeConfigParser()
@@ -593,6 +616,9 @@ def parse_config(filename):
     except configparser.Error as err:
         print(str(err))
         sys.exit(1)
+
+    apply_args(args, configs)
+
     return configs
 
 
@@ -662,7 +688,7 @@ def parse_cli():
 def main():
     args = parse_cli()
     if args.config != "" and os.path.isfile(args.config):
-        configs = check_config(parse_config(args.config))
+        configs = check_config(parse_config(args.config, args))
         if configs is None:
             sys.exit(1)
         args.func(args, configs)
