@@ -71,11 +71,11 @@ printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --remove-modules
 %files
 %defattr(644,root,root,755)
 /lib/modules/%{kmod_kernel_version}.%(arch)
-/etc/depmod.d/%{MODULE_NAME}.conf
-/usr/share/doc/kmod-%{MODULE_NAME}/greylist.txt
+/etc/depmod.d/%{kmod_name}.conf
+/usr/share/doc/kmod-%{kmod_name}/greylist.txt
 
 %prep
-%setup -n %{MODULE_NAME}-%{MODULE_VENDOR}-%{MODULE_VERSION}
+%setup -n %{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}
 %{SOURCE_PATCHES_DO}
 set -- *
 mkdir source
