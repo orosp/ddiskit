@@ -39,7 +39,7 @@ Requires(postun):	%{sbindir}/weak-modules
 Conflicts:	kmod-%{kmod_name}
 
 %description
-%{DESCRIPTION}
+%{MODULE_DESCRIPTION_CONTENT}
 %{FIRMWARE_BEGIN}
 
 %package -n %{RPM_NAME}-firmware
@@ -48,7 +48,7 @@ Summary:	%{FIRMWARE_SUMMARY}
 Provides:	firmware(%{kmod_name}) = %{kmod_firmware_version}
 Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
 %description -n  %{RPM_NAME}-firmware
-%{FIRMWARE_DESCRIPTION}
+%{FIRMWARE_DESCRIPTION_CONTENT}
 
 %files -n %{RPM_NAME}-firmware
 %defattr(644,root,root,755)
