@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# ddiskit - Red Hat tool for create Driver Update Disk
+# ddiskit - tool for Red Hat Enterprise Linux Driver Update Disk creation
 #
 # Author: Petr Oros <poros@redhat.com>
 # Copyright (C) 2016-2017 Red Hat, Inc.

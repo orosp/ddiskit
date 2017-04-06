@@ -1,5 +1,5 @@
 %global srcname ddiskit
-%global Tool for create Driver Update Disc
+%global Tool for Red Hat Enterprise Linux Driver Update Disk creation
 
 Name:           python-%{srcname}
 Version:        3.2
