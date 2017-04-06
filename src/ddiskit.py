@@ -248,9 +248,10 @@ def apply_config(data, configs):
                         "%a %b %d %Y"))
 
     # kernel_requires
-    if re.match(kernel_y_re, configs["spec_file"]["kernel_version"]):
-        kernel_version = re.split(r'[\.-]',
-                                  configs["spec_file"]["kernel_version"])
+    kernel_ver_string = config_get(configs, "spec_file.kernel_version",
+                                   default="")
+    if re.match(kernel_y_re, kernel_ver_string):
+        kernel_version = re.split(r'[\.-]', kernel_ver_string)
         kernel_version_str = "%s.%s.%s-" % (kernel_version[0],
                                             kernel_version[1],
                                             kernel_version[2])
@@ -258,18 +259,21 @@ def apply_config(data, configs):
             (kernel_version_str, kernel_version[3], kernel_version[4])
         kernel_requires += "Requires:	kernel < %s%s.%s" % \
             (kernel_version_str, int(kernel_version[3]) + 1, kernel_version[4])
-    elif re.match(kernel_z_re, configs["spec_file"]["kernel_version"]):
-        kernel_requires = "Requires:	kernel = " + \
-            configs["spec_file"]["kernel_version"]
+    elif re.match(kernel_z_re, kernel_ver_string):
+        kernel_requires = "Requires:	kernel = " + kernel_ver_string
+
     data = data.replace("%{KERNEL_REQUIRES}", kernel_requires)
 
     # module_requires
-    if "dependencies" in configs["spec_file"] and \
-            configs["spec_file"]["dependencies"] != "":
-        module_requires = "Requires:	" + configs["spec_file"]["dependencies"]
-        data = data.replace("%{MODULE_REQUIRES}", module_requires)
+    module_dep_string = config_get(configs, "spec_file.dependencies",
+                                   default="")
+    if module_dep_string != "":
+        module_requires = "Requires:	" + module_dep_string
     else:
-        data = data.replace("%{MODULE_REQUIRES}\n", "")
+        module_requires = ""
+
+    data = data.replace("%{MODULE_REQUIRES}", module_requires)
+
     return data
 
 
