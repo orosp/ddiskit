@@ -1024,6 +1024,12 @@ def parse_cli():
                              TEMPLATE_DIR)
     root_parser.add_argument("-P", "--profile-dir",
                              help="Profiles dir (%s by default)" % PROFILE_DIR)
+    root_parser.add_argument("-d", "--dump-config", action='store_true',
+                             default=False,
+                             help="Dump derived configuration after command " +
+                                  "execution")
+    root_parser.add_argument("-o", "--dump-config-name",
+                             help="Name of config dump file")
 
     cmdparsers = root_parser.add_subparsers(title='Commands',
                                             help='main ddiskit commands')
@@ -1104,6 +1110,8 @@ def main():
         if configs is None:
             return ErrCode.CONFIG_CHECK_ERROR
         ret = args.func(args, configs)
+        if config_get(configs, "dump_config"):
+            ret = ret or cmd_dump_config(args, configs)
     else:
         ret = args.func(args, parse_config(None, args, default_config))
 
