@@ -160,7 +160,7 @@ def check_config(configs):
         print("Unrecoverable FAIL, please check your config file and run " +
               "ddiskit again.")
         return None
-    print("Config check ... done")
+    print("Config check ... OK")
     return configs
 
 
