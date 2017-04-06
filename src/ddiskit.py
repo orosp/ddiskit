@@ -204,10 +204,8 @@ def cmd_prepare_sources(args, configs):
         else:
             with open('/usr/share/ddiskit/templates/config', 'r') as fin:
                 read_data = fin.read()
-            fin.close()
-            fout = open(args.config, 'w+')
-            fout.write(read_data)
-            fout.close()
+                with open(args.config, 'w+') as fout:
+                    fout.write(read_data)
             print("OK")
     except IOError as err:
         print(str(err))
@@ -254,7 +252,6 @@ def cmd_generate_spec(args, configs):
     try:
         with open('/usr/share/ddiskit/templates/spec', 'r') as fin:
             read_data = fin.read()
-            fin.close()
     except IOError as err:
         print(str(err))
         sys.exit(1)
@@ -329,7 +326,6 @@ def cmd_generate_spec(args, configs):
     try:
         with open(spec_path, 'w') as fout:
             fout.write(read_data)
-            fout.close()
     except IOError as err:
         print(str(err))
     else:
@@ -547,7 +543,6 @@ def cmd_build_iso(args, configs):
     try:
         with open(dir_tmp + "/disk/rhdd3", 'w') as fout:
             fout.write("Driver Update Disk version 3")
-            fout.close()
     except IOError as err:
         print(str(err))
 
