@@ -1,0 +1,5 @@
+[spec_file]
+description_suffix =
+	This RPM has been provided by Red Hat for testing purposes only and is
+	NOT supported for any other use. This RPM should NOT be deployed for
+	purposes other than testing and debugging.

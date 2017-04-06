@@ -1,6 +1,8 @@
 include ddiskit.bash
 include ddiskit.config
 include profiles/default
+include profiles/rh-release
+include profiles/rh-testing
 include templates/spec
 include templates/config
 include COPYING

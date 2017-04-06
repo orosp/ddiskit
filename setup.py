@@ -16,6 +16,8 @@ setup(
                 ('/usr/share/ddiskit/templates',
                     ['templates/spec', 'templates/config']),
                 ('/usr/share/ddiskit/profiles', ['profiles/default']),
+                ('/usr/share/ddiskit/profiles',
+                    ['profiles/rh-testing', 'profiles/rh-release']),
                 ('/usr/share/ddiskit', ['ddiskit.config']),
                 ],
     entry_points={
