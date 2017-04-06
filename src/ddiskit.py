@@ -234,7 +234,7 @@ def cmd_prepare_sources(args, configs):
         print(str(err))
     else:
         print("OK")
-    print("Your module source code put in src directory.")
+    print("Put your module source code in src directory.")
 
 
 def cmd_generate_spec(args, configs):
