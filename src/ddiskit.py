@@ -775,16 +775,16 @@ def apply_config_file(filename, configs={}):
     return (configs, res)
 
 
-def parse_config(filename, args):
+def parse_config(filename, args, configs={}):
     """
     Parse configuration file.
 
     :param filename: Path to input file.
     :param args:     Namespace instance containing command line arguments, as
                      returned by argparse.ArgumentParser.parse_args()
+    :param configs:  Pre-existing configuration dict.
     :return:         Resulting configuration dict.
     """
-    configs = {}
 
     ret = apply_config_file(filename, configs)[1]
     if ret is None or len(ret) == 0:
