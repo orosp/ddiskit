@@ -734,6 +734,35 @@ def apply_args(args, configs):
     return configs
 
 
+def apply_config_file(filename, configs={}):
+    """
+    Read configuration file and apply it to a configuration dict.
+
+    Ignores sections and keys containing dot as it breaks config_get/config_set
+    (and we do not use such section/key names anyway).
+
+    :param filename: Path to configuration file.
+    :param configs:  Configuration dict to merge configuration file contents
+                     into.
+    :return:         Tuple containing updated configs value (useful in case no
+                     starting configuration has been provided) and reading
+                     result (None in case of configparser errors and result of
+                     cfgparser.read() otherwise).
+    """
+    cfgparser = configparser.RawConfigParser()
+
+    res = cfgparser.read(filename)
+
+    try:
+        for section in cfgparser.sections():
+            configs[section] = dict(cfgparser.items(section))
+    except configparser.Error as err:
+        print(str(err))
+        return (configs, None)
+
+    return (configs, res)
+
+
 def parse_config(filename, args):
     """
     Parse configuration file.
@@ -744,16 +773,11 @@ def parse_config(filename, args):
     :return:         Resulting configuration dict.
     """
     configs = {}
-    cfgparser = configparser.SafeConfigParser()
-    if len(cfgparser.read(filename)) == 0:
+
+    ret = apply_config_file(filename, configs)[1]
+    if ret is None or len(ret) == 0:
         print("Config file: " + filename + " not found")
-        sys.exit(1)
-    try:
-        for section in cfgparser.sections():
-            configs[section] = dict(cfgparser.items(section))
-    except configparser.Error as err:
-        print(str(err))
-        sys.exit(1)
+        return None
 
     apply_args(args, configs)
 
@@ -826,7 +850,10 @@ def parse_cli():
 def main():
     args = parse_cli()
     if args.config != "" and os.path.isfile(args.config):
-        configs = check_config(parse_config(args.config, args))
+        configs = parse_config(args.config, args)
+        if configs is None:
+            sys.exit(1)
+        configs = check_config(configs)
         if configs is None:
             sys.exit(1)
         args.func(args, configs)
