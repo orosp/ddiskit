@@ -60,7 +60,7 @@ def apply_config(data, configs):
     :param configs: configs readed from cfg file
     :return: Replaced content
     """
-    # no firmware? -> remove all firmware defintions from spec file
+    # no firmware? -> remove all firmware definitions from spec file
     if configs["spec_file"]["firmware_include"] != "True":
         data = re.sub(re.compile(r'^%{FIRMWARE_BEGIN}.*?%{FIRMWARE_END}$',
                       re.DOTALL | re.MULTILINE), '', data)
