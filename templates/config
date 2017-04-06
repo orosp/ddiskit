@@ -3,11 +3,11 @@
 ##
 [global]
 ## Driver Update Disc Vendor
-module_vendor = ENTER_VENDOR_NAME
+# module_vendor = ENTER_VENDOR_NAME
 ## Driver Update Disc Author
-module_author = ENTER_AUTHOR
+# module_author = ENTER_AUTHOR
 ## Driver Update Disc email
-module_author_email = ENTER_AUTHOR_EMAIL
+# module_author_email = ENTER_AUTHOR_EMAIL
 ## Include SRPM files into final ISO
 include_srpm = True
 
@@ -19,7 +19,7 @@ include_srpm = True
 module_name = ENTER_MODULE_NAME
 ## rpm file name expression. Can use any variable from this config file
 ## WARNING: don't change rpm_name if you are not sure what are you doing!
-rpm_name = kmod-{module_vendor}-{module_name}
+# rpm_name = kmod-{global.module_vendor}-{module_name}
 ## module_version
 module_version = ENTER_MODULE_VERSION
 ## rpm_release_version
@@ -36,11 +36,11 @@ kernel_arch = x86_64 ppc64 ppc64le
 ## when creating DUD with firmware, dependency will by added automatically
 dependencies = 
 ## module summary in spec file
-summary = {module_name} module for Driver Update Program
+# summary = {module_name} module for Driver Update Program
 ## module description in spec file
-description = {module_name} module for Driver Update Program
+# description = {module_name} module for Driver Update Program
 ## optional: upstream commit from which the code was taken
-git_hash = ENTER_GIT_HASH
+# git_hash = ENTER_GIT_HASH
 
 ##
 ## firmware section
@@ -56,6 +56,6 @@ firmware_include = False
 ## firmware package version
 firmware_version = ENTER_FIRMWARE_VERSION
 ## firmware summary in spec file
-firmware_summary = {module_name} firmware for Driver Update Program
+# firmware_summary = {module_name} firmware for Driver Update Program
 ## module description in spec file
-firmware_description = {module_name} firmware for Driver Update Program
+# firmware_description = {module_name} firmware for Driver Update Program
