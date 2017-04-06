@@ -45,7 +45,12 @@ default_config = {
         "profile_dir": PROFILE_DIR,
         "config_template": CONFIG_TEMPLATE,
         "spec_template": SPEC_TEMPLATE,
-        }
+        },
+    "global": {
+        "module_vendor": "ENTER_MODULE_VENDOR",
+        "module_author": "ENTER_MODULE_AUTHOR",
+        "module_author_email": "ENTER_MODULE_AUTHOR_EMAIL",
+        },
     }
 
 kernel_nvr_re = r"[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}"
