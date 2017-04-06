@@ -898,6 +898,32 @@ def parse_config(filename, args, configs={}):
     return configs
 
 
+def cmd_dump_config(args, configs):
+    filename = config_get(configs, "dump_config_name",
+                          default=config_get(configs, "config") + ".generated")
+    cfgparser = configparser.RawConfigParser()
+
+    for s_name, section in configs.iteritems():
+        cfgparser.add_section(s_name)
+
+        for i_name, item in section.iteritems():
+            if s_name == "defaults" and i_name == "func":
+                continue
+            cfgparser.set(s_name, i_name, item)
+
+    print("Dumping config ... ", end="")
+
+    try:
+        with open(filename, "w") as f:
+            cfgparser.write(f)
+            print("OK")
+    except IOError as err:
+        print("Failed")
+        print(str(err))
+
+    return 0
+
+
 def parse_cli():
     """
     Commandline argument parser
@@ -966,6 +992,15 @@ def parse_cli():
                                   help="RPM list, separated by space and " +
                                   "can use directory path")
     parser_build_iso.set_defaults(func=cmd_build_iso)
+
+    parser_dump_config = cmdparsers.add_parser('dump_config',
+                                               help='Dump derived ' +
+                                                    'configuration')
+    parser_dump_config.add_argument("-c", "--config", default='module.config',
+                                    help="(Input) config file")
+    parser_dump_config.add_argument("-o", "--dump-config-name",
+                                    help="Name of config dump file")
+    parser_dump_config.set_defaults(func=cmd_dump_config)
 
     args = root_parser.parse_args()
     if not hasattr(args, "func"):
