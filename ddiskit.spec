@@ -16,7 +16,8 @@ BuildRequires:  python-setuptools
 Requires:       kernel-devel redhat-rpm-config kmod createrepo genisoimage
 
 %description -n python-%{srcname}
-Ddiskit is a little framework for easy creating proper Driver Update Disc.
+Ddiskit is a little framework for simplifying creation of proper
+Driver Update Disks (DUD).
 
 %prep
 %autosetup -n %{srcname}-%{version}
