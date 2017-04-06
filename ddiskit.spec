@@ -42,10 +42,10 @@ Ddiskit is a little framework for easy creating proper Driver Update Disc.
 
 %changelog
 * Tue Mar 14 2017 Petr Oros <poros@redhat.com> - 3.2-1
-- New upstream relese
+- New upstream release
 
 * Tue Feb 28 2017 Petr Oros <poros@redhat.com> - 3.1-1
-- New upstream relese
+- New upstream release
 
 * Mon Feb 13 2017 Petr Oros <poros@redhat.com> - 3.0-2
 - Bump version after few important fixes
