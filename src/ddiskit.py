@@ -816,10 +816,11 @@ def cmd_build_iso(args, configs):
         except TypeError:
             args.isofile = "dd.iso"
 
-    command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8', '-R',
-             '-uid', '0', '-gid', '0', '-dir-mode', '0555',
-             '-file-mode', '0444', '-o', args.isofile, dir_tmp + '/disk'],
-            args, res_print_lvl=0, capture_output=False)
+    ret, _ = command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8',
+                      '-R', '-uid', '0', '-gid', '0', '-dir-mode', '0555',
+                      '-file-mode', '0444', '-o',
+                      args.isofile, dir_tmp + '/disk'],
+                     args, res_print_lvl=0, capture_output=False)
     os.umask(saved_umask)
 
     for root, dirs, files in os.walk(dir_tmp, topdown=False):
@@ -829,6 +830,10 @@ def cmd_build_iso(args, configs):
             os.rmdir(os.path.join(root, cdir))
     os.rmdir(dir_tmp)
 
+    if ret or args.verbosity >= 1:
+        print("ISO creation ... %s" % ("Failed" if ret else "OK"))
+
+    return ret
 
 
 def apply_args(args, configs):
