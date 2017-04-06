@@ -25,6 +25,12 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
+RES_DIR = "/usr/share/ddiskit/"
+
+DEFAULT_CFG = "ddiskit.config"
+SYSTEM_CFG = "/etc/ddiskit.config"
+USER_CFG = "~/.ddiskitrc"
+
 kernel_nvr_re = r"[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}"
 kernel_z_part_re = r"(\.[0-9]{1,3})+"
 kernel_dist_re = r"\.el[0-9]"
@@ -779,17 +785,33 @@ def parse_config(filename, args, configs={}):
     """
     Parse configuration file.
 
+    Returns configuration dict based on the supplied config filename, command
+    line arguments, and default configuration dict.
+
+    It merges default, system, user, and module configs, and provide
+    resulting configuration dictionary.
+
     :param filename: Path to input file.
     :param args:     Namespace instance containing command line arguments, as
                      returned by argparse.ArgumentParser.parse_args()
     :param configs:  Pre-existing configuration dict.
     :return:         Resulting configuration dict.
     """
+    implicit_configs = [
+        os.path.join(config_get(configs, "res_dir", default=RES_DIR),
+                     DEFAULT_CFG),
+        SYSTEM_CFG,
+        os.path.expanduser(USER_CFG),
+        ]
 
-    ret = apply_config_file(filename, configs)[1]
-    if ret is None or len(ret) == 0:
-        print("Config file: " + filename + " not found")
-        return None
+    for cfg in implicit_configs:
+        apply_config_file(cfg, configs)
+
+    if filename is not None:
+        ret = apply_config_file(filename, configs)[1]
+        if ret is None or len(ret) == 0:
+            print("Config file: " + filename + " not found")
+            return None
 
     apply_args(args, configs)
 
@@ -870,7 +892,7 @@ def main():
             sys.exit(1)
         args.func(args, configs)
     else:
-        args.func(args, None)
+        args.func(args, parse_config(None, args, default_config))
 
 
 if __name__ == "__main__":
