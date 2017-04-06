@@ -26,7 +26,7 @@ module_version = ENTER_MODULE_VERSION
 module_rpm_release = 1
 ## rpm_dist
 rpm_dist = ENTER_DIST_TAG
-## module build dir
+## module build dir (drivers/infinibnd/hfi1, for example)
 module_build_dir = ENTER_BUILD_DIR
 ## target kernel version
 kernel_version = ENTER_KERNEL_VERSION
