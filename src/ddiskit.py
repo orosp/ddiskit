@@ -983,6 +983,8 @@ def main():
         configs = parse_config(args.config, args, default_config)
         if configs is None:
             sys.exit(1)
+        if (args.verbosity >= 2):
+            print("Config: %r" % configs)
         configs = check_config(configs)
         if configs is None:
             sys.exit(1)
