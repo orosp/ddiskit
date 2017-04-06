@@ -459,10 +459,10 @@ def cmd_build_rpm(args, configs):
         else:
             do_build_rpm(args, configs, build_arch)
     else:
-        do_build_srpm(args, configs)
         if not args.srpm:
             print("Because you are not on target architecture, " +
                   "building only SRPM")
+        do_build_srpm(args, configs)
 
 
 def cmd_build_iso(args, configs):
