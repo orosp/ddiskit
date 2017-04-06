@@ -25,6 +25,36 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
+
+class ErrCode:
+    """
+    List of possible error codes. Can be converted to enumeration at some
+    point.
+
+    These are intended to be used as exit codes, so please keep them in the
+    0..63 range.
+
+    For now, exit code space is divided as follows:
+     * 1..15 - generic/logic error
+     * 32..47 - I/O errors
+    """
+
+    SUCCESS = 0
+
+    GENERIC_ERROR = 1
+    ARGS_PARSE_ERROR = 2
+    CONFIG_CHECK_ERROR = 3
+
+    GENERIC_IO_ERROR = 32
+    CONFIG_READ_ERROR = 34
+    CONFIG_WRITE_ERROR = 35
+    SPEC_TEMPLATE_READ_ERROR = 36
+    SPEC_READ_ERROR = 38
+    SPEC_WRITE_ERROR = 39
+    SOURCE_ARCHIVE_WRITE_ERROR = 41
+    MAKEFILE_NOT_FOUND = 42
+    DD_ID_WRITE_ERROR = 45
+
 RES_DIR = "/usr/share/ddiskit/"
 TEMPLATE_DIR = "{res_dir}/templates"
 PROFILE_DIR = "{res_dir}/profiles"
@@ -407,7 +437,7 @@ def do_build_rpm(args, configs, arch):
            "--define", "_topdir " + os.getcwd() + "/rpm",
            "-ba", "rpm/SPECS/%s.spec" % configs["spec_file"]["module_name"]]
 
-    command(cmd, args, capture_output=False)
+    return command(cmd, args, capture_output=False)[0]
 
 
 def do_build_srpm(args, configs):
@@ -420,7 +450,7 @@ def do_build_srpm(args, configs):
     cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
            "-bs", "rpm/SPECS/%s.spec" % configs["spec_file"]["module_name"]]
 
-    command(cmd, args, capture_output=False)
+    return command(cmd, args, capture_output=False)[0]
 
 
 def create_dirs(dir_list, caption=None):
@@ -473,7 +503,7 @@ def cmd_prepare_sources(args, configs):
             print("OK")
     except IOError as err:
         print(str(err))
-        sys.exit(1)
+        return ErrCode.CONFIG_WRITE_ERROR
 
     create_dirs(["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS",
                  "rpm/SOURCES", "rpm/SPECS", "rpm/SRPMS"],
@@ -482,6 +512,8 @@ def cmd_prepare_sources(args, configs):
                 "Creating directory structure for source code")
 
     print("Put your module source code in src directory.")
+
+    return ErrCode.SUCCESS
 
 
 def cmd_generate_spec(args, configs):
@@ -493,7 +525,7 @@ def cmd_generate_spec(args, configs):
     if configs is None or len(configs) == 0:
         print(args.config, end="")
         print(" not found, use \"ddiskit prepare_sources\" to create it")
-        sys.exit(1)
+        return ErrCode.CONFIG_READ_ERROR
 
     spec_path = "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
     if os.path.isfile(spec_path):
@@ -506,7 +538,7 @@ def cmd_generate_spec(args, configs):
             read_data = fin.read()
     except IOError as err:
         print(str(err))
-        sys.exit(1)
+        return ErrCode.SPEC_TEMPLATE_READ_ERROR
 
     cwd = os.getcwd()
 
@@ -582,8 +614,11 @@ def cmd_generate_spec(args, configs):
             fout.write(read_data)
     except IOError as err:
         print(str(err))
-    else:
-        print("OK")
+        return ErrCode.SPEC_WRITE_ERROR
+
+    print("OK")
+
+    return ErrCode.SUCCESS
 
 
 def filter_tar_info(args, nvv):
@@ -632,7 +667,7 @@ def cmd_build_rpm(args, configs):
     if configs is None or len(configs) == 0:
         print(args.config, end="")
         print(" not found, use \"ddiskit prepare_sources\" for create")
-        sys.exit(1)
+        return ErrCode.CONFIG_READ_ERROR
 
     # check Makefile
     saved_root = ""
@@ -648,7 +683,7 @@ def cmd_build_rpm(args, configs):
     if not makefile_found:
         print("Makefile not found -> Please create one in " + src_root +
               saved_root)
-        sys.exit(1)
+        return ErrCode.MAKEFILE_NOT_FOUND
     else:
         print("Checking makefile ... OK")
 
@@ -684,6 +719,7 @@ def cmd_build_rpm(args, configs):
         tar.close()
     except Exception as err:
         print(str(err))
+        return ErrCode.SOURCE_ARCHIVE_WRITE_ERROR
     else:
         if not warning:
             print("Finish writing archive.")
@@ -709,14 +745,14 @@ def cmd_build_rpm(args, configs):
         if not os.path.isdir(kernel_dir):
             print("WARNING: kernel source code not found: %s" % kernel_dir)
             print("         Building SRPM only")
-            do_build_srpm(args, configs)
+            return do_build_srpm(args, configs)
         else:
-            do_build_rpm(args, configs, build_arch)
+            return do_build_rpm(args, configs, build_arch)
     else:
         if not args.srpm:
             print("Because you are not on target architecture, " +
                   "building only SRPM")
-        do_build_srpm(args, configs)
+        return do_build_srpm(args, configs)
 
 
 def cmd_build_iso(args, configs):
@@ -804,6 +840,7 @@ def cmd_build_iso(args, configs):
             fout.write("Driver Update Disk version 3")
     except IOError as err:
         print(str(err))
+        return ErrCode.DD_ID_WRITE_ERROR
 
     if args.isofile is None:
         # Try to use info from config for constructing file name
@@ -965,7 +1002,7 @@ def cmd_dump_config(args, configs):
         print("Failed")
         print(str(err))
 
-    return 0
+    return ErrCode.SUCCESS
 
 
 def parse_cli():
@@ -1049,25 +1086,28 @@ def parse_cli():
     args = root_parser.parse_args()
     if not hasattr(args, "func"):
         root_parser.print_help()
-        sys.exit(1)
+        return None
     return args
 
 
 def main():
     args = parse_cli()
+    if args is None:
+        return ErrCode.ARGS_PARSE_ERROR
     if args.config != "" and os.path.isfile(args.config):
         configs = parse_config(args.config, args, default_config)
         if configs is None:
-            sys.exit(1)
+            return ErrCode.CONFIG_READ_ERROR
         if (args.verbosity >= 2):
             print("Config: %r" % configs)
         configs = check_config(configs)
         if configs is None:
-            sys.exit(1)
-        args.func(args, configs)
+            return ErrCode.CONFIG_CHECK_ERROR
+        ret = args.func(args, configs)
     else:
-        args.func(args, parse_config(None, args, default_config))
+        ret = args.func(args, parse_config(None, args, default_config))
 
+    return ret
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
