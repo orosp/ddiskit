@@ -312,6 +312,52 @@ def check_config(configs):
     return configs
 
 
+def get_config_name(cfg, extension=".cfg"):
+    """
+    Get config name based on provided config option. Uses the following
+    heuristic (based on the one used in mock): if config options ends with
+    config file extension, this is path to file (and then dirname and extension
+    should be stripped), otherwise it is config name. In order to be cautious,
+    it leaves only base name first in any case.
+
+    :param cfg: Config name passed as the command-line argument
+    :param extension: Configuration file extension
+    """
+    cfg = os.path.basename(cfg)
+    if extension != "" and cfg.endswith(extension):
+        cfg = cfg[:-len(extension)]
+
+    return cfg
+
+
+def get_config_path(cfg, default_dir=".", rel_dir=".", extension=".cfg"):
+    """
+    Get path to config based on provided configuration "name".
+
+    It uses the following heuristic: if configuration name does not have
+    slashes and does not end with expected extension (or this extension is
+    empty) then it is considered that this name refers to the file in "default
+    directory", otherwise it is interpreted as a path to file (relative to some
+    path provided in rel_dir).
+
+    :param cfg:         Configuration file name.
+    :param default_dir: Default directory for these configuration files.
+    :param rel_dir:     Path configuration file should be relative to in case
+                        path provided instead of name.
+    :param extension:   Expected configuration file extension.
+    :return:            Path to the configuration file.
+    """
+    if "/" not in cfg and (extension == "" or not cfg.endswith(extension)):
+        cfg = os.path.basename(cfg)
+        cfg = os.path.join(default_dir, cfg + extension)
+    else:
+        cfg = os.path.join(rel_dir, cfg)
+
+    cfg = os.path.normpath(cfg)
+
+    return cfg
+
+
 def do_build_rpm(args, configs, arch):
     """
     Second stage for build rpm
