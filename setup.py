@@ -15,6 +15,7 @@ setup(
     data_files=[('/etc/bash_completion.d', ['ddiskit.bash']),
                 ('/usr/share/ddiskit/templates',
                     ['templates/spec', 'templates/config']),
+                ('/usr/share/ddiskit/profiles', ['profiles/default']),
                 ('/usr/share/ddiskit', ['ddiskit.config']),
                 ],
     entry_points={
