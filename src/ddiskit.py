@@ -116,8 +116,8 @@ def apply_config(data, configs):
 
 def check_config(configs):
     """
-    Check config and repair non-critic fails
-    :param configs: config for check
+    Check config and repair non-critical mistakes.
+    :param configs: config to check
     :return: Fixed config or None
     """
     config_critic = False
