@@ -61,6 +61,7 @@ kernel_y_re = "^%s%s$" % (kernel_nvr_re, kernel_dist_re)
 kernel_z_re = "^%s%s%s$" % (kernel_nvr_re, kernel_z_part_re, kernel_dist_re)
 
 config_var_re = re.compile(r"{([^{}]*)}")
+spec_var_re = re.compile(r"%{([^{}]*)}")
 
 
 def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2, capture_output=True):
@@ -215,37 +216,38 @@ def config_humble_set(configs, key, val, section="spec_file"):
     return configs
 
 
-def apply_config(data, configs):
+def process_configs_for_spec(configs):
     """
-    Replace prepared tags by strings from config
-    :param data: input content with tags for replace
-    :param configs: configs readed from cfg file
-    :return: Replaced content
+    Process configuration before spec file generation.
+
+    This is a set of hacks which make applying configuration to spec file
+    template a uniform process. More specifically, it does two sets of
+    configuration changes:
+     * Ones that always overwrite existing values. Currently, this is done only
+       for spec_file.firmware_begin/spec_file.firmware end configuration
+       variables, which are set based on the value of the
+       spec_file.firmware_include configuration variable, which determines
+       whether firmware should be packaged.
+     * Ones that do not change existing values: generation of spec_file.date,
+       spec_file.kernel_requires, spec_file.module_requires.
+
+    The fact that most variables are overwritten only in case they are not have
+    been set previously allows performing reproducible builds based on
+    pre-created configuration dump file (changes in spec template not
+    withstanding).
+
+    :param configs: Configuration dict to process.
+    :return:        Updated configuration dict.
     """
     # no firmware? -> remove all firmware definitions from spec file
     have_fw = config_get(configs, "spec_file.firmware_include") == "True"
     config_set(configs, "spec_file.firmware_begin", "%%if %d" % int(have_fw))
     config_set(configs, "spec_file.firmware_end", "%endif")
 
-    # apply configs on configs
-    for section in ["global", "spec_file"]:
-        for key in configs[section]:
-            for section2 in ["global", "spec_file"]:
-                for key2 in configs[section2]:
-                    configs[section2][key2] = \
-                        configs[section2][key2].replace("{" + key + "}",
-                                                        configs[section][key])
-
-    # apply all configs on specfile template
-    for section in ["global", "spec_file"]:
-        for key in configs[section]:
-            data = data.replace("%{" + key.upper() + "}",
-                                configs[section][key])
-
     # generic keys code
     # date of creation
-    data = data.replace("%{DATE}", datetime.__format__(datetime.now(),
-                        "%a %b %d %Y"))
+    config_humble_set(configs, "date",
+                      datetime.__format__(datetime.now(), "%a %b %d %Y"))
 
     # kernel_requires
     kernel_ver_string = config_get(configs, "spec_file.kernel_version",
@@ -262,7 +264,7 @@ def apply_config(data, configs):
     elif re.match(kernel_z_re, kernel_ver_string):
         kernel_requires = "Requires:	kernel = " + kernel_ver_string
 
-    data = data.replace("%{KERNEL_REQUIRES}", kernel_requires)
+    config_humble_set(configs, "kernel_requires", kernel_requires)
 
     # module_requires
     module_dep_string = config_get(configs, "spec_file.dependencies",
@@ -272,9 +274,25 @@ def apply_config(data, configs):
     else:
         module_requires = ""
 
-    data = data.replace("%{MODULE_REQUIRES}", module_requires)
+    config_humble_set(configs, "module_requires", module_requires)
 
-    return data
+    return configs
+
+
+def apply_config(data, configs):
+    """
+    Perform spec template substitution from configuration dict.
+
+    Process spec file template by replacing existing tags by strings from
+    configuration dict.
+
+    :param data:         Input content with tags to replace.
+    :param configs:      Configuration dicttionary.
+    :return:             Replaced content.
+    """
+    return spec_var_re.sub(lambda m: config_get(configs, m.group(1),
+                                                "spec_file", m.group(0)),
+                           data)
 
 
 def check_config(configs):
@@ -535,6 +553,8 @@ def cmd_generate_spec(args, configs):
               "this system")
         print("         For fix install kernel-devel-" +
               configs["spec_file"]["kernel_version"] + " package")
+
+    process_configs_for_spec(configs)
 
     read_data = apply_config(read_data, configs)
     print("Writing spec into %s ... " % spec_path, end="")
