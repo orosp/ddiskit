@@ -46,11 +46,15 @@ def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2, capture_output=True):
         stdout=PIPE if capture_output else None
     )
     result = process.communicate()[0]
+    ret = process.returncode
     if capture_output:
         result = result.decode()
-    if args.verbosity >= res_print_lvl and capture_output:
-        print(result)
-    return result
+    if args.verbosity >= res_print_lvl:
+        if capture_output:
+            print(result)
+        if args.verbosity >= cmd_print_lvl:
+            print("  Return code:", ret)
+    return (ret, result)
 
 
 def apply_config(data, configs):
@@ -476,8 +480,8 @@ def cmd_build_iso(args, configs):
     for content in args.filelist:
         try:
             if os.path.isfile(content):
-                arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p',
-                                str(content)], args)
+                ret, arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p',
+                                    str(content)], args)
                 if arch not in arch_list:
                     arch_list.append(arch)
                     rpm_files.append(str(content))
@@ -499,9 +503,10 @@ def cmd_build_iso(args, configs):
                                   str(root) + "/" + str(file))
                         else:
                             print("Including: " + str(root) + "/" + str(file))
-                            arch = command(['rpm', '-q', '--qf', '%{ARCH}',
-                                            '-p', str(root) + "/" + str(file)],
-                                           args)
+                            ret, arch = command(['rpm', '-q', '--qf',
+                                                 '%{ARCH}', '-p',
+                                                 str(root) + "/" + str(file)],
+                                                args)
                             arch = re.sub(re.compile(r'i[0-9]86',
                                           re.IGNORECASE), 'i386', arch)
                             if arch not in arch_list:
