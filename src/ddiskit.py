@@ -755,7 +755,19 @@ def apply_config_file(filename, configs={}):
 
     try:
         for section in cfgparser.sections():
-            configs[section] = dict(cfgparser.items(section))
+            if "." in section:
+                print("WARNING: section \"%s\" (config file \"%s\") contains" +
+                      " dot in its name, ignored." % (section, filename))
+                continue
+            if section not in configs:
+                configs[section] = {}
+            for key, val in cfgparser.items(section):
+                if "." in key:
+                    print("WARNING: key \"%s\" in section \"%s\" (config " +
+                          "file \"%s\") contains dot in its name, ignored." %
+                          (key, section, filename))
+                    continue
+                configs[section][key] = val
     except configparser.Error as err:
         print(str(err))
         return (configs, None)
