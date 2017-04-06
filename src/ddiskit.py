@@ -31,6 +31,14 @@ DEFAULT_CFG = "ddiskit.config"
 SYSTEM_CFG = "/etc/ddiskit.config"
 USER_CFG = "~/.ddiskitrc"
 
+# Default configuration, put here values which can be overwritten by anything,
+# but should be defined somewhere.
+default_config = {
+    "defaults": {
+        "res_dir": RES_DIR,
+        }
+    }
+
 kernel_nvr_re = r"[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}"
 kernel_z_part_re = r"(\.[0-9]{1,3})+"
 kernel_dist_re = r"\.el[0-9]"
@@ -884,7 +892,7 @@ def parse_cli():
 def main():
     args = parse_cli()
     if args.config != "" and os.path.isfile(args.config):
-        configs = parse_config(args.config, args)
+        configs = parse_config(args.config, args, default_config)
         if configs is None:
             sys.exit(1)
         configs = check_config(configs)
