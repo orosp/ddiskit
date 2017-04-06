@@ -245,7 +245,7 @@ def cmd_generate_spec(args, configs):
     """
     if configs is None or len(configs) == 0:
         print(args.config, end="")
-        print(" not found, use \"ddiskit prepare_sources\" for create")
+        print(" not found, use \"ddiskit prepare_sources\" to create it")
         sys.exit(1)
 
     spec_path = "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
