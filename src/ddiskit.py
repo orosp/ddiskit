@@ -423,6 +423,35 @@ def do_build_srpm(args, configs):
     command(cmd, args, capture_output=False)
 
 
+def create_dirs(dir_list, caption=None):
+    """
+    Try to create supplied list of directories, return information whether it
+    was successful or there were errors.
+
+    :param dir_list: List of directories to create
+    :param caption:  Caption to print during the directory creation process.
+                     If None, nothing is printed.
+    :return:         True if there were no errors, otherwise False.
+    """
+    if caption is not None:
+        print(caption, end=" ... ")
+
+    dir_creation_ok = True
+    for dirs in dir_list:
+        try:
+            if not os.path.exists(dirs):
+                os.makedirs(dirs)
+        except OSError as err:
+            if caption is not None and dir_creation_ok:
+                print("")
+            print(str(err))
+            dir_creation_ok = False
+    if caption is not None and dir_creation_ok:
+        print("OK")
+
+    return dir_creation_ok
+
+
 def cmd_prepare_sources(args, configs):
     """
     CMD prepare_sources callback
@@ -446,27 +475,12 @@ def cmd_prepare_sources(args, configs):
         print(str(err))
         sys.exit(1)
 
-    print("Creating directory structure for RPM build ... ", end="")
-    dir_list = ["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS", "rpm/SOURCES",
-                "rpm/SPECS", "rpm/SRPMS"]
-    try:
-        for dirs in dir_list:
-            if not os.path.exists(dirs):
-                os.makedirs(dirs)
-    except OSError as err:
-        print(str(err))
-    else:
-        print("OK")
-    print("Creating directory for source code ... ", end="")
-    dir_list = ["src", "src/patches", "src/firmware"]
-    try:
-        for dirs in dir_list:
-            if not os.path.exists(dirs):
-                os.makedirs(dirs)
-    except OSError as err:
-        print(str(err))
-    else:
-        print("OK")
+    create_dirs(["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS",
+                 "rpm/SOURCES", "rpm/SPECS", "rpm/SRPMS"],
+                "Creating directory structure for RPM build")
+    create_dirs(["src", "src/patches", "src/firmware"],
+                "Creating directory structure for source code")
+
     print("Put your module source code in src directory.")
 
 
@@ -761,17 +775,13 @@ def cmd_build_iso(args, configs):
 
     dir_tmp = tempfile.mkdtemp()
     saved_umask = os.umask(0o077)
-    tmp_dirs = ["disk", "disk/rpms", "disk/src"]
-    try:
-        for dirs in tmp_dirs:
-            if not os.path.exists(dir_tmp + "/" + dirs):
-                os.makedirs(dir_tmp + "/" + dirs)
-    except OSError as err:
-        print(str(err))
+    cwd = os.getcwd()
+    os.chdir(dir_tmp)
+    create_dirs(["disk", "disk/rpms", "disk/src"] +
+                [os.path.join("disk/rpms", a) for a in arch_list],
+                "Creating ISO directory structure")
 
-    for arch in arch_list:
-        if not os.path.exists(dir_tmp + "/disk/rpms/" + arch):
-            os.makedirs(dir_tmp + "/disk/rpms/" + arch)
+    os.chdir(cwd)
 
     for file in rpm_files:
         if ".src." in file:
