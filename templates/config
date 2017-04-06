@@ -14,7 +14,7 @@ include_srpm = True
 # kernel module name
 module_name = ENTER_MODULE_NAME
 # rpm file name expression. Can use any variable from this config file
-# WARNING: don't change rpm_name if you are not sure what are you do!!
+# WARNING: don't change rpm_name if you are not sure what are you doing!
 rpm_name = kmod-{module_vendor}-{module_name}
 # module_version
 module_version = ENTER_MODULE_VERSION
