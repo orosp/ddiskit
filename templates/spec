@@ -1,5 +1,5 @@
 %define kmod_name		%{MODULE_NAME}
-%define kmod_vendor		%{MODULE_VENDOR}
+%define kmod_vendor		%{GLOBAL.MODULE_VENDOR}
 %define kmod_driver_version	%{MODULE_VERSION}
 %define kmod_rpm_release	%{MODULE_RPM_RELEASE}
 %define kmod_kernel_version	%{KERNEL_VERSION}
@@ -128,6 +128,6 @@ install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
-* %{DATE} %{MODULE_AUTHOR} <%{MODULE_AUTHOR_EMAIL}> %{MODULE_VERSION}
+* %{DATE} %{GLOBAL.MODULE_AUTHOR} <%{GLOBAL.MODULE_AUTHOR_EMAIL}> %{MODULE_VERSION}
 - %{GIT_HASH}
 - %{SUMMARY}
