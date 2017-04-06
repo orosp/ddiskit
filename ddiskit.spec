@@ -6,7 +6,7 @@ Version:        3.2
 Release:        1%{?dist}
 Summary:        %{sum}
 
-License:        GPLv2
+License:        GPLv3
 URL:            %{srcname}
 Source0:        %{srcname}-%{version}.tar.gz
 

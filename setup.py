@@ -8,7 +8,7 @@ setup(
     author="Petr Oros",
     author_email="poros@redhat.com",
     description=("Red Hat tool for create Driver Update Disk"),
-    license="GPLv2+",
+    license="GPLv3",
     url="http://git.engineering.redhat.com/git/users/poros/ddiskit.git/",
     packages=['ddiskit'],
     package_dir={'ddiskit': 'src/'},
