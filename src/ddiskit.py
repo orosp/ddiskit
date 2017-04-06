@@ -27,6 +27,7 @@ except ImportError:
 
 RES_DIR = "/usr/share/ddiskit/"
 TEMPLATE_DIR = "{res_dir}/templates"
+PROFILE_DIR = "{res_dir}/profiles"
 
 CONFIG_TEMPLATE = "config"
 SPEC_TEMPLATE = "spec"
@@ -41,6 +42,7 @@ default_config = {
     "defaults": {
         "res_dir": RES_DIR,
         "template_dir": TEMPLATE_DIR,
+        "profile_dir": PROFILE_DIR,
         "config_template": CONFIG_TEMPLATE,
         "spec_template": SPEC_TEMPLATE,
         }
@@ -855,7 +857,7 @@ def parse_config(filename, args, configs={}):
     Returns configuration dict based on the supplied config filename, command
     line arguments, and default configuration dict.
 
-    It merges default, system, user, and module configs, and provide
+    It merges default, system, user, profile, and module configs, and provide
     resulting configuration dictionary.
 
     :param filename: Path to input file.
@@ -873,6 +875,15 @@ def parse_config(filename, args, configs={}):
 
     for cfg in implicit_configs:
         apply_config_file(cfg, configs)
+
+    # Apply args here in order to derive profile to use
+    apply_args(args, configs)
+
+    profile_dir = config_get(configs, "profile_dir")
+    profile = config_get(configs, "profile")
+    if profile is not None and profile_dir is not None:
+        apply_config_file(get_config_path(profile, profile_dir, extension=""),
+                          configs)
 
     if filename is not None:
         ret = apply_config_file(filename, configs)[1]
@@ -895,11 +906,15 @@ def parse_cli():
                                           'create Driver Update Disk')
     root_parser.add_argument("-v", "--verbosity", action="count", default=0,
                              help="Increase output verbosity")
+    root_parser.add_argument("-p", "--profile",
+                             help="Configuration profile to use")
     root_parser.add_argument("-R", "--res-dir",
                              help="Resources dir (%s by default)" % RES_DIR)
     root_parser.add_argument("-T", "--template-dir",
                              help="Templates dir (%s by default)" %
                              TEMPLATE_DIR)
+    root_parser.add_argument("-P", "--profile-dir",
+                             help="Profiles dir (%s by default)" % PROFILE_DIR)
 
     cmdparsers = root_parser.add_subparsers(title='Commands',
                                             help='main ddiskit commands')
