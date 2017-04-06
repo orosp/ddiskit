@@ -26,6 +26,10 @@ except ImportError:
     import ConfigParser as configparser
 
 RES_DIR = "/usr/share/ddiskit/"
+TEMPLATE_DIR = "{res_dir}/templates"
+
+CONFIG_TEMPLATE = "config"
+SPEC_TEMPLATE = "spec"
 
 DEFAULT_CFG = "ddiskit.config"
 SYSTEM_CFG = "/etc/ddiskit.config"
@@ -36,6 +40,9 @@ USER_CFG = "~/.ddiskitrc"
 default_config = {
     "defaults": {
         "res_dir": RES_DIR,
+        "template_dir": TEMPLATE_DIR,
+        "config_template": CONFIG_TEMPLATE,
+        "spec_template": SPEC_TEMPLATE,
         }
     }
 
@@ -396,7 +403,10 @@ def cmd_prepare_sources(args, configs):
         if os.path.isfile(args.config):
             print("File Exist")
         else:
-            with open('/usr/share/ddiskit/templates/config', 'r') as fin:
+            template_dir = config_get(configs, "template_dir")
+            config_template = config_get(configs, "config_template")
+            with open(get_config_path(config_template, extension="",
+                      default_dir=template_dir), 'r') as fin:
                 read_data = fin.read()
                 with open(args.config, 'w+') as fout:
                     fout.write(read_data)
@@ -444,7 +454,10 @@ def cmd_generate_spec(args, configs):
     if os.path.isfile(spec_path):
         print("File Exist %s!" % spec_path)
     try:
-        with open('/usr/share/ddiskit/templates/spec', 'r') as fin:
+        template_dir = config_get(configs, "template_dir")
+        spec_template = config_get(configs, "spec_template")
+        with open(get_config_path(spec_template, extension="",
+                  default_dir=template_dir), 'r') as fin:
             read_data = fin.read()
     except IOError as err:
         print(str(err))
@@ -882,6 +895,11 @@ def parse_cli():
                                           'create Driver Update Disk')
     root_parser.add_argument("-v", "--verbosity", action="count", default=0,
                              help="Increase output verbosity")
+    root_parser.add_argument("-R", "--res-dir",
+                             help="Resources dir (%s by default)" % RES_DIR)
+    root_parser.add_argument("-T", "--template-dir",
+                             help="Templates dir (%s by default)" %
+                             TEMPLATE_DIR)
 
     cmdparsers = root_parser.add_subparsers(title='Commands',
                                             help='main ddiskit commands')
@@ -892,6 +910,8 @@ def parse_cli():
     parser_prepare_sources.add_argument("-c", "--config",
                                         default='module.config',
                                         help="Config file")
+    parser_prepare_sources.add_argument("-t", "--config-template",
+                                        help="Config file template")
     parser_prepare_sources.set_defaults(func=cmd_prepare_sources)
 
     # parser for the "generate_spec" command
@@ -900,6 +920,8 @@ def parse_cli():
     parser_generate_spec.add_argument("-c", "--config",
                                       default='module.config',
                                       help="Config file")
+    parser_generate_spec.add_argument("-t", "--spec-template",
+                                      help="RPM spec file template")
     parser_generate_spec.set_defaults(func=cmd_generate_spec)
 
     # parser for the "build_rpm" command
