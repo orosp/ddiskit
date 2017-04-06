@@ -482,6 +482,10 @@ def cmd_build_iso(args, configs):
             if os.path.isfile(content):
                 ret, arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p',
                                     str(content)], args)
+                if ret != 0:
+                    print("Got %d when tried to get arch, skipping: %s" %
+                          (ret, str(content)))
+                    continue
                 if arch not in arch_list:
                     arch_list.append(arch)
                     rpm_files.append(str(content))
@@ -507,6 +511,10 @@ def cmd_build_iso(args, configs):
                                                  '%{ARCH}', '-p',
                                                  str(root) + "/" + str(file)],
                                                 args)
+                            if ret != 0:
+                                print(("Got %d when tried to get arch, " +
+                                       "skipping: %s") % (ret, str(content)))
+                                continue
                             arch = re.sub(re.compile(r'i[0-9]86',
                                           re.IGNORECASE), 'i386', arch)
                             if arch not in arch_list:
