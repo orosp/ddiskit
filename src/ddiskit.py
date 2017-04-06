@@ -266,7 +266,7 @@ def process_configs_for_spec(configs):
 
     config_humble_set(configs, "kernel_requires", kernel_requires)
 
-    # module_requires
+    # module_requires - deprecated
     module_dep_string = config_get(configs, "spec_file.dependencies",
                                    default="")
     if module_dep_string != "":
