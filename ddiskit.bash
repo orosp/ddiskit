@@ -4,33 +4,540 @@
 
 _ddiskit()
 {
-    local cur prev opts
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="prepare_sources generate_spec build_rpm build_iso"
+    #set -x
 
-    case "${prev}" in
-        prepare_sources)
-        COMPREPLY=( $(compgen -f ${cur}) )
+    COMPREPLY=()
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local global_opts="-v -p -R -T -P -d -o"
+    local global_opts_long="--verbosity --profile --res-dir --template-dir --profile-dir --dump-config --dump-config-name"
+    local prepare_sources_opts="-c -t"
+    local prepare_sources_opts_long="--config --config-template"
+    local generate_spec_opts="-c -t"
+    local generate_spec_opts_long="--config --spec-template"
+    local build_rpm_opts="-c -a -e -s -m -r -l"
+    local build_rpm_opts_long="--config --tar-all --tar-strict --srpm --mock --mock-config --mock-offline"
+    local build_iso_opts="-c -i"
+    local build_iso_opts_long="--config --isofile"
+    local dump_config_opts="-c -o"
+    local dump_config_opts_long="--config --dump-config-name"
+    local cmds="prepare_sources generate_spec build_rpm build_iso dump_config"
+
+    local profile_dir=/usr/share/ddiskit/profiles
+    local template_dir=/usr/share/ddiskit/templates
+    local mock_dir=/etc/mock
+
+    local i j w w1
+    local cmd=""
+    local cmd_idx=-1
+
+    local before_skip
+    local skip=0
+
+    # $1 - list of options to skip
+    _strip_opts()
+    {
+            w="${w:1}"
+            w1="${w#[$1]}"
+
+            # First, stripping options without arguments
+            while [ "$w" != "$w1" ];
+            do
+                w="$w1"
+                w1="${w#[$1]}"
+            done
+    }
+
+    # $1 - word
+    # $2 - prefix
+    _comp_dir()
+    {
+        COMPREPLY=( $(compgen -o nospace -d -S / -P "$2" -- "$1") )
+    }
+
+    # $1 - word
+    # $2 - prefix
+    _comp_file()
+    {
+        COMPREPLY=( $(compgen -o plusdirs -f -P "$2" -- "$1") )
+    }
+
+    # $1 - word
+    # $2 - prefix
+    # $3 - cfg dir
+    # $4 - suffix
+    _comp_cfg()
+    {
+            if [ "${1#*/*}" != "${1}" -o \( -n "$4" -a "${1%$4}" != "$1" \) ]
+            then
+                COMPREPLY=( $(compgen -f -P "$2" -- "$1") )
+            else
+                COMPREPLY=( $(compgen -P "$2" -W "`ls "$3" | sed -n /$4\$/s/$4\$//p`" -- "$1") )
+            fi
+    }
+
+    for i in $(seq 0 $((COMP_CWORD - 1)) )
+    do
+        w="${COMP_WORDS[$i]}"
+
+        if [ "$skip" = 1 ]
+        then
+            [ "$before_skip" = "-P" ] && profile_dir="$w"
+            [ "$before_skip" = "-T" ] && template_dir="$w"
+
+            skip=0
+            continue
+        fi
+
+        # Skipping word if previous word is an option which requires parameter.
+        case "$w" in
+        --template-dir=*)
+            template_dir=${w#--template-dir=}
+            continue
+            ;;
+        --profile-dir=*)
+            profile_dir=${w#--profile-dir=}
+            continue
+            ;;
+        --profile=*|--res-dir=*|--dump-config-name=*)
+            continue
+            ;;
+        --profile|--res-dir|--template-dir|--profile-dir|--dump-config-name)
+            [ "$w" = "--profile-dir" ] && before_skip="-P"
+            [ "$w" = "--template-dir" ] && before_skip="-T"
+            skip=1
+            continue
+            ;;
+        -[vpRTPdo]*)
+            _strip_opts vd
+
+            # Then, checking whether the rest is option which requires argument
+            # and it is the last character left
+            if [ "${#w1}" = 1 -a "${w1#[pRTPo]}" != "$w1" ]
+            then
+                before_skip="-$w1"
+                skip=1
+
+                [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+            fi
+
+            continue
+            ;;
+        esac
+
+        for j in $cmds
+        do
+            if [ "${COMP_WORDS[$i]}" = "$j" ]
+            then
+                cmd=$j
+                cmd_idx=$i
+                break
+            fi
+        done
+
+        [ -n "$cmd" ] && break
+    done
+
+    # Handle the case no command provided yet
+    if [ -z "$cmd" ]
+    then
+        [ "$skip" = 1 ] && case "$prev" in
+        -o|--dump-file-name)
+            _comp_file "$cur"
             return 0
             ;;
-        generate_spec)
-        COMPREPLY=( $(compgen -f ${cur}) )
+        -R|-P|-T|--res-dir|--profile-dir|--template-dir)
+            _comp_dir "$cur"
             return 0
             ;;
-        build_rpm)
-        COMPREPLY=( $(compgen -f ${cur}) )
+        -p|--profile)
+            _comp_cfg "$cur" "" "$profile_dir"
             return 0
             ;;
-        build_iso)
-        COMPREPLY=( $(compgen -f ${cur}) )
+        esac
+
+        case "$cur" in
+        --dump-file-name=*)
+            _comp_file "${cur#--*=}" "${cur%%=*}"
             return 0
             ;;
-        *)
+        --profile-dir=*|--template-dir=*|--res-dir=*)
+            _comp_dir "${cur#--*=}" "${cur%%=*}"
+            return 0
+            ;;
+        --profile=*)
+            _comp_cfg "${cur#--*=}" "${cur%%=*}" "$profile_dir"
+            return 0
+            ;;
+        -[vpRTPdo]*)
+            w="$cur"
+            _strip_opts vd
+            w1="${w:1}"
+
+            case "$w" in
+            o*)
+                _comp_file "$w1" "${cur%$w1}"
+                return 0
+                ;;
+            P*|R*|T*)
+                _comp_dir "$w1" "${cur%$w1}"
+                return 0
+	            ;;
+            p*)
+                _comp_cfg "$w1" "${cur%$w1}" "$profile_dir"
+                return 0
+                ;;
+            esac
+        ;;
+        esac
+
+        # Modern bash has -o nosort, but it is not present even in the version
+        # shipped in Fedora 25, so we should probably avoid adding it for now.
+        COMPREPLY=( $(compgen -W "${global_opts} ${global_opts_long} ${cmds}" -- ${cur}) )
+        return 0
+    fi
+
+    skip=0
+
+    case "${cmd}" in
+    prepare_sources)
+        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        do
+            w="${COMP_WORDS[$i]}"
+
+            if [ "$skip" = 1 ]
+            then
+                skip=0
+                continue
+            fi
+
+            case "$w" in
+            --config|--config-template)
+                skip=1
+                continue
+                ;;
+            -[ct]*)
+                w1="${w:1}"
+
+                if [ "${#w1}" = 1 -a "${w1#[ct]}" != "$w1" ]
+                then
+                    before_skip="-$w1"
+                    skip=1
+
+                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                fi
+
+                continue
+                ;;
+            esac
+        done
+
+        [ "$skip" = 1 ] && case "$prev" in
+        -c|--config)
+            _comp_file "$cur"
+            return 0
+            ;;
+        -t|--config-template)
+            _comp_cfg "$cur" "" "$template_dir"
+            return 0
+            ;;
+        esac
+
+        case "$cur" in
+        --config=*)
+            _comp_file "${cur#--*=}" "${cur%%=*}"
+            return 0
+            ;;
+        --config-template=*)
+            _comp_cfg "${cur#--*=}" "${cur%%=*}" "$template_dir"
+            return 0
+            ;;
+        -[ct]*)
+            w="${w:1}"
+            w1="${w:1}"
+
+            case "$w" in
+            c*)
+                _comp_file "$w1" "${cur%$w1}"
+                return 0
+                ;;
+            t*)
+                _comp_cfg "$w1" "${cur%$w1}" "$template_dir"
+                return 0
+                ;;
+            esac
+        ;;
+        esac
+
+        COMPREPLY=( $(compgen -W "${prepare_sources_opts} ${prepare_sources_opts_long}" -- ${cur}) )
+        return 0
+        ;;
+    generate_spec)
+        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        do
+            w="${COMP_WORDS[$i]}"
+
+            if [ "$skip" = 1 ]
+            then
+                skip=0
+                continue
+            fi
+
+            case "$w" in
+            --config|--spec-template)
+                skip=1
+                continue
+                ;;
+            -[ct]*)
+                w1="${w:1}"
+
+                if [ "${#w1}" = 1 -a "${w1#[ct]}" != "$w1" ]
+                then
+                    before_skip="-$w1"
+                    skip=1
+
+                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                fi
+
+                continue
+                ;;
+            esac
+        done
+
+        [ "$skip" = 1 ] && case "$prev" in
+        -c|--config)
+            _comp_file "$cur"
+            return 0
+            ;;
+        -t|--spec-template)
+            _comp_cfg "$cur" "" "$template_dir"
+            return 0
+            ;;
+        esac
+
+        case "$cur" in
+        --config=*)
+            _comp_file "${cur#--*=}" "${cur%%=*}"
+            return 0
+            ;;
+        --spec-template=*)
+            _comp_cfg "${cur#--*=}" "${cur%%=*}" "$template_dir"
+            return 0
+            ;;
+        -[ct]*)
+            w="${w:1}"
+            w1="${w:1}"
+
+            case "$w" in
+            c*)
+                _comp_file "$w1" "${cur%$w1}"
+                return 0
+                ;;
+            t*)
+                _comp_cfg "$w1" "${cur%$w1}" "$template_dir"
+                return 0
+                ;;
+            esac
+        ;;
+        esac
+
+        COMPREPLY=( $(compgen -W "${generate_spec_opts} ${generate_spec_opts_long}" -- ${cur}) )
+        return 0
+        ;;
+    build_rpm)
+        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        do
+            w="${COMP_WORDS[$i]}"
+
+            if [ "$skip" = 1 ]
+            then
+                skip=0
+                continue
+            fi
+
+            case "$w" in
+            --config|--mock-config)
+                skip=1
+                continue
+                ;;
+            -[caesmrl]*)
+                _strip_opts aesml
+
+                if [ "${#w1}" = 1 -a "${w1#[cr]}" != "$w1" ]
+                then
+                    before_skip="-$w1"
+                    skip=1
+
+                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                fi
+
+                continue
+                ;;
+            esac
+        done
+
+        [ "$skip" = 1 ] && case "$prev" in
+        -c|--config)
+            _comp_file "$cur"
+            return 0
+            ;;
+        -r|--mock-config)
+            _comp_cfg "$cur" "" "$mock_dir" ".cfg"
+            return 0
+            ;;
+        esac
+
+        case "$cur" in
+        --config=*)
+            _comp_file "${cur#--*=}" "${cur%%=*}"
+            return 0
+            ;;
+        --mock-config=*)
+            _comp_cfg "${cur#--*=}" "${cur%%=*}" "$mock_dir" ".cfg"
+            return 0
+            ;;
+        -[caesmrl]*)
+            w="${w:1}"
+            w1="${w:1}"
+
+            case "$w" in
+            c*)
+                _comp_file "$w1" "${cur%$w1}"
+                return 0
+                ;;
+            r*)
+                _comp_cfg "$w1" "${cur%$w1}" "$mock_dir" ".cfg"
+                return 0
+                ;;
+            esac
+        ;;
+        esac
+
+        COMPREPLY=( $(compgen -W "${build_rpm_opts} ${build_rpm_opts_long}" -- ${cur}) )
+        return 0
+        ;;
+    build_iso)
+        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        do
+            w="${COMP_WORDS[$i]}"
+
+            if [ "$skip" = 1 ]
+            then
+                skip=0
+                continue
+            fi
+
+            case "$w" in
+            --config|--isofile)
+                skip=1
+                continue
+                ;;
+            -[ci]*)
+                w1="${w:1}"
+
+                if [ "${#w1}" = 1 -a "${w1#[ci]}" != "$w1" ]
+                then
+                    before_skip="-$w1"
+                    skip=1
+
+                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                fi
+
+                continue
+                ;;
+            esac
+        done
+
+        [ "$skip" = 1 ] && case "$prev" in
+        -c|-i|--config|--isofile)
+            _comp_file "$cur"
+            return 0
+            ;;
+        esac
+
+        case "$cur" in
+        --config=*|--isofile=*)
+            _comp_file "${cur#--*=}" "${cur%%=*}"
+            return 0
+            ;;
+        -[ci]*)
+            w="${w:1}"
+            w1="${w:1}"
+
+            case "$w" in
+            [ci]*)
+                _comp_file "$w1" "${cur%$w1}"
+                return 0
+                ;;
+            esac
+        ;;
+        esac
+
+        COMPREPLY=( $(compgen -W "${build_iso_opts} ${build_iso_opts_long}" -- ${cur}) $(compgen -o plusdirs -G "$cur*.rpm" -- "$cur") )
+        return 0
+        ;;
+    dump_config)
+        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        do
+            w="${COMP_WORDS[$i]}"
+
+            if [ "$skip" = 1 ]
+            then
+                skip=0
+                continue
+            fi
+
+            case "$w" in
+            --config|--dump-config-name)
+                skip=1
+                continue
+                ;;
+            -[co]*)
+                w1="${w:1}"
+
+                if [ "${#w1}" = 1 -a "${w1#[co]}" != "$w1" ]
+                then
+                    before_skip="-$w1"
+                    skip=1
+
+                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                fi
+
+                continue
+                ;;
+            esac
+        done
+
+        [ "$skip" = 1 ] && case "$prev" in
+        -c|-o|--config|--dump-config-name)
+            _comp_file "$cur"
+            return 0
+            ;;
+        esac
+
+        case "$cur" in
+        --config=*|--dump-config-name)
+            _comp_file "${cur#--*=}" "${cur%%=*}"
+            return 0
+            ;;
+        -[co]*)
+            w="${w:1}"
+            w1="${w:1}"
+
+            case "$w" in
+            [co]*)
+                _comp_file "$w1" "${cur%$w1}"
+                return 0
+                ;;
+            esac
+        ;;
+        esac
+
+        COMPREPLY=( $(compgen -W "${dump_config_opts} ${dump_config_opts_long}" -- ${cur}) )
+        return 0
+        ;;
+    *)
         ;;
     esac
-
-    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 }
 complete -F _ddiskit ddiskit
