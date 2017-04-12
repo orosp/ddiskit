@@ -34,6 +34,9 @@ Provides:	kmod-%{kmod_name} = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires(post):	%{sbindir}/weak-modules
 Requires(postun):	%{sbindir}/weak-modules
 %{KERNEL_REQUIRES}
+%{FIRMWARE_BEGIN}
+Requires: firmware(%{kmod_name}) = %{FIRMWARE_VERSION}
+%{FIRMWARE_END}
 %if "%{kmod_dependencies}" != ""
 Requires:       %{kmod_dependencies}
 %endif
@@ -48,7 +51,7 @@ Conflicts:	kmod-%{kmod_name}
 %package -n %{RPM_NAME}-firmware
 Version:	%{FIRMWARE_VERSION}
 Summary:	%{FIRMWARE_SUMMARY}
-Provides:	firmware(%{kmod_name}) = %{kmod_firmware_version}
+Provides:	firmware(%{kmod_name}) = %{FIRMWARE_VERSION}
 Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
 %description -n  %{RPM_NAME}-firmware
 %{FIRMWARE_DESCRIPTION_CONTENT}
