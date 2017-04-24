@@ -1,14 +1,13 @@
 %global srcname ddiskit
-%global sum     Tool for Red Hat Enterprise Linux Driver Update Disk creation
 
 Name:           %{srcname}
 Version:        3.2
 Release:        1%{?dist}
-Summary:        %{sum}
+Summary:        Tool for Red Hat Enterprise Linux Driver Update Disk creation
 
 License:        GPLv3
-URL:            %{srcname}
-Source0:        %{srcname}-%{version}.tar.gz
+URL:            https://github.com/orosp/ddiskit
+Source0:        https://github.com/orosp/ddiskit/archive/%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python-devel
