@@ -1,7 +1,7 @@
 %global srcname ddiskit
 %global sum     Tool for Red Hat Enterprise Linux Driver Update Disk creation
 
-Name:           python-%{srcname}
+Name:           %{srcname}
 Version:        3.2
 Release:        1%{?dist}
 Summary:        %{sum}
@@ -15,7 +15,7 @@ BuildRequires:  python-devel
 BuildRequires:  python-setuptools
 Requires:       kernel-devel redhat-rpm-config kmod createrepo genisoimage
 
-%description -n python-%{srcname}
+%description -n %{srcname}
 Ddiskit is a little framework for simplifying creation of proper
 Driver Update Disks (DUD).
 
@@ -31,7 +31,7 @@ Driver Update Disks (DUD).
 %check
 %{__python} setup.py test
 
-%files -n python-%{srcname}
+%files -n %{srcname}
 %defattr(-,root,root,-)
 %doc README
 %license COPYING
