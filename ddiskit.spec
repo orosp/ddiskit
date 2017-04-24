@@ -1,7 +1,7 @@
 %global srcname ddiskit
 
 Name:           %{srcname}
-Version:        3.2
+Version:        3.3
 Release:        1%{?dist}
 Summary:        Tool for Red Hat Enterprise Linux Driver Update Disk creation
 
@@ -43,6 +43,9 @@ Driver Update Disks (DUD).
 %{_datadir}/ddiskit/ddiskit.config
 
 %changelog
+* Mon Apr 24 2017 Petr Oros <poros@redhat.com> - 3.3-1
+- New upstream release
+
 * Tue Mar 14 2017 Petr Oros <poros@redhat.com> - 3.2-1
 - New upstream release
 
