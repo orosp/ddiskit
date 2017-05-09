@@ -66,7 +66,7 @@ DEFAULT_CFG = "ddiskit.config"
 SYSTEM_CFG = "/etc/ddiskit.config"
 USER_CFG = "~/.ddiskitrc"
 
-SRC_PATTERNS = "^Kbuild$|^Makefile$|^.*\.[ch]$"
+SRC_PATTERNS = "^Kbuild$|^Kconfig$|^Makefile$|^.*\.[ch]$"
 
 # Default configuration, put here values which can be overwritten by anything,
 # but should be defined somewhere.
