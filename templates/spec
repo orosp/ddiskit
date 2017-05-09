@@ -5,6 +5,7 @@
 %define kmod_kernel_version	%{KERNEL_VERSION}
 %define kmod_kbuild_dir		%{MODULE_BUILD_DIR}
 %define kmod_dependencies       %{DEPENDENCIES}
+%define kmod_build_dependencies	%{BUILD_DEPENDENCIES}
 
 %{!?dist: %define dist .%{RPM_DIST}}
 
@@ -37,6 +38,9 @@ Requires(postun):	%{sbindir}/weak-modules
 %{FIRMWARE_BEGIN}
 Requires: firmware(%{kmod_name}) = %{FIRMWARE_VERSION}
 %{FIRMWARE_END}
+%if "%{kmod_build_dependencies}" != ""
+BuildRequires:  %{kmod_build_dependencies}
+%endif
 %if "%{kmod_dependencies}" != ""
 Requires:       %{kmod_dependencies}
 %endif

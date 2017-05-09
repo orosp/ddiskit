@@ -35,6 +35,8 @@ kernel_arch = x86_64 ppc64 ppc64le
 ## dependencies on other modules based on rpm name
 ## when creating DUD with firmware, dependency will by added automatically
 dependencies = 
+## Build dependencies
+build_dependencies = 
 ## module summary in spec file
 # summary = {module_name} module for Driver Update Program
 ## module description in spec file
