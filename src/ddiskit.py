@@ -1086,6 +1086,7 @@ def parse_cli():
                                   "can use directory path")
     parser_build_iso.set_defaults(func=cmd_build_iso)
 
+    # parser for the "dump_config" command
     parser_dump_config = cmdparsers.add_parser('dump_config',
                                                help='Dump derived ' +
                                                     'configuration')
