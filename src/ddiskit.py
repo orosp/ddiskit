@@ -621,8 +621,8 @@ def cmd_generate_spec(args, configs):
     return ErrCode.SUCCESS
 
 
-def filter_tar_info(args, nvv):
-    def filter_tar_info_args(ti, args, nvv):
+def filter_tar_info(configs, nvv):
+    def filter_tar_info_args(ti, configs, nvv):
         ti.mode = 0755 if ti.isdir() else 0644
         ti.uname = "nobody"
         ti.gname = "nobody"
@@ -630,9 +630,9 @@ def filter_tar_info(args, nvv):
         ti.gid = 0
         ti.mtime = time.time()
 
-        if not args.tar_all and \
+        if not config_get(configs, "tar_all") and \
                 any([x.startswith(".") for x in ti.name.split("/")]):
-            if args.verbosity >= 1:
+            if config_get(configs, "verbosity") >= 1:
                 print("  Skipping hidden file: %s" % ti.name)
 
             return None
@@ -644,17 +644,17 @@ def filter_tar_info(args, nvv):
                 not fn.endswith(".c") and not fn.endswith(".h"):
             print("  Unexpected file: %s" % ti.name)
 
-            if args.tar_strict:
+            if config_get(configs, "tar_strict"):
                 return None
 
-        if args.verbosity >= 2:
+        if config_get(configs, "verbosity") >= 2:
             print("  Adding: %s" % ti.name)
 
         ti.name = os.path.join(nvv, ti.name)
 
         return ti
 
-    return functools.partial(filter_tar_info_args, args=args, nvv=nvv)
+    return functools.partial(filter_tar_info_args, configs=configs, nvv=nvv)
 
 
 def cmd_build_rpm(args, configs):
@@ -715,7 +715,8 @@ def cmd_build_rpm(args, configs):
                     if args.verbosity >= 1:
                         print("  Skipping: %s" % files)
                     continue
-            tar.add(os.path.normpath(files), filter=filter_tar_info(args, nvv))
+            tar.add(os.path.normpath(files),
+                    filter=filter_tar_info(configs, nvv))
         tar.close()
     except Exception as err:
         print(str(err))
