@@ -6,6 +6,7 @@
 %define kmod_kbuild_dir		%{MODULE_BUILD_DIR}
 %define kmod_dependencies       %{DEPENDENCIES}
 %define kmod_build_dependencies	%{BUILD_DEPENDENCIES}
+%define kmod_devel_package	%{DEVEL_PACKAGE}
 
 %{!?dist: %define dist .%{RPM_DIST}}
 
@@ -65,6 +66,21 @@ Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
 %{FIRMWARE_FILES}
 
 %{FIRMWARE_END}
+
+# Development package
+%if 0%{kmod_devel_package}
+%package -n %{RPM_NAME}-devel
+Version:	%{kmod_driver_version}
+%{KERNEL_REQUIRES}
+Summary:	%{DEVEL_SUMMARY}
+
+%description -n  %{RPM_NAME}-devel
+%{DEVEL_DESCRIPTION_CONTENT}
+
+%files -n %{RPM_NAME}-devel
+%defattr(644,root,root,755)
+/usr/share/kmod-%{kmod_vendor}-%{kmod_name}/Module.symvers
+%endif
 
 %post
 modules=( $(find /lib/modules/%{kmod_kernel_version}.%(arch)/extra/kmod-%{kmod_vendor}-%{kmod_name} | grep '\.ko$') )
@@ -131,6 +147,10 @@ install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/kmod-%{kmod_
 %{FIRMWARE_BEGIN}
 %{FIRMWARE_FILES_INSTALL}
 %{FIRMWARE_END}
+%if 0%{kmod_devel_package}
+install -m 644 -D $PWD/obj/%{kmod_kbuild_dir}/Module.symvers $RPM_BUILD_ROOT/usr/share/kmod-%{kmod_vendor}-%{kmod_name}/Module.symvers
+%endif
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
