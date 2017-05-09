@@ -66,6 +66,8 @@ DEFAULT_CFG = "ddiskit.config"
 SYSTEM_CFG = "/etc/ddiskit.config"
 USER_CFG = "~/.ddiskitrc"
 
+SRC_PATTERNS = "^Kbuild$|^Makefile$|^.*\.[ch]$"
+
 # Default configuration, put here values which can be overwritten by anything,
 # but should be defined somewhere.
 default_config = {
@@ -75,6 +77,7 @@ default_config = {
         "profile_dir": PROFILE_DIR,
         "config_template": CONFIG_TEMPLATE,
         "spec_template": SPEC_TEMPLATE,
+        "src_patterns": SRC_PATTERNS,
         },
     "global": {
         "module_vendor": "ENTER_MODULE_VENDOR",
@@ -640,8 +643,7 @@ def filter_tar_info(configs, nvv):
         fn = os.path.basename(ti.name)
 
         if ti.isfile() and ti.name.split("/")[0] != "firmware" and \
-                fn != "Kbuild" and fn != "Makefile" and \
-                not fn.endswith(".c") and not fn.endswith(".h"):
+                not filter_tar_info_args.src_patterns.match(fn):
             print("  Unexpected file: %s" % ti.name)
 
             if config_get(configs, "tar_strict"):
@@ -653,6 +655,9 @@ def filter_tar_info(configs, nvv):
         ti.name = os.path.join(nvv, ti.name)
 
         return ti
+
+    filter_tar_info_args.src_patterns = \
+        re.compile(config_get(configs, "src_patterns", default=SRC_PATTERNS))
 
     return functools.partial(filter_tar_info_args, configs=configs, nvv=nvv)
 
