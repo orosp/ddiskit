@@ -16,7 +16,7 @@ Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 %define findpat %( echo "%""P" )
 %define __find_requires /usr/lib/rpm/redhat/find-requires.ksyms
 %define __find_provides /usr/lib/rpm/redhat/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
-%define sbindir %( if [ -x "/sbin/weak-modules" ]; then echo "/sbin"; else echo %{_sbindir}; fi )
+%define sbindir %( if [ -d "/sbin" -a \! -h "/sbin" ]; then echo "/sbin"; else echo %{_sbindir}; fi )
 
 Name:		%{RPM_NAME}
 Version:	%{kmod_driver_version}
