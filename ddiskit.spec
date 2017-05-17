@@ -40,7 +40,7 @@ Driver Update Disks (DUD).
 %{_datadir}/ddiskit/templates/spec
 %{_datadir}/ddiskit/templates/config
 %{_datadir}/ddiskit/profiles/*
-%{_datadir}/ddiskit/ddiskit.config
+%config(noreplace) %{_datadir}/ddiskit/ddiskit.config
 
 %changelog
 * Mon Apr 24 2017 Petr Oros <poros@redhat.com> - 3.3-1
