@@ -35,6 +35,8 @@ Driver Update Disks (DUD).
 %{python_sitelib}/*
 %{_bindir}/ddiskit
 %{_sysconfdir}/bash_completion.d/ddiskit.bash
+%dir %{_datadir}/ddiskit/profiles
+%dir %{_datadir}/ddiskit/templates
 %{_datadir}/ddiskit/templates/spec
 %{_datadir}/ddiskit/templates/config
 %{_datadir}/ddiskit/profiles/*
