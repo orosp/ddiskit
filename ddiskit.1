@@ -1,0 +1,164 @@
+.TH DDISKIT "1"
+.SH NAME
+ddiskit \- Red Hat tool for create Driver Update Disk
+.SH SYNOPSIS
+.B ddiskit
+[\fB\-h\fR] [\fB\-v\fR] [\fB\-p\fR \fIPROFILE\fR] [\fB\-R\fR \fIRES_DIR\fR] [\fB\-T\fR \fITEMPLATE_DIR\fR] [\fB\-P\fR \fIPROFILE_DIR\fR] [\fB\-d\fR] [\fB\-o\fR \fIDUMP_CONFIG_NAME\fR] {\fBprepare_sources\fR, \fBgenerate_spec\fR, \fBbuild_rpm\fR, \fBbuild_iso\fR, \fBdump_config\fR}
+.SH DESCRIPTION
+This manual page explains the \fBddiskit\fR framework. The program can be used to create driver update disk for rpm based distributions. \fBddiskit\fR was created for simple packaging out-of-tree kernel modules for Red Hat Enterprise Linux.
+.SH "OPTIONS"
+.IP \fIGeneral options\fR
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print a list of options. \fBddiskit\fR will exit after this action, ignoring the remainder of the command-line.
+.TP
+\fB\-v\fR, \fB\-\-verbosity\fR
+Increase output verbosity
+.TP
+\fB\-p\fR \fIPROFILE\fR, \fB\-\-profile\fR \fIPROFILE\fR
+Configuration profile to use
+.TP
+\fB\-R\fR \fIRES_DIR\fR, \fB\-\-res\-dir\fR \fIRES_DIR\fR,
+Resources dir (/usr/share/ddiskit/ by default)
+.TP
+\fB\-T\fR \fIITEMPLATE_DIR\fR, \fB\-\-template\-dir\fR \fIITEMPLATE_DIR\fR,
+Templates dir ({res_dir}/templates by default)
+.TP
+\fB\-P\fR \fIPROFILE_DIR\fR, \fB\-\-profile\-dir\fR \fIPROFILE_DIR\fR
+Profiles dir ({res_dir}/profiles by default)
+.TP
+\fB\-d\fR
+Dump derived configuration after command execution
+.TP
+\fB\-o\fR \fIDUMP_CONFIG_NAME\fR, \fB\-\-dump\-config\-name\fR \fIDUMP_CONFIG_NAME\fR
+Name of config dump file
+.TP
+.IP \fIprepare_sources\fR
+.TP
+\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+Config file
+.TP
+\fB\-t\fR \fICONFIG_TEMPLATE\fR, \fB\-\-config\-\-template\fR \fICONFIG_TEMPLATE\fR
+Config file template
+.TP
+.IP \fIgenerate_spec\fR
+.TP
+\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+Config file
+.TP
+\fB\-t\fR \fISPEC_TEMPLATE\fR, \fB\-\-spec\-\-template\fR \fISPEC_TEMPLATE\fR
+RPM spec file template
+.TP
+.IP \fIbuild_rpm\fR
+.TP
+\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+Config file
+.TP
+\fB\-a\fR, \fB\-\-tar\-\-all\fR
+Tar all files, including hidden ones
+.TP
+\fB\-e\fR, \fB\-\-tar\-\-strict\fR
+Tar only expected files
+.TP
+\fB\-s\fR, \fB\-\-srpm\fR
+Build src RPM
+.TP
+.IP \fIbuild_iso\fR
+.TP
+\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+Config file
+.TP
+\fB\-i\fR \fIISOFILE\fR, \fB\-\-isofile\fR \fIISOFILE\fR
+Output file name
+.TP
+.IP \fIdump_config\fR
+.TP
+\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+Config file
+.TP
+\fB\-o\fR \fIDUMP_CONFIG_NAME\fR, \fB\-\-dump\-config\-name\fR \fIDUMP_CONFIG_NAME\fR
+Name of config dump file
+.SH USAGE EXAMPLES
+.TP
+Step 1)
+.RS
+$ \fBddiskit\fR prepare_sources
+.br
+Writing new config file (module.config)... OK
+.br
+Creating directory structure for RPM build ... OK
+.br
+Creating directory for source code ... OK
+.br
+Your module source code put in src directory.
+.br
+.RE
+.TP
+Step 2)
+.RS
+Copy your code into src directory
+.br
+$ tree src
+.br
+src
+.br
+├── drivers
+.br
+│   └── net
+.br
+│       └── ethernet
+.br
+│           └── broadcom
+.br
+│               ├── Makefile
+.br
+│               ├── tg3.c
+.br
+│               └── tg3.h
+.br
+└── patches
+.RS
+├── 0001-test.patch
+.br
+└── 0002-test.patch
+.RE
+Note1: Please, respect kernel tradicional directories!
+.br
+Note2: Code in src could be patched or you can use additional patches. Additional patches just copy into "patches" directory.
+.RE
+.TP
+Step 3)
+.RS
+$ \fBddiskit\fR generate_spec
+.br
+Checking config ...
+.br
+Config check ... done
+.br
+File Exist rpm/SPECS/tg3.spec!
+.br
+Found directory with patches, adding into spec file:
+.RS
+Patch0: 0001-test.patch
+.br
+Patch1: 0002-test.patch
+.RE
+Firmware directory not found or empty-> skipping
+.br
+Writing spec into rpm/SPECS/tg3.spec ... OK
+.RE
+.TP
+Step 4)
+.RS
+$ \fBddiskit\fR build_rpm
+.br
+Note: Before this step, optionaly can check spec file in rpm/SPEC/ directory
+.RE
+.TP
+Step 5)
+.RS
+$ \fBddiskit\fR build_iso
+.SH BUGS
+No know bugs
+.br
+Report bugs to <https://github.com/orosp/ddiskit/issues>

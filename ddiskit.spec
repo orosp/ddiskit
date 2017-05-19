@@ -34,6 +34,7 @@ Driver Update Disks (DUD).
 %license COPYING
 %{python_sitelib}/*
 %{_bindir}/ddiskit
+%{_mandir}/man1/ddiskit.1.gz
 %{_sysconfdir}/bash_completion.d/ddiskit.bash
 %dir %{_datadir}/ddiskit/profiles
 %dir %{_datadir}/ddiskit/templates
