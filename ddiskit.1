@@ -7,7 +7,7 @@ ddiskit \- Red Hat tool for create Driver Update Disk
 .SH DESCRIPTION
 This manual page explains the \fBddiskit\fR framework. The program can be used to create driver update disk for rpm based distributions. \fBddiskit\fR was created for simple packaging out-of-tree kernel modules for Red Hat Enterprise Linux.
 .SH "OPTIONS"
-.IP \fIGeneral options\fR
+.SS \fIGeneral options\fR
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Print a list of options. \fBddiskit\fR will exit after this action, ignoring the remainder of the command-line.
@@ -32,24 +32,21 @@ Dump derived configuration after command execution
 .TP
 \fB\-o\fR \fIDUMP_CONFIG_NAME\fR, \fB\-\-dump\-config\-name\fR \fIDUMP_CONFIG_NAME\fR
 Name of config dump file
-.TP
-.IP \fIprepare_sources\fR
+.SS \fIprepare_sources\fR
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
 Config file
 .TP
 \fB\-t\fR \fICONFIG_TEMPLATE\fR, \fB\-\-config\-\-template\fR \fICONFIG_TEMPLATE\fR
 Config file template
-.TP
-.IP \fIgenerate_spec\fR
+.SS \fIgenerate_spec\fR
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
 Config file
 .TP
 \fB\-t\fR \fISPEC_TEMPLATE\fR, \fB\-\-spec\-\-template\fR \fISPEC_TEMPLATE\fR
 RPM spec file template
-.TP
-.IP \fIbuild_rpm\fR
+.SS \fIbuild_rpm\fR
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
 Config file
@@ -62,16 +59,14 @@ Tar only expected files
 .TP
 \fB\-s\fR, \fB\-\-srpm\fR
 Build src RPM
-.TP
-.IP \fIbuild_iso\fR
+.SS \fIbuild_iso\fR
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
 Config file
 .TP
 \fB\-i\fR \fIISOFILE\fR, \fB\-\-isofile\fR \fIISOFILE\fR
 Output file name
-.TP
-.IP \fIdump_config\fR
+.SS \fIdump_config\fR
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
 Config file

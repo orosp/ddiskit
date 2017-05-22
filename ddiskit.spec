@@ -33,7 +33,7 @@ Driver Update Disks (DUD).
 %doc README COPYING
 %{python_sitelib}/*
 %{_bindir}/ddiskit
-%{_mandir}/man1/ddiskit.1.gz
+%{_mandir}/man1/ddiskit.1*
 %{_sysconfdir}/bash_completion.d/ddiskit.bash
 %dir %{_datadir}/ddiskit/profiles
 %dir %{_datadir}/ddiskit/templates
