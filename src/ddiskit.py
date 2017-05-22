@@ -1,4 +1,3 @@
-#!/usr/bin/python
 #
 # ddiskit - tool for Red Hat Enterprise Linux Driver Update Disk creation
 #
