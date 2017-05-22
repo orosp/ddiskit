@@ -30,8 +30,7 @@ Driver Update Disks (DUD).
 
 %files -n %{name}
 %defattr(-,root,root,-)
-%doc README
-%license COPYING
+%doc README COPYING
 %{python_sitelib}/*
 %{_bindir}/ddiskit
 %{_mandir}/man1/ddiskit.1.gz
