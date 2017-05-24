@@ -24,6 +24,7 @@ Driver Update Disks (DUD).
 
 %install
 %{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT
+find %{buildroot} -size 0 -delete
 
 %check
 %{__python} setup.py test
