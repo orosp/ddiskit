@@ -12,7 +12,7 @@ setup(
     url="http://git.engineering.redhat.com/git/users/poros/ddiskit.git/",
     packages=['ddiskit'],
     package_dir={'ddiskit': 'src/'},
-    data_files=[('/etc/bash_completion.d', ['ddiskit.bash']),
+    data_files=[('/usr/share/bash-completion/completions', ['ddiskit']),
                 ('/usr/share/ddiskit/templates',
                     ['templates/spec', 'templates/config']),
                 ('/usr/share/ddiskit/profiles', ['profiles/default']),
