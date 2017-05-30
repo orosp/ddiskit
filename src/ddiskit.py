@@ -102,6 +102,39 @@ config_var_re = re.compile(r"{([^{}]*)}")
 spec_var_re = re.compile(r"%{([^{}]*)}")
 
 
+def val2bool(val):
+    """
+    Convert (string) value to some boolean one or None in case it doesn't look
+    true-ish of false-ish enough.
+
+    True-ish values: True, non-zero integer, "t", "y", "true", "yes", "1"
+    False-ish values: False, 0, "f", "n", "false", "no", "0"
+
+    String match for true-ish/false-ish values is case insensitive.
+
+    Of course we are in desperate need of our own implementation of str2bool
+    because ours is much better than anyone's else.
+
+    :param val: Value which should be converted to boolean.
+    :return:    True in case value is True-isch, False in case value is
+                False-ish, None in all other cases (some weird invalid input
+                on which we do not want to decide).
+    """
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, (int, long)):
+        return val != 0
+    if isinstance(val, basestring):
+        val = val.lower().encode("utf-8", "ignore")
+
+        if val in ("t", "y", "true", "yes", "1"):
+            return True
+        if val in ("f", "n", "false", "no", "0"):
+            return False
+
+    return None
+
+
 def command(cmd, args, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
             capture_output=True):
     """
@@ -245,6 +278,16 @@ def config_get(configs, key, section="defaults", default=None,
     return val
 
 
+def config_get_bool(configs, key, section="defaults", default=None,
+                    max_subst_depth=8, overrides=None):
+    """
+    Simple wrapper for val2bool(config_get()). Parameters are the same as for
+    config_get() method, return value is the same as for val2bool() mathod.
+    """
+    return val2bool(config_get(configs, key, section, default, max_subst_depth,
+                               overrides))
+
+
 def config_set(configs, key, val, section="defaults"):
     """
     Set value in configuration dict.
@@ -322,7 +365,7 @@ def process_configs_for_spec(configs):
     :return:        Updated configuration dict.
     """
     # no firmware? -> remove all firmware definitions from spec file
-    have_fw = config_get(configs, "spec_file.firmware_include") == "True"
+    have_fw = config_get_bool(configs, "firmware_include", "spec_file", False)
     config_set(configs, "spec_file.firmware_begin", "%%if %d" % int(have_fw))
     config_set(configs, "spec_file.firmware_end", "%endif")
 
@@ -394,7 +437,8 @@ def check_config(configs):
         for key in configs[section]:
             if "ENTER_" in configs[section][key]:
                 if key == "firmware_version" and \
-                        configs["spec_file"]["firmware_include"] == "False":
+                        not config_get_bool(configs,
+                                            "spec_file.firmware_include"):
                     continue
                 else:
                     print("FAIL: key: %s value: %s is default value" %
@@ -619,7 +663,7 @@ def cmd_generate_spec(args, configs):
 
     if os.path.isdir(src_root + "firmware") and \
             os.listdir(src_root + "firmware"):
-        if configs["spec_file"]["firmware_include"] != "True":
+        if not config_get_bool(configs, "spec_file.firmware_include"):
             print("\n  WARNING: Firmware directory contain files, but " +
                   "firmware package is disabled by config!\n")
         else:
@@ -759,7 +803,8 @@ def cmd_build_rpm(args, configs):
                 continue
             if "firmware" == files:
                 if os.path.isdir("firmware") and os.listdir("firmware"):
-                    if configs["spec_file"]["firmware_include"] != "True":
+                    if not config_get_bool(configs,
+                                           "spec_file.firmware_include"):
                         warning = True
                         print("  WARNING: Firmware directory contains " +
                               "files, but firmware package is disabled by " +
@@ -838,7 +883,8 @@ def cmd_build_iso(args, configs):
                         if not file.endswith(".rpm"):
                             continue
                         if configs and \
-                                configs["global"]["include_srpm"] != "True" \
+                                not config_get_bool(configs,
+                                                    "global.include_srpm") \
                                 and ".src." in str(file):
                             print("Source rpms are disabled by config. " +
                                   "Skipping: " + str(root) + "/" + str(file))
