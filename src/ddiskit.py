@@ -715,25 +715,24 @@ def cmd_generate_spec(args, configs):
     cwd = os.getcwd()
 
     src_root = "src/"
-    configs["spec_file"]["source_patches"] = ""
-    configs["spec_file"]["source_patches_do"] = ""
+    patches = ""
+    patches_do = ""
     if os.path.isdir(src_root + "patches") and \
             os.listdir(src_root + "patches"):
         print("Found directory with patches, adding into spec file:")
         os.chdir(src_root + "patches")
         index = 0
-        configs["spec_file"]["source_patches"] = "# Source code patches"
+        patches = "# Source code patches"
         for files in sorted(os.listdir(".")):
-            print("  Patch" + str(index) + ": " + files)
-            configs["spec_file"]["source_patches"] = \
-                configs["spec_file"]["source_patches"] + \
-                "\nPatch" + str(index) + ":\t" + files
-            configs["spec_file"]["source_patches_do"] = \
-                configs["spec_file"]["source_patches_do"] + "\n%patch" + \
-                str(index) + " -p1"
+            print("  Patch%d: %s" % (index, files))
+            patches += "\nPatch%d:\t%s" % (index, files)
+            patches_do += "\n%%patch%d -p1" % index
             index = index + 1
     else:
         print("Patch directory not found or empty-> skipping")
+
+    config_set(configs, "spec_file.source_patches", patches)
+    config_set(configs, "spec_file.source_patches_do", patches_do)
 
     os.chdir(cwd)
 
@@ -743,31 +742,28 @@ def cmd_generate_spec(args, configs):
             print("\n  WARNING: Firmware directory contain files, but " +
                   "firmware package is disabled by config!\n")
         else:
-            configs["spec_file"]["firmware_files"] = ""
-            configs["spec_file"]["firmware_files_install"] = ""
+            fw_files = ""
+            fw_install = ""
             print("Found directory with firmware, adding into spec file:")
             for root, dirs, files in os.walk(src_root + "firmware/"):
                 for file in files:
-                    file_root = root.replace(src_root + "firmware/", "")
-                    if len(file_root) > 0:
-                        file_root = file_root + "/"
-                    print("  Firmware: " + file_root + str(file))
-                    configs["spec_file"]["firmware_files"] = \
-                        configs["spec_file"]["firmware_files"] + \
-                        "/lib/firmware/" + file_root + str(file) + "\n"
-                    configs["spec_file"]["firmware_files_install"] = \
-                        configs["spec_file"]["firmware_files_install"] + \
-                        "install -m 644 -D source/firmware/" + \
-                        file_root + str(file) + \
-                        " $RPM_BUILD_ROOT/lib/firmware/" + file_root + \
-                        str(file) + "\n"
+                    fpath = os.path.join(root[len(src_root + "firmware/"):],
+                                         file)
+                    print("  Firmware: %s" % fpath)
+                    fw_files += "/lib/firmware/%s\n" % fpath
+                    fw_install += \
+                        ("install -m 644 -D source/firmware/%(f)s " +
+                         "$RPM_BUILD_ROOT/lib/firmware/%(f)s\n") % {"f": fpath}
+
+            config_set(configs, "spec_file.firmware_files", fw_files)
+            config_set(configs, "spec_file.firmware_files_install", fw_install)
     else:
         print("Firmware directory not found or empty-> skipping")
 
     source_fail = False
-    for arch in configs["spec_file"]["kernel_arch"].split():
-        kernel_dir = "/usr/src/kernels/" + \
-            configs["spec_file"]["kernel_version"] + "." + arch
+    for arch in config_get(configs, "spec_file.kernel_arch").split():
+        kernel_dir = "/usr/src/kernels/%s.%s" % \
+            (config_get(configs, "spec_file.kernel_version"), arch)
         if not os.path.isdir(kernel_dir):
             print("WARNING: kernel source code not found: " + kernel_dir)
             source_fail = True
@@ -775,7 +771,7 @@ def cmd_generate_spec(args, configs):
         print("         Probably will not possible to compile all rpms on " +
               "this system")
         print("         For fix install kernel-devel-" +
-              configs["spec_file"]["kernel_version"] + " package")
+              config_get(configs, "spec_file.kernel_version") + " package")
 
     process_configs_for_spec(configs)
 
@@ -861,9 +857,10 @@ def cmd_build_rpm(args, configs):
     else:
         print("Checking makefile ... OK")
 
-    nvv = configs["spec_file"]["module_name"] + "-" + \
-        configs["global"]["module_vendor"] + "-" + \
-        configs["spec_file"]["module_version"]
+    nvv = "%s-%s-%s" % \
+        (config_get(configs, "spec_file.module_name"),
+         config_get(configs, "global.module_vendor"),
+         config_get(configs, "spec_file.module_version"))
     archive = "rpm/SOURCES/" + nvv + ".tar.bz2"
     print("Writing archive " + archive + " ...")
 
