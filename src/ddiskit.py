@@ -482,6 +482,11 @@ def check_config(configs):
     config_critic = False
     print("Checking config ... ")
     for section in ["global", "spec_file"]:
+        if section not in configs:
+            log_error("required section \"%s\" hasn't been found!", configs)
+            config_critic = True
+            continue
+
         for key in configs[section]:
             if "ENTER_" in configs[section][key]:
                 if key == "firmware_version" and \
