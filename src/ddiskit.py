@@ -1009,12 +1009,7 @@ def cmd_build_iso(args, configs):
                      args, res_print_lvl=0, capture_output=False)
     os.umask(saved_umask)
 
-    for root, dirs, files in os.walk(dir_tmp, topdown=False):
-        for file in files:
-            os.remove(os.path.join(root, file))
-        for cdir in dirs:
-            os.rmdir(os.path.join(root, cdir))
-    os.rmdir(dir_tmp)
+    shutil.rmtree(dir_tmp)
 
     if ret or args.verbosity >= 1:
         print("ISO creation ... %s" % ("Failed" if ret else "OK"))
