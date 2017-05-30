@@ -106,7 +106,8 @@ def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2, capture_output=True):
     """
     Execute shell command and return stdout string
     :param cmd: Command
-    :return: String printed by cmd to stdout
+    :return: Tuple with command exit code as a first element and command output
+             as a second.
     """
     if (args.verbosity >= cmd_print_lvl):
         print("Executing command: %r" % cmd)
