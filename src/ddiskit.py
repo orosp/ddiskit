@@ -912,7 +912,8 @@ def cmd_build_rpm(args, configs):
     os.chdir(cwd)
 
     build_arch = os.uname()[4]
-    if not args.srpm and build_arch in configs["spec_file"]["kernel_arch"]:
+    if not args.srpm and \
+            build_arch in config_get(configs, "spec_file.kernel_arch").split():
         if not do_check_rpm_build(args, configs):
             log_warn("Binary RPM build check failed, building SRPM only",
                      configs)
@@ -1018,10 +1019,10 @@ def cmd_build_iso(args, configs):
         # Try to use info from config for constructing file name
         try:
             args.isofile = "dd-" + \
-                configs["spec_file"]["module_name"] + "-" + \
-                configs["spec_file"]["module_version"] + "-" + \
-                configs["spec_file"]["module_rpm_release"] + "." + \
-                configs["spec_file"]["rpm_dist"] + ".iso"
+                config_get(configs, "spec_file.module_name") + "-" + \
+                config_get(configs, "spec_file.module_version") + "-" + \
+                config_get(configs, "spec_file.module_rpm_release") + "." + \
+                config_get(configs, "spec_file.rpm_dist") + ".iso"
         except TypeError:
             args.isofile = "dd.iso"
 
