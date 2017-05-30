@@ -121,7 +121,7 @@ def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2, capture_output=True):
 
 
 def config_get(configs, key, section="defaults", default=None,
-               max_subst_depth=8):
+               max_subst_depth=8, overrides=None):
     """
     Retrieve a value from configuration dict and perform substitution on it.
 
@@ -146,10 +146,42 @@ def config_get(configs, key, section="defaults", default=None,
     :param max_subst_depth: Maximum number of substitution rounds performed.
                             Providing value of 0 in this argument allows
                             retrieving raw value.
+    :param overrides:       Dict (which is expected to be small) of local
+                            overrides for configuration values. Keys are can be
+                            dotless strings (in this case they are assumed to
+                            belong to the section provided in section argument)
+                            or contain dot (which is interpreted as
+                            "section.key"); with the former having priority
+                            over the latter during the matching process. Note
+                            that keys in this dict are not normalised
+                            (converted to lower case) and compared against
+                            normalised key/section values.
     :return:                Value of the requested key (or default), with
                             substitution performed no more than max_subst_depth
                             times.
     """
+    def check_overrides(s, k):
+        """
+        Check whether key is overridden.
+
+        :param s: Configuration option section.
+        :param k: Configuration option key name.
+        :return:  2-value tuple; first element is a boolean value which
+                  signalises whether the key is overridden; second value is the
+                  overriding value.
+        """
+        if overrides is None:
+            return (False, None)
+
+        if s == section and k in overrides:
+            return (True, overrides[k])
+
+        full_key = "%s.%s" % (s, k)
+        if full_key in overrides:
+            return (True, overrides[full_key])
+
+        return (False, None)
+
     def config_subst(m):
         """
         Callback for performing substitution in the configuration value.
@@ -162,11 +194,15 @@ def config_get(configs, key, section="defaults", default=None,
         key = map(str.lower, m.group(1).split('.', 1))
 
         if len(key) == 1:
-            if section in configs and key[0] in configs[section]:
-                return configs[section][key[0]]
-        else:
-            if key[0] in configs and key[1] in configs[key[0]]:
-                return configs[key[0]][key[1]]
+            key.insert(0, section)
+
+        override, val = check_overrides(key[0], key[1])
+
+        if override:
+            return val
+
+        if key[0] in configs and key[1] in configs[key[0]]:
+            return configs[key[0]][key[1]]
 
         return m.group(0)
 
@@ -177,7 +213,11 @@ def config_get(configs, key, section="defaults", default=None,
     section = section.lower()
     key = key.lower()
 
-    if section in configs and key in configs[section]:
+    override, override_val = check_overrides(section, key)
+
+    if override:
+        val = override_val
+    elif section in configs and key in configs[section]:
         val = configs[section][key]
 
     if not isinstance(val, str):
