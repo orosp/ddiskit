@@ -361,7 +361,7 @@ def apply_config(data, configs, empty_is_nil=True):
     value.
 
     :param data:         Input content with tags to replace.
-    :param configs:      Configuration dicttionary.
+    :param configs:      Configuration dictionary.
     :param empty_is_nil: Whether to replace tags with corresponding
                          configuration values evaluated to empty string with
                          %{nil}.
