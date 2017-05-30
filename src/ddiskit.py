@@ -163,6 +163,54 @@ def command(cmd, args, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
     return (ret, result)
 
 
+def log_status(msg, configs, level=0):
+    """
+    Log execution progress information.
+
+    :param msg:     Message to log.
+    :param configs: Dict of dicts containing current configuration.
+    :param level:   Message verbosity level.
+    """
+    if config_get(configs, "verbosity", default=0) >= level:
+        print(msg)
+
+
+def log_info(msg, configs, level=2):
+    """
+    Log informational message.
+
+    :param msg:     Message to log.
+    :param configs: Dict of dicts containing current configuration.
+    :param level:   Message verbosity level.
+    """
+    if config_get(configs, "verbosity", default=0) >= level:
+        print("INFO:", msg)
+
+
+def log_warn(msg, configs, level=1):
+    """
+    Log warning message.
+
+    :param msg:     Message to log.
+    :param configs: Dict of dicts containing current configuration.
+    :param level:   Message verbosity level.
+    """
+    if config_get(configs, "verbosity", default=0) >= level:
+        print("WARNING:", msg)
+
+
+def log_error(msg, configs, level=0):
+    """
+    Log error message.
+
+    :param msg:     Message to log.
+    :param configs: Dict of dicts containing current configuration.
+    :param level:   Message verbosity level.
+    """
+    if config_get(configs, "verbosity", default=0) >= level:
+        print("ERROR:", msg)
+
+
 def config_get(configs, key, section="defaults", default=None,
                max_subst_depth=8, overrides=None):
     """
