@@ -9,7 +9,7 @@ setup(
     author_email="poros@redhat.com",
     description=("Red Hat tool for create Driver Update Disk"),
     license="GPLv3",
-    url="http://git.engineering.redhat.com/git/users/poros/ddiskit.git/",
+    url="https://github.com/orosp/ddiskit.git",
     packages=['ddiskit'],
     package_dir={'ddiskit': 'src/'},
     data_files=[('/usr/share/bash-completion/completions', ['ddiskit']),
