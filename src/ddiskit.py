@@ -488,19 +488,21 @@ def check_config(configs):
             continue
 
         for key in configs[section]:
-            if "ENTER_" in configs[section][key]:
+            val = config_get(configs, key, section)
+
+            if "ENTER_" in val:
                 if key == "firmware_version" and \
                         not config_get_bool(configs,
                                             "spec_file.firmware_include"):
                     continue
                 else:
                     print("FAIL: key: %s value: %s is default value" %
-                          (key, configs[section][key]))
+                          (key, val))
                     config_critic = True
             elif key == "kernel_version":
-                if re.match(kernel_y_re, configs[section][key]):
+                if re.match(kernel_y_re, val):
                     continue
-                elif re.match(kernel_z_re, configs[section][key]):
+                elif re.match(kernel_z_re, val):
                     print("WARNING: You are using z-stream kernel version! " +
                           "You shouldn't use it.")
                     print("         If you don't have good reason for it, " +
@@ -508,16 +510,18 @@ def check_config(configs):
                     continue
                 else:
                     print("FAIL: Invalid kernel version in config file: " +
-                          configs[section][key])
+                          val)
                     print("      Valid version is for example 3.10.0-123.el7")
                     config_critic = True
             elif key == "module_build_dir":
-                if configs[section][key][0] == "/":
-                    configs[section][key] = configs[section][key][1:]
+                if val[0] == "/":
+                    val = val[1:]
+                    config_set(configs, key, val, section)
                     print("WARNING: Leading \"/\" in module_build_dir, " +
                           "fixing ... OK")
-                if configs[section][key][-1] == "/":
-                    configs[section][key] = configs[section][key][0:-1]
+                if val[-1] == "/":
+                    val = val[:-1]
+                    config_set(configs, key, val, section)
                     print("WARNING: Trailing \"/\" in module_build_dir, " +
                           "fixing ... OK")
 
