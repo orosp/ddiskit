@@ -126,7 +126,7 @@ def command(cmd, args, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
         if capture_output:
             print(result)
         if args.verbosity >= cmd_print_lvl:
-            print("  Return code:", ret)
+            print("  Return code for %r:" % cmd, ret)
     return (ret, result)
 
 
