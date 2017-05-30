@@ -102,7 +102,8 @@ config_var_re = re.compile(r"{([^{}]*)}")
 spec_var_re = re.compile(r"%{([^{}]*)}")
 
 
-def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2, capture_output=True):
+def command(cmd, args, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
+            capture_output=True):
     """
     Execute shell command and return stdout string
     :param cmd: Command
@@ -113,6 +114,7 @@ def command(cmd, args, cmd_print_lvl=1, res_print_lvl=2, capture_output=True):
         print("Executing command: %r" % cmd)
     process = Popen(
         args=cmd,
+        cwd=cwd,
         stdout=PIPE if capture_output else None
     )
     result = process.communicate()[0]
