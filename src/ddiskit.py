@@ -69,6 +69,12 @@ SRC_PATTERNS = "^Kbuild$|^Kconfig$|^Makefile$|^.*\.[ch]$"
 
 # Default configuration, put here values which can be overwritten by anything,
 # but should be defined somewhere.
+#
+# How to determine, what should go here and what should be defined in
+# package-wise ddiskit.config: if ddiskit itself breaks in case it can't find
+# the key, then the default value should be placed there. If something else
+# breaks (for example, rpm, in case of improperly generated spec), then
+# the sane default should be provided in ddiskit.config.
 default_config = {
     "defaults": {
         "res_dir": RES_DIR,
