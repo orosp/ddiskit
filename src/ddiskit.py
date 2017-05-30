@@ -586,9 +586,11 @@ def do_build_rpm(args, configs, arch):
     :param configs: Dict of dicts of configuration values.
     """
     print("Start RPM build for "+arch+" ... ")
+    spec_path = "rpm/SPECS/%s.spec" % \
+        config_get(configs, "spec_file.module_name")
     cmd = ["rpmbuild", "--target", arch,
            "--define", "_topdir " + os.getcwd() + "/rpm",
-           "-ba", "rpm/SPECS/%s.spec" % configs["spec_file"]["module_name"]]
+           "-ba", spec_path]
 
     return command(cmd, args, capture_output=False)[0]
 
@@ -600,8 +602,10 @@ def do_build_srpm(args, configs):
     :param configs: Dict of dicts of configuration values.
     """
     print("Start SRPM build ... ")
+    spec_path = "rpm/SPECS/%s.spec" % \
+        config_get(configs, "spec_file.module_name")
     cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
-           "-bs", "rpm/SPECS/%s.spec" % configs["spec_file"]["module_name"]]
+           "-bs", spec_path]
 
     return command(cmd, args, capture_output=False)[0]
 
@@ -680,7 +684,8 @@ def cmd_generate_spec(args, configs):
         print(" not found, use \"ddiskit prepare_sources\" to create it")
         return ErrCode.CONFIG_READ_ERROR
 
-    spec_path = "rpm/SPECS/" + configs["spec_file"]["module_name"] + ".spec"
+    spec_path = "rpm/SPECS/%s.spec" % \
+        config_get(configs, "spec_file.module_name")
     if os.path.isfile(spec_path):
         print("File Exist %s!" % spec_path)
     try:
