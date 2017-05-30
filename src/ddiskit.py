@@ -267,8 +267,8 @@ def config_set(configs, key, val, section="defaults"):
 
     if section not in configs:
         configs[section] = {}
-    if key not in configs[section]:
-        configs[section][key] = val
+
+    configs[section][key] = val
 
     return configs
 
