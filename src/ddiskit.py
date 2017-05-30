@@ -610,6 +610,20 @@ def do_build_srpm(args, configs):
     return command(cmd, args, capture_output=False)[0]
 
 
+def do_check_rpm_build(args, configs):
+    """
+    Check whether RPM can be built on the host.
+    :param args: unused (required for unify callback interface)
+    :param configs: Dict of dicts of configuration values.
+    """
+    spec_path = "rpm/SPECS/%s.spec" % \
+        config_get(configs, "spec_file.module_name")
+    cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
+           "--nobuild", "-bc", spec_path]
+
+    return command(cmd, args, capture_output=False)[0] == 0
+
+
 def create_dirs(dir_list, caption=None):
     """
     Try to create supplied list of directories, return information whether it
@@ -901,12 +915,10 @@ def cmd_build_rpm(args, configs):
     os.chdir(cwd)
 
     build_arch = os.uname()[4]
-    kernel_dir = "/usr/src/kernels/" + \
-        configs["spec_file"]["kernel_version"] + "." + build_arch
     if not args.srpm and build_arch in configs["spec_file"]["kernel_arch"]:
-        if not os.path.isdir(kernel_dir):
-            print("WARNING: kernel source code not found: %s" % kernel_dir)
-            print("         Building SRPM only")
+        if not do_check_rpm_build(args, configs):
+            log_warn("Binary RPM build check failed, building SRPM only",
+                     configs)
             return do_build_srpm(args, configs)
         else:
             return do_build_rpm(args, configs, build_arch)
