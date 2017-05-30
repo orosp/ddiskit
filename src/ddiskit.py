@@ -479,7 +479,7 @@ def do_build_rpm(args, configs, arch):
     """
     Second stage for build rpm
     :param args: unused (required for unify callback interface)
-    :param configs: configs readed from cfg file
+    :param configs: Dict of dicts of configuration values.
     """
     print("Start RPM build for "+arch+" ... ")
     cmd = ["rpmbuild", "--target", arch,
@@ -493,7 +493,7 @@ def do_build_srpm(args, configs):
     """
     Second stage for build rpm (here build only srpm)
     :param args: unused (required for unify callback interface)
-    :param configs: configs readed from cfg file
+    :param configs: Dict of dicts of configuration values.
     """
     print("Start SRPM build ... ")
     cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
@@ -535,7 +535,7 @@ def cmd_prepare_sources(args, configs):
     """
     CMD prepare_sources callback
     :param args: argument parser arguments
-    :param configs: configs readed from cfg file
+    :param configs: Dict of dicts of configuration values.
     """
     try:
         print("Writing new config file (" + args.config + ")... ", end="")
@@ -569,7 +569,7 @@ def cmd_generate_spec(args, configs):
     """
     CMD generate_spec callback
     :param args: argument parser arguments
-    :param configs: configs readed from cfg file
+    :param configs: Dict of dicts of configuration values.
     """
     if configs is None or len(configs) == 0:
         print(args.config, end="")
@@ -712,7 +712,7 @@ def cmd_build_rpm(args, configs):
     """
     CMD build_rpm callback
     :param args: argument parser arguments
-    :param configs: configs readed from cfg file
+    :param configs: Dict of dicts of configuration values.
     """
     warning = False
     if configs is None or len(configs) == 0:
@@ -811,7 +811,7 @@ def cmd_build_iso(args, configs):
     """
     CMD build_iso callback
     :param args: argument parser arguments
-    :param configs: configs readed from cfg file
+    :param configs: Dict of dicts of configuration values.
     """
     arch_list = []
     rpm_files = []
