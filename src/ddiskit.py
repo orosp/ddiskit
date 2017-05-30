@@ -115,6 +115,7 @@ def command(cmd, args, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
     process = Popen(
         args=cmd,
         cwd=cwd,
+        close_fds=True,
         stdout=PIPE if capture_output else None
     )
     result = process.communicate()[0]
