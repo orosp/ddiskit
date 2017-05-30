@@ -1066,15 +1066,13 @@ def apply_config_file(filename, configs={}):
                 print("WARNING: section \"%s\" (config file \"%s\") contains" +
                       " dot in its name, ignored." % (section, filename))
                 continue
-            if section not in configs:
-                configs[section] = {}
             for key, val in cfgparser.items(section):
                 if "." in key:
                     print("WARNING: key \"%s\" in section \"%s\" (config " +
                           "file \"%s\") contains dot in its name, ignored." %
                           (key, section, filename))
                     continue
-                configs[section][key] = val
+                config_set(configs, key, val, section)
     except configparser.Error as err:
         print(str(err))
         return (configs, None)
