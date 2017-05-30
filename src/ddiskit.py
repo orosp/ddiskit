@@ -829,7 +829,7 @@ def cmd_build_iso(args, configs):
                     continue
                 if arch not in arch_list:
                     arch_list.append(arch)
-                    rpm_files.append(str(content))
+                rpm_files.append(str(content))
                 print("Including: " + str(content))
             elif os.path.exists(content):
                 print("Listing content: " + str(content))
