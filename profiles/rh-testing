@@ -1,3 +1,5 @@
+## Red Hat testing DUP profile
+
 [spec_file]
 description_suffix =
 	This RPM has been provided by Red Hat for testing purposes only and is

@@ -1,0 +1,4 @@
+## Default profile
+##
+## Put here configuration options which are useful in default builds and
+## shouldn't be exposed in other profiles
