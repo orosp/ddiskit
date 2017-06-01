@@ -1469,16 +1469,19 @@ def main():
         configs = parse_config(args.config, args, default_config)
         if configs is None:
             return ErrCode.CONFIG_READ_ERROR
-        if (args.verbosity >= 2):
-            print("Config: %r" % configs)
         configs = check_config(configs)
         if configs is None:
             return ErrCode.CONFIG_CHECK_ERROR
-        ret = args.func(args, configs)
-        if config_get(configs, "dump_config"):
-            ret = ret or cmd_dump_config(args, configs)
     else:
-        ret = args.func(args, parse_config(None, args, default_config))
+        configs = parse_config(None, args, default_config)
+
+    if (args.verbosity >= 2):
+        print("Config: %r" % configs)
+
+    ret = args.func(args, configs)
+
+    if config_get(configs, "dump_config"):
+        ret = ret or cmd_dump_config(args, configs)
 
     return ret
 
