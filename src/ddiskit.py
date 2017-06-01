@@ -1197,21 +1197,24 @@ def cmd_build_iso(args, configs):
         print(str(err))
         return ErrCode.DD_ID_WRITE_ERROR
 
-    if args.isofile is None:
+    isofile = config_get(configs, "isofile")
+    if isofile is None:
         # Try to use info from config for constructing file name
         try:
-            args.isofile = "dd-" + \
+            isofile = "dd-" + \
                 config_get(configs, "spec_file.module_name") + "-" + \
                 config_get(configs, "spec_file.module_version") + "-" + \
                 config_get(configs, "spec_file.module_rpm_release") + "." + \
                 config_get(configs, "spec_file.rpm_dist") + ".iso"
         except TypeError:
-            args.isofile = "dd.iso"
+            isofile = "dd.iso"
+
+    config_set(configs, "isofile", isofile)
 
     ret, _ = command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8',
                       '-R', '-uid', '0', '-gid', '0', '-dir-mode', '0555',
                       '-file-mode', '0444', '-o',
-                      args.isofile, dir_tmp + '/disk'],
+                      isofile, dir_tmp + '/disk'],
                      args, res_print_lvl=0, capture_output=False)
     os.umask(saved_umask)
 
