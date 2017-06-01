@@ -823,8 +823,9 @@ def cmd_generate_spec(args, configs):
     :param configs: Dict of dicts of configuration values.
     """
     if configs is None or len(configs) == 0 or not os.path.isfile(args.config):
-        print(args.config, end="")
-        print(" not found, use \"ddiskit prepare_sources\" to create it")
+        print(("Configuration file \"%(f)s\" was not found, use " +
+               "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
+              {"f": args.config})
         return ErrCode.CONFIG_READ_ERROR
 
     spec_path = "rpm/SPECS/%s.spec" % \
@@ -973,8 +974,9 @@ def cmd_build_rpm(args, configs):
     """
     warning = False
     if configs is None or len(configs) == 0 or not os.path.isfile(args.config):
-        print(args.config, end="")
-        print(" not found, use \"ddiskit prepare_sources\" for create")
+        print(("Configuration file \"%(f)s\" was not found, use " +
+               "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
+              {"f": args.config})
         return ErrCode.CONFIG_READ_ERROR
 
     # check Makefile
