@@ -1,159 +1,1054 @@
 .TH DDISKIT "1"
+.mso www.tmac
 .SH NAME
-ddiskit \- Red Hat tool for create Driver Update Disk
+ddiskit \- Red Hat tool for Driver Update Disk creation
 .SH SYNOPSIS
 .B ddiskit
-[\fB\-h\fR] [\fB\-v\fR] [\fB\-p\fR \fIPROFILE\fR] [\fB\-R\fR \fIRES_DIR\fR] [\fB\-T\fR \fITEMPLATE_DIR\fR] [\fB\-P\fR \fIPROFILE_DIR\fR] [\fB\-d\fR] [\fB\-o\fR \fIDUMP_CONFIG_NAME\fR] {\fBprepare_sources\fR, \fBgenerate_spec\fR, \fBbuild_rpm\fR, \fBbuild_iso\fR, \fBdump_config\fR}
+[\fB\-h\fR]
+[\fB\-v\fR]*
+[\fB\-p\fR \fIPROFILE\fR]
+[\fB\-R\fR \fIRES_DIR\fR]
+[\fB\-T\fR \fITEMPLATE_DIR\fR]
+[\fB\-P\fR \fIPROFILE_DIR\fR]
+[\fB\-d\fR]
+[\fB\-o\fR \fIDUMP_CONFIG_NAME\fR]
+[\fB\-q\fR | \fB\-Q\fR]
+\fIACTION\fR
+[\fIACTION_OPTIONS\fR]...
 .SH DESCRIPTION
-This manual page explains the \fBddiskit\fR framework. The program can be used to create driver update disk for rpm based distributions. \fBddiskit\fR was created for simple packaging out-of-tree kernel modules for Red Hat Enterprise Linux.
-.SH "OPTIONS"
-.SS \fIGeneral options\fR
+.B ddiskit
+aids and simplifies the creation of out-of-tree kernel module RPMs and
+Driver Update Disks containing them. These RPMs and DUDs are deemed
+suitable for using with Red Hat Enterprise Linux. This version of
+.B ddiskit
+supports RHEL 7 and backward-compatible with RHEL 6.
+
+.B ddiskit
+assumes some workflow which is described in the
+.I USAGE EXAMPLE
+section.
+
+.SH OPTIONS
+Please refer to the
+.I Configuration generation
+section for the description of "configuration option name" and "default value".
+.SS General options
 .TP
 \fB\-h\fR, \fB\-\-help\fR
-Print a list of options. \fBddiskit\fR will exit after this action, ignoring the remainder of the command-line.
+Print a list of options.
+.B ddiskit
+will exit after this action, ignoring the remainder of the command-line.
 .TP
 \fB\-v\fR, \fB\-\-verbosity\fR
-Increase output verbosity
+Increase output verbosity by 1.
+Value of 1 means verbose output (it toggles printing of most of executed
+commands and all warnings), and value of 2 is useful for debugging
+(it enables printing of all the executed commands output, actions,
+and messages).
+.IP
+Configuration option name:
+.I defaults.verbosity
+.br
+Default value: 0
 .TP
 \fB\-p\fR \fIPROFILE\fR, \fB\-\-profile\fR \fIPROFILE\fR
-Configuration profile to use
+Configuration profile to use.
+Please refer to the
+.I Configuration generation
+section for the additional information about profiles.
+.IP
+Configuration option name:
+.I defaults.profile
+.br
+Default value: none; "default" is provided in package configuration
 .TP
-\fB\-R\fR \fIRES_DIR\fR, \fB\-\-res\-dir\fR \fIRES_DIR\fR,
-Resources dir (/usr/share/ddiskit/ by default)
+\fB\-R\fR \fIRES_DIR\fR, \fB\-\-res\-dir\fR \fIRES_DIR\fR
+Resources directory.
+Used as a base of evaluation for template and profile directory paths.
+.IP
+Configuration option name:
+.I defaults.res_dir
+.br
+Default value: none; "/usr/share/ddiskit/" is a hard-coded default.
 .TP
 \fB\-T\fR \fIITEMPLATE_DIR\fR, \fB\-\-template\-dir\fR \fIITEMPLATE_DIR\fR,
-Templates dir ({res_dir}/templates by default)
+Templates directory, used as a base for searching for spec or module
+configuration templates.
+Please refer to the
+.I File path evaluation
+section for the information regarding template file path resolution.
+.IP
+Configuration option name:
+.I defaults.template_dir
+.br
+Default value: none; "{res_dir}/templates" is a hard-coded default.
 .TP
 \fB\-P\fR \fIPROFILE_DIR\fR, \fB\-\-profile\-dir\fR \fIPROFILE_DIR\fR
-Profiles dir ({res_dir}/profiles by default)
+Profiles directory, used as a base for searching for profiles.
+Please refer to the
+.I File path evaluation
+section for the information regarding profile file path resolution.
+.IP
+Configuration option name:
+.I defaults.profile_dir
+.br
+Default value: none; "{res_dir}/profiles" is a hard-coded default.
 .TP
-\fB\-d\fR
-Dump derived configuration after command execution
+\fB\-d\fR, \fB\-\-dump-config\fR
+Dump the derived configuration after performing the action.
+.IP
+Configuration option name:
+.I defaults.dump_config
+.br
+Default value: False
 .TP
 \fB\-o\fR \fIDUMP_CONFIG_NAME\fR, \fB\-\-dump\-config\-name\fR \fIDUMP_CONFIG_NAME\fR
-Name of config dump file
-.SS \fIprepare_sources\fR
+Path to the file targeted for the configuration dump.
+.IP
+Configuration option name:
+.I defaults.dump_config_name
+.br
+Default value: none; "{defaults.config_name}.generated" is a hard-coded default.
+.TP
+\fB\-q\fR, \fB\-\-quilt\-enable\fR
+Enable quilt support.
+Please refer to the
+.I QUILT INTEGRATION
+section for the information regarding quilt integration.
+The option sets
+.I defaults.quilt_support
+configuration option to
+.BR True .
+.TP
+\fB\-Q\fR, \fB\-\-quilt\-disable\fR
+Disable quilt support.
+The option sets
+.I defaults.quilt_support
+configuration option to
+.BR False .
+.\"
+.SS Options for prepare_sources action
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
-Config file
+Path to the module configuration file.
+.IP
+Configuration option name:
+.I defaults.config
+.br
+Default value: "module.config"
 .TP
-\fB\-t\fR \fICONFIG_TEMPLATE\fR, \fB\-\-config\-\-template\fR \fICONFIG_TEMPLATE\fR
-Config file template
-.SS \fIgenerate_spec\fR
+\fB\-t\fR \fICONFIG_TEMPLATE\fR, \fB\-\-config\-template\fR \fICONFIG_TEMPLATE\fR
+Configuration file template.
+Please refer to the
+.I File path evaluation
+section for the information regarding configuration template file path
+resolution.
+.IP
+Configuration option name:
+.I defaults.config_template
+.br
+Default value: none; "config" is a hard-coded default.
+.\"
+.SS Options for generate_spec action
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
-Config file
+Path to the module configuration file.
+.IP
+Configuration option name:
+.I defaults.config
+.br
+Default value: "module.config"
 .TP
-\fB\-t\fR \fISPEC_TEMPLATE\fR, \fB\-\-spec\-\-template\fR \fISPEC_TEMPLATE\fR
-RPM spec file template
-.SS \fIbuild_rpm\fR
+\fB\-t\fR \fISPEC_TEMPLATE\fR, \fB\-\-spec\-template\fR \fISPEC_TEMPLATE\fR
+RPM spec file template.
+Please refer to the
+.I File path evaluation
+section for the information regarding RPM spec template file path resolution.
+.IP
+Configuration option name:
+.I defaults.spec_template
+.br
+Default value: none; "spec" is a hard-coded default.
+.\"
+.SS Options for build_rpm action
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
-Config file
+Path to the module configuration file.
+.IP
+Configuration option name:
+.I defaults.config
+.br
+Default value: "module.config"
 .TP
-\fB\-a\fR, \fB\-\-tar\-\-all\fR
-Tar all files, including hidden ones
+\fB\-a\fR, \fB\-\-tar\-all\fR
+Tar all files, including hidden ones (files with names starting with dot).
+Otherwise, only files with names starting with non-dot character will be added
+to the source tarball.
+The option sets the value of the relevant configuration parameter to
+.BR True .
+Note that this check is independent from the check controlled by the
+.I defaults.tar_strict
+configuration parameter.
+.IP
+Configuration option name:
+.I defaults.tar_all
+.br
+Default value: False
 .TP
-\fB\-e\fR, \fB\-\-tar\-\-strict\fR
-Tar only expected files
+\fB\-e\fR, \fB\-\-tar\-strict\fR
+Tar only expected files.
+Only the files with names matching the regular expression pattern provided in
+.I defaults.src_patterns
+configuration option will be added to the source tarball.
+The option sets the value of the relevant configuration parameter to
+.BR True .
+Note that this check is independent from the check controlled by the
+.I defaults.tar_all
+configuration parameter.
+.IP
+Configuration option name:
+.I defaults.tar_strict
+.br
+Default value: False
 .TP
 \fB\-s\fR, \fB\-\-srpm\fR
-Build src RPM
-.SS \fIbuild_iso\fR
+Force building of source RPM instead of binary one.
+.B ddiskit
+has several heuristics (whether host architecture is among architectures
+targeted by module, whether RPM build check passes) that detect possibility
+of binary RPM build and falls back to building source RPM only in case they
+indicated that binary RPM build is impossible; however, one can force building
+of source RPM instead of binary one with this switch.
+The option sets the value of the relevant configuration parameter to
+.BR True .
+.IP
+Configuration option name:
+.I defaults.srpm
+.br
+Default value: False
+.\"
+.SS Options for build_iso action
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
-Config file
+Path to the module configuration file.
+.IP
+Configuration option name:
+.I defaults.config
+.br
+Default value: "module.config"
 .TP
 \fB\-i\fR \fIISOFILE\fR, \fB\-\-isofile\fR \fIISOFILE\fR
-Output file name
-.SS \fIdump_config\fR
+File name for the output ISO.
+.IP
+Configuration option name:
+.I defaults.isofile
+.br
+Default value: none; see also
+.I build_iso
+action description section.
+.\"
+.SS Options for dump_config action
 .TP
 \fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
-Config file
+Path to the module configuration file.
+.IP
+Configuration option name:
+.I defaults.config
+.br
+Default value: "module.config"
 .TP
 \fB\-o\fR \fIDUMP_CONFIG_NAME\fR, \fB\-\-dump\-config\-name\fR \fIDUMP_CONFIG_NAME\fR
-Name of config dump file
-.SH USAGE EXAMPLES
-.TP
-Step 1)
+Name of the file where to store configuration dump.
+This is the same option as the \fB\-o\fR option in the
+.I General options
+section, and present here only for convenience.
+.IP
+Configuration option name:
+.I defaults.dump_config_name
+.br
+Default value: none; "{defaults.config_name}.generated" is a hard-coded default.
+.\"
+.\"
+.SH CONFIGURATION
+Configuration is a sectioned key-value store, with values being strings and
+interpreted based on the context (see
+.I CONFIGURATION VALUES REFERENCE
+section for the reference) as strings, integers, booleans (see
+.I Boolean values
+section for the details on boolean value derivation), or arrays.
+.\"
+.SS Configuration generation
+In order to construct its configuration,
+.B ddiskit
+gathers configuration options from the multiple sources, then performs
+some fixed processing.
+The sources of configuration options are the following:
+.IP \(bu 3
+Hard-coded defaults, present in
+.B ddiskit
+source code.
+These are mostly for default configuration search paths and for other values
+which are expected to be defined one way or another. Currently, it contains
+the following configuration options:
 .RS
+.IP \(bu 3
+.IR defaults " section"
+.RS
+.IP \(bu 3
+.IR res_dir
+= "/usr/share/ddiskit"
+.IP \(bu
+.IR template_dir
+= "{res_dir}/templates"
+.IP \(bu
+.IR profile_dir
+= "{res_dir}/profiles"
+.IP \(bu
+.IR config_template
+= "config"
+.IP \(bu
+.IR quilt_support
+= True
+.IP \(bu
+.IR spec_template
+= "spec"
+.IP \(bu
+.IR src_patterns
+= "^Kbuild$|^Kconfig$|^Makefile$|^.*\.[ch]$"
+.RE
+.IP \(bu 3
+.IR global " section"
+.RS
+.IP \(bu 3
+.IR module_vendor
+= "ENTER_MODULE_VENDOR"
+.IP \(bu
+.IR module_author
+= "ENTER_MODULE_AUTHOR"
+.IP \(bu 3
+.IR module_author_email
+= "ENTER_MODULE_AUTHOR_EMAIL"
+.RE
+.RE
+.IP \(bu
+The "package" configuration.
+It contains the rest of the configuration option defaults which should be defined
+for proper operation (like spec file generation).
+Package configuration is read from the fixed path
+"/usr/share/ddiskit/ddiskit.config"
+which is not expected to be modified by user or system administrator (and is
+usually overwritten by package update).
+.IP \(bu
+The "site" configuration. Located in "/etc/ddiskit.config", this file is
+treated as a configuration file and is subject to possible changes by the
+system administrator.
+.IP \(bu
+The "user" configuration. In case user wants some user-specific changes
+(like his own default values for
+.IR global.module_author " or " global.module_author_email
+configuration options, as well as default profile), he should place it in
+".ddiskitrc" file in his home directory.
+.IP \(bu
+Profile. The profile in use is derived from
+.IR defaults.profile " and " default.profile_dir
+configuration variables (see more in the
+.I File path evaluation
+section on how the path to the profile is evaluated).
+It contains overrides suitable for a particular use case (for example, the
+.B rh-testing
+profile contains spec file description suffix with a notice that the package
+provided is a testing package).
+Note that the values for aforementioned configuration variables can be
+overridden by
+.BR -p " and " -P
+command-line arguments.
+.IP \(bu
+Module configuration. This file is usually called "module.config"
+(but can be overridden by
+.B -c
+command-line argument) and contains module-specific configuration.
+It is usually generated from template by
+.I prepare_sources
+action and is self-documented in terms of what values user is expected
+to provide there.
+.IP \(bu
+Command-line arguments. They update
+.I defaults
+section of the configuration dictionary, and usually have key name equal
+to the long option name, with dashes replaced with underscores.
+Configuration option name for each specific command line option is provided
+in the
+.I OPTIONS
+section.
+Unless explicitly specified (with default value being "none"),
+command-line option \fIalways\fR updates the configuration option value.
+.PP
+These files are applied one after another in aforementioned order, so the
+"last wins" rule applies.
+The exception from the rule are command line options, which take precedence
+at each point of configuration generation (during the profile path evaluation,
+for example).
+
+The configuration files themselves are sectioned key-value files with a
+syntax described in
+.URL https://docs.python.org/2/library/configparser.html "related python module documentation" ,
+except for the interpolation part, which is home-grown and described in section
+.IR "Configuration value evaluation".
+.\"
+.SS Kernel package versioning scheme
+Red Hat Enterprise Linux follows specific kernel package versioning scheme, and
+.B ddiskit
+employs it in order to generate proper dependencies on the kernel package.
+As a result, it expects that in places where kernel version is provided,
+this version follows specific scheme.
+More specifically, two version schemes are supported:
+.IP \(bu 3
+Y-stream kernel version.
+This kernel package version is shipped as a part of General Availability
+release, and has the following format:
+.in +4n
+.nf
+
+\fIkernel_version\fR.\fIkernel_patchlevel\fR.\fIkernel_sublevel\fR-\fIrhel_release\fR.\fIrpm_dist\fR
+
+.fi
+.in
+For example, RHEL 7.3 GA kernel has kernel version 3.10.0-514.el7.
+As a result, it is expected that
+.IR kernel_version ", " kernel_patchlevel ", " kernel_sublevel ", " rhel_release
+are decimal numbers (having no more than 1, 2, 2, and 4 digits, respectively),
+and
+.I rpm_dist
+part is provided in the form of "el\f<Inumber>\fR", where \fI<number>\fR is
+a 1-digit or 2-digit number not less than 6.
+.IP \(bu
+Z-stream kernel version.
+These kernel packages are provided as a part of updates for the existing release
+(so-called Z-stream).
+The versions of these packages have the following format:
+.in +4n
+.nf
+
+\fIkernel_version\fR.\fIkernel_patchlevel\fR.\fIkernel_sublevel\fR-\fIrhel_release\fR\fB[\fR.update_release\fB]+\fR.\fIrpm_dist\fR
+
+.fi
+.in
+The restrictions on the parts used for the Y-stream kernel package version
+description are the same, and \fIupdate_release\fR is a number which can have
+up to 3 digits.
+Example of a Z-stream kernel package version (RHEL 7.3 update from 2017-05-25):
+3.10.0-514.21.1.el7.
+.PP
+Generally, it is expected that kernel module RPMs and Driver Update Disks are
+built for using along with the Y-stream GA kernel (and all the following
+Z-stream kernels, thanks to kABI compatibility), so when Z-stream kernel package
+version is detected, the user is warned about this.
+The differences between kernel package dependency generation in these cases
+are described in the
+.I Spec file generation
+section.
+.\"
+.SS Configuration check
+After the configuration has been constructed (and in case module configuration
+is present), it is subject to a set of checks:
+.IP \(bu 3
+Whether
+.IR global " and " spec_file
+configuration sections are present.
+.IP \(bu
+Whether all configuration options in
+.IR global " and " spec_file
+sections have non-default values.
+Default value is a value which is the concatenation of "ENTER_" and upper-cased
+configuration key name ("ENTER_MODULE_NAME" for
+.I spec_file.module_name
+configuration option, for example). The exception is
+.I spec_file.firmware_version
+option, in case
+.I spec_file.firmware_include
+configuration options is set to
+.BR False .
+.IP \(bu
+Whether
+.I spec_file.kernel_version
+has proper format (only Y-stream and Z-stream kernel versions are accepted).
+.\"
+.SS File path evaluation
+Paths to various external resource files (like templates and profiles)
+are evaluated based on provided resource directory and name
+using the following algorithm:
+.IP \(bu 3
+If resource name does not have slashes, then it is considered that this name
+refers to the file in the provided directory.
+.IP \(bu
+Otherwise, it is interpreted as a path relative to the current working
+directory.
+.PP
+For example, profile "my-profile" is searched relative to profile directory
+("/usr/share/ddiskit/profiles" by default), but profile "./my-profile"
+is searched relative to current directory.
+.\"
+.SS Configuration value evaluation
+Configuration option values can reference other configuration options using
+the "{\fB[\fR\fIsection_name\fR.\fB]\fR\fIkey_name\fR}" syntax.
+If section is not present, it is assumed that the referenced key is
+in the same section as the value which references it.
+If the referenced key is not found, no substitution occurs.
+.PP
+For example, let's assume the following configuration file:
+.in +4n
+.nf
+
+[foo]
+foo = aaa {bar} {bar.baz}
+bar = bbb {baz} {bar.foo}
+
+[bar]
+foo = ccc {baz}
+bar = ddd {foo.foo}
+baz = eee
+
+.fi
+.in
+After the evaluation,
+.I foo.foo
+key would have the value "aaa bbb {baz} ddd ccc eee eee",
+.I foo.bar
+would equal to "bbb {baz} ccc eee",
+.I bar.foo
+would be "ccc eee", and
+.I bar.bar
+is "ddd ccc eee".
+.PP
+Circular dependencies are not explicitly resolved, there's only substitution
+depth limit present (which is set to 8 currently).
+.\"
+.SS Boolean values
+The values which are treated as boolean can have the following
+(case-insensitive) values in order to indicate that the value
+should be evaluated to True:
+.BR 1 ", " t ", " y ", " true ", " yes .
+In order to indicate False value, one of the following string may be used:
+.BR 0 ", " f ", " n ", " false ", " no .
+.\"
+.SS Spec file generation
+Before spec file generation takes place, additional configuration processing
+is performed:
+.IP \(bu 3
+.IR spec_file.source_patches " and " spec_file.source_patches_do
+generated in accordance with a lexicographically sorted list of patch files
+found in the patch directory (src/patch relative to current working directory).
+.I spec_file.source_patches
+contains lines in the "Patch\fIN\fR: \fIpatch-file-name\fR" format, and
+.I spec_file.source_patches_do
+contains lines in the "%patch\fIN\fR -p1" format.
+As a result, first configuration variable is suitable for patch file list
+description, and second is useful in the \fB%prep\fR section for patch applying.
+If the
+.I default.quilt_support
+configuration option is enabled, file named
+.B series
+is ignored in the patch directory.
+.IP \(bu
+.I spec_file.firmware_files
+configuration variable contains list of files found in the \fBsrc/firmware\fR
+directory with the \fB/lib/firmware/\fR directory prepended, which is suitable
+for the \fB%files\fR section of the firmware sub-package.
+.IP \(bu
+.I spec_file.firmware_files_install
+configuration variable contains list for firmware file installation commands
+in the format "install -m 644 -D source/firmware/\fIfirmware-file-path\fR
+$RPM_BUILD_ROOT/lib/firmware/\fIfirmware-file-path\fR", which is suitable
+for the \fB%install\fR section of the firmware sub-package.
+.IP \(bu
+.I spec_file.firmware_begin
+configuration option is set to "%if 1" or "%if 0" when the
+.I spec_file.firmware_include
+configuration variable is true or not, respectively.
+.IP \(bu
+.I spec_file.firmware_end
+configuration variable is set to "%endif".
+.IP \(bu
+.I spec_file.date
+is set to the current date and time in "%a %b %d %Y"
+.BR strftime (3)
+format, if this variable hasn't been set already.
+.IP \(bu
+.I spec_file.kernel_requires
+is formatted as
+.in +4n
+.nf
+
+Requires:    kernel >= \fIkernel_version\fR-\fIkernel_release\fR.\fIkernel_dist\fR
+Requires:    kernel <  \fIkernel_version\fR-\fI(kernel_release + 1)\fR.\fIkernel_dist\fR
+
+.fi
+.in
+for the Y-stream kernel version, and
+.in +4n
+.nf
+
+Requires:    kernel = \fIkernel_version\fR-\fIkernel_release\fR.\fIkernel_dist\fR
+
+.fi
+.in
+for the Z-stream kernel version, if the variable hasn't been set already
+(please refer to the
+.I Kernel package versioning scheme
+section for the additional details regarding Y-stream and Z-stream versions).
+.IP \(bu
+.I spec_file.module_requires
+is set to
+.I spec_file.dependencies
+value with the "Requires: " string prepended, if the variable hasn't been set
+already.
+Note that this special configuration variable is deprecated, present only for
+the backward compatibility, and this special value generation may be removed
+in the future.
+.PP
+After this configuration processing, parts of the spec template in the
+"%{\fB[\fR\fIsection_name\fR.\fB]\fR\fIkey_name\fR}" format (note the presence
+of percent sign in comparison to the syntax used for configuration option
+substitution) are replaced with evaluated configuration values.
+If no appropriate configuration has been found, no replacement occurs.
+If configuration option evaluates to empty string, "%{nil}" is inserted into the
+resulting spec file.
+.\"
+.\"
+.SH ACTIONS
+.SS prepare_sources
+Prepare initial file and directory structure.
+This action creates directories where various files are expected to be placed
+and copies (into a file set in
+.B \-\-config
+option) module configuration from the template file (which path is determined
+by the
+.IR defaults.template_dir " and " defaults.config_template
+configuration variables; please refer to the
+.I File path evaluation
+section for the module configuration template path derivation process).
+The action creates the following directory hierarchy:
+.IP \(bu 3
+.B rpm
+- directory for storing
+.BR rpmbuild (1)
+artifacts.
+.RS
+.IP \(bu 3
+.B BUILD
+- build directory, used by
+.BR rpmbuild (1).
+.IP \(bu
+.B BUILDROOT
+- RPM build root.
+.IP \(bu
+.B RPMS
+- directory where resulting binary RPMs are stored.
+.IP \(bu
+.B SOURCES
+- directory where source tarball and patches are stored.
+.IP \(bu
+.B SPECS
+- directory where generated spec file is placed.
+.IP \(bu
+.B SRPMS
+- directory where resulting source RPM is stored.
+.RE
+.IP \(bu
+.B src
+- directory where module sources are expected to be placed.
+There are not explicit constrains on the file layout, but it is expected
+that the main make file is placed in a directory provided in the
+.I spec_file.module_build_dir
+configuration variable.
+.RS
+.IP \(bu 3
+.B patches
+- directory where with patches which should be applied to the source.
+.IP \(bu
+.B firmware
+- firmware files.
+.RE
+.\"
+.SS generate_spec
+Generate spec file from the spec template (which path is determined by the
+.IR defaults.template_dir " and " defaults.spec_template
+configuration variables; please refer to the
+.I File path evaluation
+section for spec template path derivation process) using process described in
+.I Spec file generation
+section.
+As a result of the execution of this action, the
+"rpm/SPECS/{\fIspec_file.module_name\fR}.spec" file is generated.
+During the generation process, the presence of kernel headers for the
+target kernel version and architectures is also checked, and warning message
+is printed in case some of them are not present; this check doesn't affect
+spec file generation process, however.
+.\"
+.SS build_rpm
+The RPM build action includes several steps:
+.IP \(bu 3
+Check for the module configuration file presence (provided in
+.I defaults.config
+configuration variable via the
+.B \-\-config
+command-line option).
+Since some configuration values should be derived directly from it,
+its absence makes the whole operation senseless, thus the early bailout.
+.IP \(bu
+Check for the Makefile presence.
+Presence of file named "Makefile" somewhere in the source tree allows for
+passing this check.
+Absence of Makefile leads to early termination with a non-zero exit code.
+.IP \(bu
+In case quilt integration (specified via the configuration option
+.IR default.quit_support )
+is enabled, quilt patches are de-applied.
+.IP \(bu
+Source tarball creation. Tar file named
+"rpm/SOURCES/{\fIspec_file.module_name\fR}-{\fIglobal.module_vendor\fR}-{\fIspec_file.module_version\fR}.tar.bz2"
+is created, and files present in the
+.B src
+directory added to it,
+with the following exceptions:
+.RS
+.IP \(bu 3
+.B patches
+subdirectory is skipped.
+.IP \(bu
+All RPM files present in the top level of the
+.B src
+directory are skipped.
+.IP \(bu
+Files present in the
+.B firmware
+source subdirectory are skipped in case boolean configuration option
+.I spec_file.firmware_include
+is set to
+.BR False .
+In case there are files present in this directory, warning message
+is displayed regarding the matter.
+.IP \(bu
+Hidden files (files beginning with dot) are skipped, unless the
+.I defaults.tar_all
+configuration option (controlled via the
+.B \-\-tar\-all
+action-specific command-line option) is set to
+.BR True .
+.IP \(bu
+Only files matching the pattern set in the
+.I defaults.src_patterns
+configuration option are added, if the
+.I defaults.tar_strict
+configuration option (controlled via the
+.B \-\-tar\-strict
+action-specific command-line option) is set to
+.BR True .
+The default pattern includes only *.c, *.h, Makefile, Kbuild, and Kconfig files,
+which should be suitable for the most cases.
+.RE
+.IP \(bu
+All files from the
+.B src/patches
+directory are copied to the
+.B rpm/SOURCES
+directory.
+.IP \(bu
+If current host architecture is among architectures provided in the
+.I spec_file.kernel_arch
+architectures,
+.I rpmbuild
+check (rpmbuild -bc --nobuild) succeeded, and the
+.I defaults.srpm
+configuration option (controlled via the
+.B \-\-srpm
+action-specific command-line option) is not enabled,
+an attempt to build binary RPM is performed.
+Otherwise, a source RPM is built.
+.IP \(bu
+In case quilt integration (specified via the configuration option
+.IR default.quit_support )
+is enabled, quilt patches are applied back.
+.\"
+.SS build_iso
+This action takes list of files and directories that should be placed
+on the Driver Update Disk as a non-option arguments.
+It performs the following steps:
+.IP \(bu 3
+Iterate over the files provided in arguments (recursively descending into
+directories) and add to the list of candidate files which satisfy the
+following criteria:
+.RS
+.IP \(bu 3
+File name ends with ".rpm",
+.IP \(bu
+.BR rpmquery (1)
+successfully retrieved information regarding RPM architecture from the package.
+.IP \(bu
+RPM is a binary package or RPM is a source package and the
+.I global.include_srpm
+configuration option is enabled,
+.IP \(bu
+RPM is not a debug information package (RPM has group other than
+"Development/Debug").
+.RE
+.IP \(bu
+All satisfying candidates then copied in a temporary directory.
+Source RPMs are placed in \fBsrc\fR subdirectory in the disk hierarchy, and
+binary RPMs are placed in \fBrpms/\fIarch\fR subdirectory, where \fIarch\fR is
+the architecture of the binary RPM (with all variants of \fBi386\fR, ...,
+\fBi686\fR RPM architecture placed in the \fBi386\fR subdirectory).
+.IP \(bu
+RPM repository metadata is generated (using the
+.BR createrepo (1)
+command) in each of the aforementioned binary RPM directories.
+.IP \(bu
+.B rhdd3
+file containing Driver Update Disk signature is created
+in the temporary directory.
+.IP \(bu
+ISO image is created with the
+.BR mkisofs (1)
+command.
+The name of the ISO is provided in the
+.I defaults.isofile
+option (which can be set via the
+.B \-\-isofile
+action-specific command-line option).
+In case no explicit ISO file name is provided, it is generated as
+"dd-{\fIspec_file.module_name\fR}-{\fIspec_file.module_version\fR}-{\fIspec_file.module_rpm_release\fR}.{\fIspec_file.rpm_dist\fR}.iso",
+or, in case one of values of these configuration options is not a string,
+simply "dd.iso".
+.\"
+.SS dump_config
+Dumps configuration dictionary as it has been evaluated by a process described
+in the
+.I Configuration generation
+section.
+Output file for the dump is set in the
+.I defaults.dump_config_name
+option.
+.\"
+.\"
+.SH QUILT INTEGRATION
+.B ddiskit
+supports quilt patch workflow.
+Specifically:
+.IP \(bu 3
+It de-applies quilt patches before building source tarball and applies them
+back after the build.
+.IP \(bu
+It ignores hidden files by default which avoids inclusion of ".pc" directory.
+.IP \(bu
+It ignores \fBseries\fR file in \fBpatches\fR directory when builds
+a list of patches.
+.PP
+This behaviour is controlled by the
+.I defaults.quilt_support
+configuration option, which is accessible via the
+.BR \-\-quilt\-enable " and " \-\-quilt\-disable
+command-line options.
+.\"
+.\"
+.SH USAGE EXAMPLE
+.IP 1. 3
+Create initial directory structure and module configuraiton.
+.in +4n
+.nf
+
 $ \fBddiskit\fR prepare_sources
-.br
 Writing new config file (module.config)... OK
-.br
 Creating directory structure for RPM build ... OK
-.br
-Creating directory for source code ... OK
-.br
-Your module source code put in src directory.
-.br
-.RE
-.TP
-Step 2)
-.RS
-Copy your code into src directory
-.br
+Creating directory structure for source code ... OK
+Put your module source code in src directory.
+
+.fi
+.in
+.IP 2.
+Copy your code into the \fBsrc\fR directory:
+.in +4n
+.nf
+
 $ tree src
-.br
 src
-.br
 ├── drivers
-.br
 │   └── net
-.br
 │       └── ethernet
-.br
 │           └── broadcom
-.br
 │               ├── Makefile
-.br
 │               ├── tg3.c
-.br
 │               └── tg3.h
-.br
 └── patches
+    ├── 0001-test.patch
+    └── 0002-test.patch
+
+.fi
+.in
 .RS
-├── 0001-test.patch
-.br
-└── 0002-test.patch
+.IP \(bu 3
+Please, respect the directory hierarchy for the drivers which are originally part
+of the kernel tree.
+.IP \(bu 3
+Additional patches for the code could be placed in the \fBpatches\fR directory.
 .RE
-Note1: Please, respect kernel tradicional directories!
-.br
-Note2: Code in src could be patched or you can use additional patches. Additional patches just copy into "patches" directory.
-.RE
-.TP
-Step 3)
-.RS
+.IP 3.
+Fill out the \fBmodule.config\fR and generate the spec file:
+.in +4n
+.nf
+
 $ \fBddiskit\fR generate_spec
-.br
 Checking config ...
-.br
-Config check ... done
-.br
-File Exist rpm/SPECS/tg3.spec!
-.br
-Found directory with patches, adding into spec file:
-.RS
-Patch0: 0001-test.patch
-.br
-Patch1: 0002-test.patch
-.RE
-Firmware directory not found or empty-> skipping
-.br
+Config check ... OK
+RPM spec file "rpm/SPECS/tg3.spec" exists!
+Patches found, adding to the spec file:
+  Patch0: 0001-test.patch
+  Patch1: 0002-test.patch
+Firmware directory is empty or nonexistent, skipping
 Writing spec into rpm/SPECS/tg3.spec ... OK
-.RE
-.TP
-Step 4)
+
+.fi
+.in
 .RS
+.IP \(bu 3
+The resulting spec file is placed in the \fBrpm/SPEC/\fR directory,
+you can optionally check it out before proceeding.
+.RE
+.IP 4.
+Build binary RPM:
+.in +4n
+.nf
+
 $ \fBddiskit\fR build_rpm
-.br
-Note: Before this step, optionaly can check spec file in rpm/SPEC/ directory
-.RE
-.TP
-Step 5)
-.RS
+
+.fi
+.in
+.IP 5.
+Build Driver Update Disk ISO:
+.in +4n
+.nf
+
 $ \fBddiskit\fR build_iso
-.SH BUGS
-No know bugs
-.br
-Report bugs to <https://github.com/orosp/ddiskit/issues>
+
+
+.fi
+.in
+.\"
+.\"
+.SH FILES
+.TP
+.B /usr/share/ddiskit.config
+Package default configuration.
+.TP
+.B /etc/ddiskit.config
+System-wide configuration.
+.TP
+.B ~/.ddiskitrc
+User configuration.
+.TP
+.B module.config
+Default configuration name.
+.TP
+.B /usr/share/ddiskit/templates/spec
+Template for RPM spec file generation.
+Path to it can be overridden by changing
+.B defaults.spec_template
+configuration option or
+.TP
+.B /usr/share/ddiskit/templates/config
+Template for module configuration.
+.\"
+.\"
+.SH EXIT STATUS
+.TP
+.B 0
+successful execution.
+.TP
+.B 1
+generic error (no additional information available).
+.TP
+.B 2
+problems during command-line argument parsing.
+.TP
+.B 3
+problems during the configuration check phase (see
+.I Configuration check
+section for the additional information).
+.TP
+.B 4
+problem occurred when tried to de-apply quilt patches (patches do not de-apply
+cleanly, for example).
+.TP
+.B 5
+problem occurred when tried to apply quilt patches.
+.TP
+.B 32
+generic input/output error.
+.TP
+.B 34
+error occurred while reading configuration file.
+.TP
+.B 35
+error occurred while writing module configuration file
+.RI ( prepare_source
+action).
+.TP
+.B 36
+spec template file read error
+.RI ( generate_spec
+action).
+.TP
+.B 38
+spec read error (unused currently).
+.TP
+.B 39
+spec write error
+.RI ( generate_spec
+action).
+.TP
+.B 41
+source archive write error
+.RI ( build_rpm
+action).
+.TP
+.B 42
+Makefile not found
+.RI ( build_rpm
+action).
+.TP
+.B 45
+Driver Update Disk signature write error.
+.\"
+.\"
+.SH REPORTING BUGS
+Problems with
+.B ddiskit
+should be reported to <https://github.com/orosp/ddiskit/issues>
+.\"
+.\"
+.SH HISTORY
+The initial version of
+.B ddiskit
+was created by John W. Linville in the year 2005 for 2.6-based
+Red Hat Enterprise Linux and Fedora Core distributions
+(like 2.6.9-based RHEL 4).
+It filled "the same need which Doug Ledford's Device Driver Update Disk
+Devel Kit filled for prior generations of Red Hat distributions" which was used
+for the Linux 2.4-series based Red Hat distributions around the year 2003.
+In 2007, the responsibility for maintaining and enhancing
+.B ddiskit
+was passed to Jon Masters, who then developed
+.B ddiskit
+during the RHEL 5 and RHEL 6 era.
+The third reincarnation of
+.B ddiskit
+was conceived in 2016 by Petr Oroš in an attempt to bring more automation to
+the process of Driver Update Disk creation along with RHEL 7 support.
+.\"
+.\"
+.SH SEE ALSO
+.BR rpmbuild (1),
+.BR quilt (1)
+.PP
+.URL http://people.redhat.com/jcm/el6/dup/docs/dup_book.pdf "Jon Masters. Red Hat Driver Update Packages. Official Reference Guide"
+.PP
+.URL https://github.com/orosp/ddiskit/ "ddiskit repository"
