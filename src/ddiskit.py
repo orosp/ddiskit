@@ -1465,7 +1465,7 @@ def main():
     args = parse_cli()
     if args is None:
         return ErrCode.ARGS_PARSE_ERROR
-    if args.config != "" and os.path.isfile(args.config):
+    if os.path.isfile(args.config):
         configs = parse_config(args.config, args, default_config)
         if configs is None:
             return ErrCode.CONFIG_READ_ERROR
