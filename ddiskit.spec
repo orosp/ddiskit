@@ -18,7 +18,8 @@ Recommends:     mock
 
 %description -n %{name}
 Ddiskit is a little framework for simplifying creation of proper
-Driver Update Disks (DUD).
+Driver Update Disks (DUD) used for providing new or updated out-of-tree
+kernel modules.
 
 %prep
 %autosetup -n %{name}-%{version}
