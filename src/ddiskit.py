@@ -658,7 +658,8 @@ def do_quilt(action, args, configs, restore_patch=None):
 
 def do_build_rpm(args, configs, arch):
     """
-    Second stage for build rpm
+    Binary RPM building routine.
+
     :param args: unused (required for unify callback interface)
     :param configs: Dict of dicts of configuration values.
     """
@@ -711,7 +712,8 @@ def do_build_rpm(args, configs, arch):
 
 def do_build_srpm(args, configs):
     """
-    Second stage for build rpm (here build only srpm)
+    Source RPM building routine.
+
     :param args: unused (required for unify callback interface)
     :param configs: Dict of dicts of configuration values.
     """
