@@ -798,6 +798,12 @@ def cmd_generate_spec(args, configs):
         index = 0
         patches = "# Source code patches"
         for files in sorted(os.listdir(".")):
+            # Hack for series file inside patches directory
+            if files == "series" and config_get_bool(configs, "quilt_support"):
+                if config_get(configs, "verbosity") >= 2:
+                    print("  Skipping %s" % files)
+                continue
+
             print("  Patch%d: %s" % (index, files))
             patches += "\nPatch%d:\t%s" % (index, files)
             patches_do += "\n%%patch%d -p1" % index
