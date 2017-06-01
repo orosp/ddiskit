@@ -822,7 +822,7 @@ def cmd_generate_spec(args, configs):
     :param args: argument parser arguments
     :param configs: Dict of dicts of configuration values.
     """
-    if configs is None or len(configs) == 0:
+    if configs is None or len(configs) == 0 or not os.path.isfile(args.config):
         print(args.config, end="")
         print(" not found, use \"ddiskit prepare_sources\" to create it")
         return ErrCode.CONFIG_READ_ERROR
@@ -972,7 +972,7 @@ def cmd_build_rpm(args, configs):
     :param configs: Dict of dicts of configuration values.
     """
     warning = False
-    if configs is None or len(configs) == 0:
+    if configs is None or len(configs) == 0 or not os.path.isfile(args.config):
         print(args.config, end="")
         print(" not found, use \"ddiskit prepare_sources\" for create")
         return ErrCode.CONFIG_READ_ERROR
