@@ -504,8 +504,8 @@ def check_config(configs):
                                             "spec_file.firmware_include"):
                     continue
                 else:
-                    print("FAIL: key: %s value: %s is default value" %
-                          (key, val))
+                    print("FAIL: key: %s.%s value: %s is a default value" %
+                          (section, key, val))
                     config_critic = True
             elif section == "spec_file" and key == "kernel_version":
                 if re.match(kernel_y_re, val):
@@ -514,12 +514,14 @@ def check_config(configs):
                     print("WARNING: You are using z-stream kernel version! " +
                           "You shouldn't use it.")
                     print("         If you don't have good reason for it, " +
-                          "please use y-stream kernel version")
+                          "please use the Y-stream kernel version " +
+                          "(3.10.0-123.el7)")
                     continue
                 else:
-                    print("FAIL: Invalid kernel version in config file: " +
+                    print("FAIL: Invalid kernel version in config file: %s" %
                           val)
-                    print("      Valid version is for example 3.10.0-123.el7")
+                    print("      Valid version is, for example, " +
+                          "3.10.0-123.el7")
                     config_critic = True
             elif section == "spec_file" and key == "module_build_dir":
                 if val[0] == "/":
@@ -534,8 +536,8 @@ def check_config(configs):
                           "fixing ... OK")
 
     if config_critic:
-        print("Unrecoverable FAIL, please check your config file and run " +
-              "ddiskit again.")
+        print("Unrecoverable failure, please fix the aforementioned " +
+              "issues and run ddiskit again.")
         return None
     print("Config check ... OK")
     return configs
