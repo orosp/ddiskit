@@ -226,6 +226,38 @@ Configuration option name:
 .I defaults.srpm
 .br
 Default value: False
+.TP
+\fB\-m\fR, \fB\-\-mock\fR
+Enable
+.B mock
+usage for building RPM.
+See the
+.I MOCK SUPPORT
+section for additional information.
+.IP
+Configuration option name:
+.I defaults.mock
+.br
+Default value: False
+.TP
+\fB\-r\fR \fIMOCK_CONFIG\fR, \fB\-\-mock\-config\fR \fIMOCK_CONFIG\fR
+Which mock configuration should be used for building RPM.
+.IP
+Configuration option name:
+.I defaults.mock_config
+.br
+Default value: "default"
+.TP
+\fB\-l\fR, \fB\-\-mock\-offline\fR
+Whether to pass
+.B \-\-offline
+option to
+.BR mock .
+.IP
+Configuration option name:
+.I defaults.mock_offline
+.br
+Default value: False
 .\"
 .SS Options for build_iso action
 .TP
@@ -850,6 +882,36 @@ configuration option, which is accessible via the
 command-line options.
 .\"
 .\"
+.SH MOCK INTEGRATION
+.B ddiskit
+supports using
+.BR mock (1)
+for building RPM.
+This support is activated via the
+.I defaults.mock
+configuration option which is controlled via the
+.B \-\-mock
+action-specific command-line option.
+When mock support is enabled, the following changes apply:
+.IP \(bu 3
+.B mock
+is called instead of
+.B rpmbuild
+for source and binary RPM creation.
+Specifically,
+.B mock --buildsrpm
+is called for source RPM creation and pair of
+.B mock --buildsrpm
+and
+.B mock --rebuild
+is used to build binary RPM out of source RPM which is created inside mock
+environment.
+.IP \(bu
+No build check (\fBrpmbuild -bc --nobuild\fR) is performed in order to check
+whether it is possible to build binary RPM, it is assumed that mock
+can handle it.
+.\"
+.\"
 .SH USAGE EXAMPLE
 .IP 1. 3
 Create initial directory structure and module configuraiton.
@@ -1047,6 +1109,7 @@ the process of Driver Update Disk creation along with RHEL 7 support.
 .\"
 .SH SEE ALSO
 .BR rpmbuild (1),
+.BR mock (1)
 .BR quilt (1)
 .PP
 .URL http://people.redhat.com/jcm/el6/dup/docs/dup_book.pdf "Jon Masters. Red Hat Driver Update Packages. Official Reference Guide"
