@@ -1481,7 +1481,8 @@ def main():
     ret = args.func(args, configs)
 
     if config_get(configs, "dump_config"):
-        ret = ret or cmd_dump_config(args, configs)
+        dump_ret = cmd_dump_config(args, configs)
+        ret = ret or dump_ret
 
     return ret
 
