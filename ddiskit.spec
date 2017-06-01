@@ -10,9 +10,9 @@ Source0:        https://github.com/orosp/ddiskit/archive/%{version}.tar.gz
 BuildArch:      noarch
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
-Requires:       kmod createrepo genisoimage
+Requires:       rpm createrepo genisoimage
 Suggests:       quilt
-Recommends:     kernel-devel redhat-rpm-config
+Recommends:     kernel-devel redhat-rpm-config rpm-build
 Recommends:     mock
 
 
