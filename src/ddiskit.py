@@ -1070,58 +1070,96 @@ def cmd_build_rpm(args, configs):
     return ret and ret_quilt and ErrCode.QUILT_APPLY_ERROR
 
 
+def rpm_is_src(pkg, args, configs):
+    ret, out = command(["rpm", "-qp", "--qf", "%|SOURCERPM?{0}:{1}|", pkg],
+                       args, cmd_print_lvl=2)
+
+    if ret:
+        return None
+
+    return out == "1"
+
+
+def rpm_is_debuginfo(pkg, args, configs):
+    ret, out = command(["rpm", "-qp", "--qf", "%{GROUP}", pkg],
+                       args, cmd_print_lvl=2)
+
+    if ret:
+        return None
+
+    return out == "Development/Debug"
+
+
+def rpm_get_arch(pkg, args, configs):
+    ret, arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p', pkg], args,
+                        cmd_print_lvl=2)
+
+    if ret:
+        return None
+
+    return arch
+
+
 def cmd_build_iso(args, configs):
     """
     CMD build_iso callback
     :param args: argument parser arguments
     :param configs: Dict of dicts of configuration values.
     """
-    arch_list = []
-    rpm_files = []
-    for content in args.filelist:
-        try:
-            if os.path.isfile(content):
-                ret, arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p',
-                                    str(content)], args)
-                if ret != 0:
-                    print("Got %d when tried to get arch, skipping: %s" %
-                          (ret, str(content)))
-                    continue
-                if arch not in arch_list:
-                    arch_list.append(arch)
-                rpm_files.append(str(content))
-                print("Including: " + str(content))
-            elif os.path.exists(content):
-                print("Listing content: " + str(content))
+    def iterate_args(args):
+        for content in args:
+            if os.path.isdir(content):
                 for root, dirs, files in os.walk(content):
-                    for file in files:
-                        if not file.endswith(".rpm"):
-                            continue
-                        if configs and \
-                                not config_get_bool(configs,
-                                                    "global.include_srpm") \
-                                and ".src." in str(file):
-                            print("Source rpms are disabled by config. " +
-                                  "Skipping: " + str(root) + "/" + str(file))
-                        elif "debuginfo" in str(file):
-                            # TODO
-                            print("Debuginfo is not supported. Skipping: " +
-                                  str(root) + "/" + str(file))
-                        else:
-                            print("Including: " + str(root) + "/" + str(file))
-                            ret, arch = command(['rpm', '-q', '--qf',
-                                                 '%{ARCH}', '-p',
-                                                 str(root) + "/" + str(file)],
-                                                args)
-                            if ret != 0:
-                                print(("Got %d when tried to get arch, " +
-                                       "skipping: %s") % (ret, str(content)))
-                                continue
-                            arch = re.sub(re.compile(r'i[0-9]86',
-                                          re.IGNORECASE), 'i386', arch)
-                            if arch not in arch_list:
-                                arch_list.append(arch)
-                            rpm_files.append(str(root) + "/" + str(file))
+                    for f in files:
+                        yield os.path.join(root, f)
+            elif os.path.exists(content):
+                yield content
+            else:
+                raise IOError(errno.ENOENT, os.strerror(errno.ENOENT),
+                              content)
+
+    src_rpms = []
+    bin_rpms = {}  # Binary RPMs are stored per-arch
+    for content in iterate_args(args.filelist):
+        try:
+            if not content.endswith(".rpm"):
+                log_warn(("File name \"%s\" does not end with .rpm " +
+                          "extension, skipping") % content, configs)
+                continue
+
+            arch = rpm_get_arch(content, args, configs)
+            if arch is None or not arch:
+                log_warn("Failed to get arch for \"%s\", skipping" % content,
+                         configs)
+                continue
+
+            is_src = rpm_is_src(content, args, configs)
+            if is_src is None:
+                log_warn("Failed to get whether RPM is source RPM for " +
+                         "\"%s\", skipping" % content, configs)
+                continue
+
+            if not config_get_bool(configs, "global.include_srpm") and is_src:
+                log_warn("Source RPMs are disabled in configuration, " +
+                         "skipping \"%s\"" % content, configs)
+                continue
+
+            if rpm_is_debuginfo(content, args, configs) != False:
+                log_warn("Debuginfo packages are not supported, skipping " +
+                         "\"%s\"" % content, configs)
+                continue
+
+            arch = re.sub(re.compile(r'i[0-9]86', re.IGNORECASE), 'i386', arch)
+
+            if is_src:
+                src_rpms.append(content)
+            else:
+                if arch not in bin_rpms:
+                    bin_rpms[arch] = []
+                bin_rpms[arch].append(content)
+
+            print("Including \"%s\" (%s)" %
+                  (content, "source" if is_src else "binary, %s" % arch))
         except OSError as err:
             print(str(err))
 
@@ -1130,25 +1168,21 @@ def cmd_build_iso(args, configs):
     cwd = os.getcwd()
     os.chdir(dir_tmp)
     create_dirs(["disk", "disk/rpms", "disk/src"] +
-                [os.path.join("disk/rpms", a) for a in arch_list],
+                [os.path.join("disk/rpms", a) for a in bin_rpms],
                 "Creating ISO directory structure")
 
     os.chdir(cwd)
 
-    for file in rpm_files:
-        if ".src." in file:
-            shutil.copyfile(file, dir_tmp + "/disk/src/" +
-                            os.path.basename(file))
-        else:
-            for arch in arch_list:
-                if '.' + arch + '.' in \
-                        os.path.basename(re.sub(re.compile(r'i[0-9]86',
-                                         re.IGNORECASE), 'i386', file)):
-                    shutil.copyfile(file, dir_tmp + "/disk/rpms/" + arch +
-                                    "/" + os.path.basename(file))
+    dir = os.path.join(dir_tmp, "disk/src")
+    for file in src_rpms:
+        shutil.copy(file, dir)
 
-    for arch in arch_list:
-        command(['createrepo', '--pretty', dir_tmp + "/disk/rpms/" + arch],
+    for arch, rpms in bin_rpms.iteritems():
+        dir = os.path.join(dir_tmp, "disk/rpms", arch)
+        for file in rpms:
+            shutil.copy(file, dir)
+
+        command(['createrepo', '--pretty', dir],
                 args, res_print_lvl=0, capture_output=False)
 
     try:
