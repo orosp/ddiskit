@@ -10,8 +10,11 @@ Source0:        https://github.com/orosp/ddiskit/archive/%{version}.tar.gz
 BuildArch:      noarch
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
-Requires:       kernel-devel redhat-rpm-config kmod createrepo genisoimage
+Requires:       kmod createrepo genisoimage
 Suggests:       quilt
+Recommends:     kernel-devel redhat-rpm-config
+Recommends:     mock
+
 
 %description -n %{name}
 Ddiskit is a little framework for simplifying creation of proper
