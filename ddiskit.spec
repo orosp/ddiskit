@@ -11,6 +11,7 @@ BuildArch:      noarch
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
 Requires:       kernel-devel redhat-rpm-config kmod createrepo genisoimage
+Suggests:       quilt
 
 %description -n %{name}
 Ddiskit is a little framework for simplifying creation of proper
