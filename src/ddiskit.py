@@ -498,8 +498,8 @@ def check_config(configs):
         for key in configs[section]:
             val = config_get(configs, key, section)
 
-            if "ENTER_" in val:
-                if key == "firmware_version" and \
+            if val == "ENTER_" + key.upper():
+                if section == "spec_file" and key == "firmware_version" and \
                         not config_get_bool(configs,
                                             "spec_file.firmware_include"):
                     continue
@@ -507,7 +507,7 @@ def check_config(configs):
                     print("FAIL: key: %s value: %s is default value" %
                           (key, val))
                     config_critic = True
-            elif key == "kernel_version":
+            elif section == "spec_file" and key == "kernel_version":
                 if re.match(kernel_y_re, val):
                     continue
                 elif re.match(kernel_z_re, val):
@@ -521,7 +521,7 @@ def check_config(configs):
                           val)
                     print("      Valid version is for example 3.10.0-123.el7")
                     config_critic = True
-            elif key == "module_build_dir":
+            elif section == "spec_file" and key == "module_build_dir":
                 if val[0] == "/":
                     val = val[1:]
                     config_set(configs, key, val, section)
