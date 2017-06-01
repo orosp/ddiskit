@@ -830,7 +830,7 @@ def cmd_generate_spec(args, configs):
     spec_path = "rpm/SPECS/%s.spec" % \
         config_get(configs, "spec_file.module_name")
     if os.path.isfile(spec_path):
-        print("File Exist %s!" % spec_path)
+        print("RPM spec file \"%s\" exists!" % spec_path)
     try:
         template_dir = config_get(configs, "template_dir")
         spec_template = config_get(configs, "spec_template")
@@ -848,7 +848,7 @@ def cmd_generate_spec(args, configs):
     patches_do = ""
     if os.path.isdir(src_root + "patches") and \
             os.listdir(src_root + "patches"):
-        print("Found directory with patches, adding into spec file:")
+        print("Patches found, adding to the spec file:")
         os.chdir(src_root + "patches")
         index = 0
         patches = "# Source code patches"
@@ -864,7 +864,7 @@ def cmd_generate_spec(args, configs):
             patches_do += "\n%%patch%d -p1" % index
             index = index + 1
     else:
-        print("Patch directory not found or empty-> skipping")
+        print("Patch directory is empty or nonexistent, skipping")
 
     config_set(configs, "spec_file.source_patches", patches)
     config_set(configs, "spec_file.source_patches_do", patches_do)
@@ -874,12 +874,12 @@ def cmd_generate_spec(args, configs):
     if os.path.isdir(src_root + "firmware") and \
             os.listdir(src_root + "firmware"):
         if not config_get_bool(configs, "spec_file.firmware_include"):
-            print("\n  WARNING: Firmware directory contain files, but " +
-                  "firmware package is disabled by config!\n")
+            print("\n  WARNING: Firmware directory contains files, but " +
+                  "firmware package is disabled in config!\n")
         else:
             fw_files = ""
             fw_install = ""
-            print("Found directory with firmware, adding into spec file:")
+            print("Firmware found, adding to the spec file:")
             for root, dirs, files in os.walk(src_root + "firmware/"):
                 for file in files:
                     fpath = os.path.join(root[len(src_root + "firmware/"):],
@@ -893,20 +893,23 @@ def cmd_generate_spec(args, configs):
             config_set(configs, "spec_file.firmware_files", fw_files)
             config_set(configs, "spec_file.firmware_files_install", fw_install)
     else:
-        print("Firmware directory not found or empty-> skipping")
+        print("Firmware directory is empty or nonexistent, skipping")
 
     source_fail = False
     for arch in config_get(configs, "spec_file.kernel_arch").split():
         kernel_dir = "/usr/src/kernels/%s.%s" % \
             (config_get(configs, "spec_file.kernel_version"), arch)
         if not os.path.isdir(kernel_dir):
-            print("WARNING: kernel source code not found: " + kernel_dir)
+            print("WARNING: kernel source code was not found: \"%s\"" %
+                  kernel_dir)
             source_fail = True
+
     if source_fail:
-        print("         Probably will not possible to compile all rpms on " +
-              "this system")
-        print("         For fix install kernel-devel-" +
-              config_get(configs, "spec_file.kernel_version") + " package")
+        print("         It probably will not be possible to build all RPMs " +
+              "on this system")
+        print(("         You can try to install kernel-devel-%s package in " +
+               "order to fix this") %
+              config_get(configs, "spec_file.kernel_version"))
 
     process_configs_for_spec(configs)
 
@@ -1019,7 +1022,7 @@ def cmd_build_rpm(args, configs):
                                            "spec_file.firmware_include"):
                         warning = True
                         print("  WARNING: Firmware directory contains " +
-                              "files, but firmware package is disabled by " +
+                              "files, but firmware package is disabled in " +
                               "config!")
                         continue
                 else:
@@ -1034,7 +1037,7 @@ def cmd_build_rpm(args, configs):
         return ErrCode.SOURCE_ARCHIVE_WRITE_ERROR
     else:
         if not warning:
-            print("Finish writing archive.")
+            print("Finished writing the archive.")
 
     os.chdir(cwd)
 
@@ -1061,8 +1064,8 @@ def cmd_build_rpm(args, configs):
             ret = do_build_rpm(args, configs, build_arch)
     else:
         if not args.srpm:
-            print("Because you are not on target architecture, " +
-                  "building only SRPM")
+            print("Because you are not on the target architecture, " +
+                  "building SRPM only")
         ret = do_build_srpm(args, configs)
 
     ret_quilt = do_quilt(QuiltCmd.APPLY, args, configs)
