@@ -9,6 +9,7 @@
 from __future__ import print_function
 
 import argparse
+import errno
 import functools
 import os
 import re
@@ -661,12 +662,49 @@ def do_build_rpm(args, configs, arch):
     :param args: unused (required for unify callback interface)
     :param configs: Dict of dicts of configuration values.
     """
-    print("Start RPM build for "+arch+" ... ")
+    print("Start RPM build for %s %s... " %
+          (arch, "using mock " if args.mock else ""))
     spec_path = "rpm/SPECS/%s.spec" % \
         config_get(configs, "spec_file.module_name")
-    cmd = ["rpmbuild", "--target", arch,
-           "--define", "_topdir " + os.getcwd() + "/rpm",
-           "-ba", spec_path]
+    if args.mock:
+        mock_cfg = config_get(configs, "mock_config", default="default.cfg")
+
+        # We build RPM out of SRPM and we should build SRPM inside target
+        # config
+        if do_build_srpm(args, configs) != 0:
+            return 1
+
+        log_status("Start binary RPM build for %s using mock... " % arch,
+                   configs)
+
+        ret, dist = command(["mock", "-q", "-r", mock_cfg, "--chroot",
+                             "rpm --eval %{dist}"], args)
+        if ret != 0:
+            return 1
+
+        if dist.endswith('\n'):
+            dist = dist[:-1]
+
+        srpm_name = "%s%s.src.rpm" % \
+            (config_get(configs, "", "spec_file",
+                        "{rpm_name}-{module_version}-{module_rpm_release}"),
+             dist)
+
+        cmd = ["mock", "--no-cleanup-after", "--rebuild", "-r", mock_cfg]
+
+        if args.verbosity > 1:
+            cmd.append("-v")
+        elif not args.verbosity:
+            cmd.append("-q")
+        if args.mock_offline:
+            cmd.append("--offline")
+
+        cmd += ["--arch", arch, "--resultdir", "rpm/RPMS/",
+                "rpm/SRPMS/%s" % srpm_name]
+    else:
+        cmd = ["rpmbuild", "--target", arch,
+               "--define", "_topdir " + os.getcwd() + "/rpm",
+               "-ba", spec_path]
 
     return command(cmd, args, capture_output=False)[0]
 
@@ -677,11 +715,24 @@ def do_build_srpm(args, configs):
     :param args: unused (required for unify callback interface)
     :param configs: Dict of dicts of configuration values.
     """
-    print("Start SRPM build ... ")
+    print("Start SRPM build %s... " % ("using mock " if args.mock else "", ))
     spec_path = "rpm/SPECS/%s.spec" % \
         config_get(configs, "spec_file.module_name")
-    cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
-           "-bs", spec_path]
+    if args.mock:
+        cmd = ["mock", "--buildsrpm", "-r", args.mock_config]
+
+        if args.verbosity > 1:
+            cmd.append("-v")
+        elif not args.verbosity:
+            cmd.append("-q")
+        if args.mock_offline:
+            cmd.append("--offline")
+
+        cmd += ["--spec", spec_path,
+                "--sources", "rpm/SOURCES/", "--resultdir", "rpm/SRPMS/"]
+    else:
+        cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
+               "-bs", spec_path]
 
     return command(cmd, args, capture_output=False)[0]
 
@@ -1000,7 +1051,7 @@ def cmd_build_rpm(args, configs):
     build_arch = os.uname()[4]
     if not args.srpm and \
             build_arch in config_get(configs, "spec_file.kernel_arch").split():
-        if not do_check_rpm_build(args, configs):
+        if not args.mock and not do_check_rpm_build(args, configs):
             log_warn("Binary RPM build check failed, building SRPM only",
                      configs)
             ret = do_build_srpm(args, configs)
@@ -1330,6 +1381,13 @@ def parse_cli():
                                   help="Tar only expected files")
     parser_build_rpm.add_argument("-s", "--srpm", action='store_true',
                                   default=False, help="Build src RPM")
+    parser_build_rpm.add_argument("-m", "--mock", action="store_true",
+                                  default=False, help="Build using mock")
+    parser_build_rpm.add_argument("-r", "--mock-config", default='default',
+                                  help="Mock config")
+    parser_build_rpm.add_argument("-l", "--mock-offline", action="store_true",
+                                  default=False,
+                                  help="Run mock in offline mode")
     parser_build_rpm.set_defaults(func=cmd_build_rpm)
 
     # parser for the "build_iso" command
