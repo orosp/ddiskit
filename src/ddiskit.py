@@ -43,6 +43,8 @@ class ErrCode:
     GENERIC_ERROR = 1
     ARGS_PARSE_ERROR = 2
     CONFIG_CHECK_ERROR = 3
+    QUILT_DEAPPLY_ERROR = 4
+    QUILT_APPLY_ERROR = 5
 
     GENERIC_IO_ERROR = 32
     CONFIG_READ_ERROR = 34
@@ -53,6 +55,11 @@ class ErrCode:
     SOURCE_ARCHIVE_WRITE_ERROR = 41
     MAKEFILE_NOT_FOUND = 42
     DD_ID_WRITE_ERROR = 45
+
+
+class QuiltCmd:
+    APPLY = 0
+    DEAPPLY = 1
 
 RES_DIR = "/usr/share/ddiskit/"
 TEMPLATE_DIR = "{res_dir}/templates"
@@ -81,6 +88,7 @@ default_config = {
         "template_dir": TEMPLATE_DIR,
         "profile_dir": PROFILE_DIR,
         "config_template": CONFIG_TEMPLATE,
+        "quilt_support": True,
         "spec_template": SPEC_TEMPLATE,
         "src_patterns": SRC_PATTERNS,
         },
@@ -579,6 +587,72 @@ def get_config_path(cfg, default_dir=".", rel_dir=".", extension=".cfg"):
     return cfg
 
 
+def do_quilt(action, args, configs, restore_patch=None):
+    """
+    Perform quilt-related operation.
+
+    :param action:        Action to perform. Currently supported operations:
+     * QuiltCmd.DEAPPLY - de-apply all currently applied patches and store
+                          the list of patches originally applied inside
+                          function object.
+     * QuiltCmd.APPLY - restore patches provided in restore_patch argument,
+                        or, in case it is None, retrieve previously stored
+                        patches the from the function object.
+    :param args:          Command line arguments.
+    :param configs:       Dict of dicts containing current configuration.
+    :param restore_patch: List of patches to restore (used by QuiltCmd.APPLY
+                          action).
+    :return:              0 in case of success, non-zero return code in case of
+                          errors.
+    """
+    series_dir = config_get(configs, "quilt_series_dir", default="src")
+    quilt_enabled = config_get_bool(configs, "quilt_support")
+
+    if not quilt_enabled:
+        log_warn(("Quilt support is not enabled (got \"%s\" instead), " +
+                  "skipping quilt actions") % quilt_enabled, configs, level=2)
+
+        return 0
+
+    if action == QuiltCmd.APPLY:
+        patches = restore_patch if restore_patch is not None else \
+            getattr(do_quilt, "saved_patches", None)
+
+        if patches is None:
+            log_warn("No quilt patches were applied, not trying to restore " +
+                     "anything", configs, level=2)
+
+            return 0
+
+        ret = 0
+        for p in patches.split('\n'):
+            if not p:
+                continue
+
+            ret = command(["quilt", "push", p], args, cwd=series_dir,
+                          cmd_print_lvl=2)[0] or ret
+
+        return ret
+    elif action == QuiltCmd.DEAPPLY:
+        ret, out = command(["quilt", "applied"], args, cwd=series_dir,
+                           cmd_print_lvl=2)
+
+        do_quilt.saved_patches = out if ret == 0 else None
+
+        if ret != 0:
+            log_warn(("Quilt returned non-zero exit code (%d), do not try " +
+                     "to de-apply patches") % ret, configs, level=2)
+
+            return 0
+
+        return command(["quilt", "pop", "-a"], args, cwd=series_dir,
+                       cmd_print_lvl=2)[0]
+    else:
+        log_warn("Unknown quilt action %d" % action, configs)
+
+    return 1
+
+
 def do_build_rpm(args, configs, arch):
     """
     Second stage for build rpm
@@ -857,6 +931,10 @@ def cmd_build_rpm(args, configs):
     else:
         print("Checking makefile ... OK")
 
+    if do_quilt(QuiltCmd.DEAPPLY, args, configs):
+        log_error("Quilt de-applying returned error, aborting", configs)
+        return ErrCode.QUILT_DEAPPLY_ERROR
+
     nvv = "%s-%s-%s" % \
         (config_get(configs, "spec_file.module_name"),
          config_get(configs, "global.module_vendor"),
@@ -917,14 +995,20 @@ def cmd_build_rpm(args, configs):
         if not do_check_rpm_build(args, configs):
             log_warn("Binary RPM build check failed, building SRPM only",
                      configs)
-            return do_build_srpm(args, configs)
+            ret = do_build_srpm(args, configs)
         else:
-            return do_build_rpm(args, configs, build_arch)
+            ret = do_build_rpm(args, configs, build_arch)
     else:
         if not args.srpm:
             print("Because you are not on target architecture, " +
                   "building only SRPM")
-        return do_build_srpm(args, configs)
+        ret = do_build_srpm(args, configs)
+
+    ret_quilt = do_quilt(QuiltCmd.APPLY, args, configs)
+
+    # Return ret in case it is non-zero or QUILT_APPLY_ERROR in case of quilt
+    # errors or 0 in case everything is fine.
+    return ret and ret_quilt and ErrCode.QUILT_APPLY_ERROR
 
 
 def cmd_build_iso(args, configs):
@@ -1196,6 +1280,12 @@ def parse_cli():
                                   "execution")
     root_parser.add_argument("-o", "--dump-config-name",
                              help="Name of config dump file")
+    root_parser.add_argument("-q", "--quilt-enable", action="store_const",
+                             dest="quilt_support", const=True,
+                             help="Enable quilt integration")
+    root_parser.add_argument("-Q", "--quilt-disable", action="store_const",
+                             dest="quilt_support", const=False,
+                             help="Disable quilt integration")
 
     cmdparsers = root_parser.add_subparsers(title='Commands',
                                             help='main ddiskit commands')
