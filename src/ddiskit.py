@@ -150,20 +150,29 @@ def command(cmd, args, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
     Execute shell command and return stdout string
     :param cmd: Command
     :return: Tuple with command exit code as a first element and command output
-             as a second.
+             as a second. In case OSError occurred during the execution, value
+             of -256 - errno is returned as the return code.
     """
     if (args.verbosity >= cmd_print_lvl):
         print("Executing command: %r" % cmd)
-    process = Popen(
-        args=cmd,
-        cwd=cwd,
-        close_fds=True,
-        stdout=PIPE if capture_output else None
-    )
-    result = process.communicate()[0]
-    ret = process.returncode
-    if capture_output:
-        result = result.decode()
+    try:
+        process = Popen(
+            args=cmd,
+            cwd=cwd,
+            close_fds=True,
+            stdout=PIPE if capture_output else None
+        )
+        result = process.communicate()[0]
+        ret = process.returncode
+        if capture_output:
+            result = result.decode()
+    except OSError as err:
+        if args.verbosity >= max(1, min(cmd_print_lvl, res_print_lvl)):
+            print("  Got OSError when tried to execute %r (errno %d): %s" %
+                  (cmd, err.errno, err.strerror))
+        result = ""
+        ret = -256 - err.errno
+
     if args.verbosity >= res_print_lvl:
         if capture_output:
             print(result)
