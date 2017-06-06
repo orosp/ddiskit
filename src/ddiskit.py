@@ -1083,7 +1083,7 @@ def cmd_build_rpm(args, configs):
 
     # Return ret in case it is non-zero or QUILT_APPLY_ERROR in case of quilt
     # errors or 0 in case everything is fine.
-    return ret and ret_quilt and ErrCode.QUILT_APPLY_ERROR
+    return ret or ret_quilt and ErrCode.QUILT_APPLY_ERROR
 
 
 def rpm_is_src(pkg, args, configs):
