@@ -8,12 +8,23 @@ URL:            https://github.com/orosp/ddiskit
 Source0:        https://github.com/orosp/ddiskit/archive/%{version}/%{name}-%{version}.tar.gz
 
 BuildArch:      noarch
+%if 0%{?fedora} >= 25
 BuildRequires:  python2-devel
 BuildRequires:  python2-setuptools
+%else
+BuildRequires:  python-devel
+BuildRequires:  python-setuptools
+%endif
+
 Requires:       rpm createrepo genisoimage
+%if 0%{?fedora} >= 23
 Suggests:       quilt git
 Recommends:     kernel-devel redhat-rpm-config rpm-build
 Recommends:     mock
+%else
+Requires:       kernel-devel redhat-rpm-config rpm-build
+Requires:       mock
+%endif
 
 
 %description -n %{name}
