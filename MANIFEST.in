@@ -1,6 +1,7 @@
 include ddiskit
 include ddiskit.1
 include ddiskit.config
+include etc/ddiskit.config
 include profiles/default
 include profiles/rh-release
 include profiles/rh-testing

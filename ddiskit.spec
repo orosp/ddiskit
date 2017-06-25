@@ -51,6 +51,8 @@ find %{buildroot} -size 0 -delete
 %{_datadir}/ddiskit/profiles/*
 %{_datadir}/ddiskit/ddiskit.config
 
+%config(noreplace) /etc/ddiskit.config
+
 %changelog
 * Thu Jun 22 2017 Petr Oros <poros@redhat.com> - 3.4-1
 - New upstream release

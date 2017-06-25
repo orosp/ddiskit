@@ -20,6 +20,7 @@ setup(
                     ['profiles/rh-testing', 'profiles/rh-release']),
                 ('/usr/share/ddiskit', ['ddiskit.config']),
                 ('/usr/share/man/man1', ['ddiskit.1']),
+                ('/etc', ['etc/ddiskit.config']),
                 ],
     entry_points={
         'console_scripts': [
