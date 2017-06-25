@@ -42,6 +42,8 @@ find %{buildroot} -size 0 -delete
 %{_bindir}/ddiskit
 %{_mandir}/man1/ddiskit.1*
 %{_datadir}/bash-completion/completions/ddiskit
+
+%dir %{_datadir}/ddiskit
 %dir %{_datadir}/ddiskit/profiles
 %dir %{_datadir}/ddiskit/templates
 %{_datadir}/ddiskit/templates/spec
