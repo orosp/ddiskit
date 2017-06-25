@@ -1016,9 +1016,43 @@ Template for RPM spec file generation.
 Path to it can be overridden by changing
 .I defaults.spec_template
 configuration option or
+.IR defaults.template_dir ,
+please refer to the
+.I File path evaluation
+section for the additional information.
 .TP
 .B /usr/share/ddiskit/templates/config
 Template for module configuration.
+Path to it can be overridden by changing
+.I defaults.config_template
+configuration option or
+.IR defaults.template_dir ,
+please refer to the
+.I File path evaluation
+section for the additional information.
+.TP
+.B /usr/share/ddiskit/profiles/default
+Default profile.
+Contains configuration options which are useful in non-specific cases
+(none, currently).
+The profile in use is selected via the
+.I defaults.profile
+configuration option.
+Path to profile is configured by the
+.IR defaults.profile_dir ,
+configuration option, please refer to the
+.I File path evaluation
+section for the additional information.
+.TP
+.B /usr/share/ddiskit/profiles/rh-testing
+Profile which contains configuration options used for the testing DUP RPMs
+by Red Hat.
+This includes the disclaimer that the package is provided for the
+testing purposes.
+.TP
+.B /usr/share/ddiskit/profiles/rh-release
+Profile which contains configuration options used for the release DUP RPMs
+by Red Hat.
 .\"
 .\"
 .SH EXIT STATUS
