@@ -821,7 +821,7 @@ def cmd_prepare_sources(configs):
     try:
         print("Writing new config file (" + cfgfile + ")... ", end="")
         if os.path.isfile(cfgfile):
-            print("File Exist")
+            print("File exists")
         else:
             template_dir = config_get(configs, "template_dir")
             config_template = config_get(configs, "config_template")
