@@ -1,24 +1,24 @@
 ##
-## global config values
+## global configuration values
 ##
 [global]
-## Driver Update Disc Vendor
+## Driver Update Disc vendor
 # module_vendor = ENTER_VENDOR_NAME
-## Driver Update Disc Author
+## Driver Update Disc author
 # module_author = ENTER_AUTHOR
-## Driver Update Disc email
+## Driver Update Disc e-mail
 # module_author_email = ENTER_AUTHOR_EMAIL
-## Include SRPM files into final ISO
+## Include SRPM files into the final ISO
 include_srpm = True
 
 ##
-## config values for driver spec file
+## configuration values for the driver spec file
 ##
 [spec_file]
 ## kernel module name
 module_name = ENTER_MODULE_NAME
-## RPM file name expression. Can use any variable from this config file
-## WARNING: don't change rpm_name if you are not sure what are you doing!
+## RPM file name expression.
+## WARNING: don't change rpm_name if you are not sure what you are doing!
 # rpm_name = kmod-{global.module_vendor}-{module_name}
 ## Module version. It's a good idea to make it equivalent to MODULE_VERSION
 ## value, kernel version or some other versioning scheme used for existing DUPs.
@@ -36,14 +36,15 @@ module_build_dir = ENTER_BUILD_DIR
 kernel_version = ENTER_KERNEL_VERSION
 ## target kernel exclusive arch (x86_64 ppc64 ppc64le, for example)
 kernel_arch = x86_64 ppc64 ppc64le
-## dependencies on other modules based on RPM name
-## when creating DUD with firmware, dependency will by added automatically
+## Install dependencies
+## When DUD has firmware enabled, dependency on the firmware RPM will be added
+## automatically
 dependencies = 
 ## Build dependencies
 build_dependencies = 
-## module summary in spec file
+## module summary in the spec file
 # summary = {module_name} module for Driver Update Program
-## module description in spec file
+## module description in the spec file
 # description = {module_name} module for Driver Update Program
 ## optional: upstream commit from which the code was taken
 # git_hash = ENTER_GIT_HASH
@@ -61,9 +62,9 @@ build_dependencies =
 firmware_include = False
 ## firmware package version
 firmware_version = ENTER_FIRMWARE_VERSION
-## firmware summary in spec file
+## firmware summary in the spec file
 # firmware_summary = {module_name} firmware for Driver Update Program
-## firmware description in spec file
+## firmware description in the spec file
 # firmware_description = {module_name} firmware for Driver Update Program
 
 ##
@@ -75,7 +76,7 @@ firmware_version = ENTER_FIRMWARE_VERSION
 ##
 ## Whether to supply development package. 0/1
 devel_package = 0
-## development package summary in spec file
+## development package summary in the spec file
 # devel_summary = {module_name} development files for Driver Update Program
-## development package description in spec file
+## development package description in the spec file
 # devel_description = {module_name} development files for Driver Update Program
