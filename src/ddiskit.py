@@ -705,11 +705,13 @@ def do_build_rpm(args, configs, arch):
     :param args: unused (required for unify callback interface)
     :param configs: Dict of dicts of configuration values.
     """
+    use_mock = config_get(configs, "mock")
+
     print("Start RPM build for %s %s... " %
-          (arch, "using mock " if args.mock else ""))
+          (arch, "using mock " if use_mock else ""))
     spec_path = "rpm/SPECS/%s.spec" % \
         config_get(configs, "spec_file.module_name")
-    if args.mock:
+    if use_mock:
         mock_args = get_mock_args(args, configs)
 
         # We build RPM out of SRPM and we should build SRPM inside target
@@ -752,10 +754,12 @@ def do_build_srpm(args, configs):
     :param args: unused (required for unify callback interface)
     :param configs: Dict of dicts of configuration values.
     """
-    print("Start SRPM build %s... " % ("using mock " if args.mock else "", ))
+    use_mock = config_get(configs, "mock")
+
+    print("Start SRPM build %s... " % ("using mock " if use_mock else "", ))
     spec_path = "rpm/SPECS/%s.spec" % \
         config_get(configs, "spec_file.module_name")
-    if args.mock:
+    if use_mock:
         cmd = ["mock", "--buildsrpm"]
         cmd += get_mock_args(args, configs)[0]
         cmd += ["--spec", spec_path,
@@ -816,9 +820,11 @@ def cmd_prepare_sources(args, configs):
     :param args: argument parser arguments
     :param configs: Dict of dicts of configuration values.
     """
+    cfgfile = config_get(configs, "config", default="module.config")
+
     try:
-        print("Writing new config file (" + args.config + ")... ", end="")
-        if os.path.isfile(args.config):
+        print("Writing new config file (" + cfgfile + ")... ", end="")
+        if os.path.isfile(cfgfile):
             print("File Exist")
         else:
             template_dir = config_get(configs, "template_dir")
@@ -826,7 +832,7 @@ def cmd_prepare_sources(args, configs):
             with open(get_config_path(config_template, extension="",
                       default_dir=template_dir), 'r') as fin:
                 read_data = fin.read()
-                with open(args.config, 'w+') as fout:
+                with open(cfgfile, 'w+') as fout:
                     fout.write(read_data)
             print("OK")
     except IOError as err:
@@ -850,10 +856,12 @@ def cmd_generate_spec(args, configs):
     :param args: argument parser arguments
     :param configs: Dict of dicts of configuration values.
     """
-    if configs is None or len(configs) == 0 or not os.path.isfile(args.config):
+    cfgfile = config_get(configs, "config", default="module.config")
+
+    if configs is None or len(configs) == 0 or not os.path.isfile(cfgfile):
         print(("Configuration file \"%(f)s\" was not found, use " +
                "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
-              {"f": args.config})
+              {"f": cfgfile})
         return ErrCode.CONFIG_READ_ERROR
 
     spec_path = "rpm/SPECS/%s.spec" % \
@@ -1001,10 +1009,12 @@ def cmd_build_rpm(args, configs):
     :param configs: Dict of dicts of configuration values.
     """
     warning = False
-    if configs is None or len(configs) == 0 or not os.path.isfile(args.config):
+    cfgfile = config_get(configs, "config", default="module.config")
+
+    if configs is None or len(configs) == 0 or not os.path.isfile(cfgfile):
         print(("Configuration file \"%(f)s\" was not found, use " +
                "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
-              {"f": args.config})
+              {"f": cfgfile})
         return ErrCode.CONFIG_READ_ERROR
 
     # check Makefile
@@ -1043,8 +1053,7 @@ def cmd_build_rpm(args, configs):
         os.chdir(src_root)
         for files in os.listdir("."):
             if "patches" == files or files.endswith(".rpm"):
-                if args.verbosity >= 1:
-                    print("  Skipping: %s" % files)
+                log_status("  Skipping: %s" % files, configs, level=1)
                 continue
             if "firmware" == files:
                 if os.path.isdir("firmware") and os.listdir("firmware"):
@@ -1056,8 +1065,7 @@ def cmd_build_rpm(args, configs):
                               "config!")
                         continue
                 else:
-                    if args.verbosity >= 1:
-                        print("  Skipping: %s" % files)
+                    log_status("  Skipping: %s" % files, configs, level=1)
                     continue
             tar.add(os.path.normpath(files),
                     filter=filter_tar_info(configs, nvv))
@@ -1084,16 +1092,17 @@ def cmd_build_rpm(args, configs):
     os.chdir(cwd)
 
     build_arch = os.uname()[4]
-    if not args.srpm and \
+    if not config_get_bool(configs, "srpm") and \
             build_arch in config_get(configs, "spec_file.kernel_arch").split():
-        if not args.mock and not do_check_rpm_build(args, configs):
+        if not config_get_bool(configs, "mock") and \
+                not do_check_rpm_build(args, configs):
             log_warn("Binary RPM build check failed, building SRPM only",
                      configs)
             ret = do_build_srpm(args, configs)
         else:
             ret = do_build_rpm(args, configs, build_arch)
     else:
-        if not args.srpm:
+        if not config_get_bool(configs, "srpm"):
             print("Because you are not on the target architecture, " +
                   "building SRPM only")
         ret = do_build_srpm(args, configs)
@@ -1155,7 +1164,7 @@ def cmd_build_iso(args, configs):
 
     src_rpms = []
     bin_rpms = {}  # Binary RPMs are stored per-arch
-    for content in iterate_args(args.filelist):
+    for content in iterate_args(config_get(configs, "filelist")):
         try:
             if not content.endswith(".rpm"):
                 log_warn(("File name \"%s\" does not end with .rpm " +
@@ -1250,8 +1259,8 @@ def cmd_build_iso(args, configs):
 
     shutil.rmtree(dir_tmp)
 
-    if ret or args.verbosity >= 1:
-        print("ISO creation ... %s" % ("Failed" if ret else "OK"))
+    log_status("ISO creation ... %s" % ("Failed" if ret else "OK"), configs,
+               level=0 if ret else 1)
 
     return ret
 
