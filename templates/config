@@ -20,15 +20,19 @@ module_name = ENTER_MODULE_NAME
 ## RPM file name expression. Can use any variable from this config file
 ## WARNING: don't change rpm_name if you are not sure what are you doing!
 # rpm_name = kmod-{global.module_vendor}-{module_name}
-## module_version
+## Module version. It's a good idea to make it equivalent to MODULE_VERSION
+## value, kernel version or some other versioning scheme used for existing DUPs.
+## Note that dashes are not allowed here (replace them with underscores).
 module_version = ENTER_MODULE_VERSION
 ## RPM release version
 module_rpm_release = 1
-## rpm_dist
+## RPM %dist override (el7_3, for example)
 rpm_dist = ENTER_DIST_TAG
 ## module build dir (drivers/infiniband/hfi1, for example)
 module_build_dir = ENTER_BUILD_DIR
 ## target kernel version (3.10.0-123.el7, for example)
+## RHEL 7.2: 3.10.0-327.el7
+## RHEL 7.3: 3.10.0-514.el7
 kernel_version = ENTER_KERNEL_VERSION
 ## target kernel exclusive arch (x86_64 ppc64 ppc64le, for example)
 kernel_arch = x86_64 ppc64 ppc64le
