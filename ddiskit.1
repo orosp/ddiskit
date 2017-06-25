@@ -424,8 +424,9 @@ for example).
 The configuration files themselves are sectioned key-value files with a
 syntax described in
 .URL https://docs.python.org/2/library/configparser.html "related python module documentation" ,
-except for the interpolation part, which is home-grown and described in section
-.IR "Configuration value evaluation".
+except for the interpolation part, which is home-grown and described
+in the section
+.IR "Configuration value evaluation" .
 .\"
 .SS Kernel package versioning scheme
 Red Hat Enterprise Linux follows specific kernel package versioning scheme, and
@@ -465,9 +466,9 @@ The versions of these packages have the following format:
 
 .fi
 .in
-The restrictions on the parts used for the Y-stream kernel package version
-description are the same, and \fIupdate_release\fR is a number which can have
-up to 3 digits.
+The restrictions on the parts that also used for the Y-stream kernel package
+version description are the same, and \fIupdate_release\fR is a number that
+can have up to 3 digits.
 Example of a Z-stream kernel package version (RHEL 7.3 update from 2017-05-25):
 3.10.0-514.21.1.el7.
 .PP
@@ -1002,7 +1003,7 @@ $ \fBddiskit\fR build_iso
 Package default configuration.
 .TP
 .B /etc/ddiskit.config
-System-wide configuration.
+System-wide ("site") configuration.
 .TP
 .B ~/.ddiskitrc
 User configuration.
@@ -1084,7 +1085,8 @@ Driver Update Disk signature write error.
 .SH REPORTING BUGS
 Problems with
 .B ddiskit
-should be reported to <https://github.com/orosp/ddiskit/issues>
+should be reported to
+.URL https://github.com/orosp/ddiskit/issues "ddiskit project bug tracker"
 .\"
 .\"
 .SH HISTORY
