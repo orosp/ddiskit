@@ -601,7 +601,7 @@ def get_config_path(cfg, default_dir=".", rel_dir=".", extension=".cfg"):
     return cfg
 
 
-def do_quilt(action, args, configs, restore_patch=None):
+def do_quilt(action, configs, restore_patch=None):
     """
     Perform quilt-related operation.
 
@@ -612,7 +612,6 @@ def do_quilt(action, args, configs, restore_patch=None):
      * QuiltCmd.APPLY - restore patches provided in restore_patch argument,
                         or, in case it is None, retrieve previously stored
                         patches the from the function object.
-    :param args:          Command line arguments.
     :param configs:       Dict of dicts containing current configuration.
     :param restore_patch: List of patches to restore (used by QuiltCmd.APPLY
                           action).
@@ -667,7 +666,7 @@ def do_quilt(action, args, configs, restore_patch=None):
     return 1
 
 
-def get_mock_args(args, configs):
+def get_mock_args(configs):
     """
     Constructs list of mock arguments based on the configuration provided.
 
@@ -678,7 +677,6 @@ def get_mock_args(args, configs):
                                  more.
      * "mock_offline" (default False) - adds "--offline" in case it is True
 
-    :param args:    Command line arguments.
     :param configs: Dict of dicts containing current configuration.
     :return:        Tuple containing array of command line arguments as first
                     value and retrieved configuration values in second.
@@ -700,11 +698,10 @@ def get_mock_args(args, configs):
     return (res, {"config": mock_cfg, "offline": mock_offline})
 
 
-def do_build_rpm(args, configs, arch):
+def do_build_rpm(configs, arch):
     """
     Binary RPM building routine.
 
-    :param args: unused (required for unify callback interface)
     :param configs: Dict of dicts of configuration values.
     """
     use_mock = config_get(configs, "mock")
@@ -714,11 +711,11 @@ def do_build_rpm(args, configs, arch):
     spec_path = "rpm/SPECS/%s.spec" % \
         config_get(configs, "spec_file.module_name")
     if use_mock:
-        mock_args = get_mock_args(args, configs)
+        mock_args = get_mock_args(configs)
 
         # We build RPM out of SRPM and we should build SRPM inside target
         # config
-        if do_build_srpm(args, configs) != 0:
+        if do_build_srpm(configs) != 0:
             return 1
 
         log_status("Start binary RPM build for %s using mock... " % arch,
@@ -749,11 +746,10 @@ def do_build_rpm(args, configs, arch):
     return command(cmd, configs, capture_output=False)[0]
 
 
-def do_build_srpm(args, configs):
+def do_build_srpm(configs):
     """
     Source RPM building routine.
 
-    :param args: unused (required for unify callback interface)
     :param configs: Dict of dicts of configuration values.
     """
     use_mock = config_get(configs, "mock")
@@ -763,7 +759,7 @@ def do_build_srpm(args, configs):
         config_get(configs, "spec_file.module_name")
     if use_mock:
         cmd = ["mock", "--buildsrpm"]
-        cmd += get_mock_args(args, configs)[0]
+        cmd += get_mock_args(configs)[0]
         cmd += ["--spec", spec_path,
                 "--sources", "rpm/SOURCES/", "--resultdir", "rpm/SRPMS/"]
     else:
@@ -773,10 +769,9 @@ def do_build_srpm(args, configs):
     return command(cmd, configs, capture_output=False)[0]
 
 
-def do_check_rpm_build(args, configs):
+def do_check_rpm_build(configs):
     """
     Check whether RPM can be built on the host.
-    :param args: unused (required for unify callback interface)
     :param configs: Dict of dicts of configuration values.
     """
     spec_path = "rpm/SPECS/%s.spec" % \
@@ -816,10 +811,9 @@ def create_dirs(dir_list, caption=None):
     return dir_creation_ok
 
 
-def cmd_prepare_sources(args, configs):
+def cmd_prepare_sources(configs):
     """
     CMD prepare_sources callback
-    :param args: argument parser arguments
     :param configs: Dict of dicts of configuration values.
     """
     cfgfile = config_get(configs, "config", default="module.config")
@@ -852,10 +846,9 @@ def cmd_prepare_sources(args, configs):
     return ErrCode.SUCCESS
 
 
-def cmd_generate_spec(args, configs):
+def cmd_generate_spec(configs):
     """
     CMD generate_spec callback
-    :param args: argument parser arguments
     :param configs: Dict of dicts of configuration values.
     """
     cfgfile = config_get(configs, "config", default="module.config")
@@ -1004,10 +997,9 @@ def filter_tar_info(configs, nvv):
     return functools.partial(filter_tar_info_args, configs=configs, nvv=nvv)
 
 
-def cmd_build_rpm(args, configs):
+def cmd_build_rpm(configs):
     """
     CMD build_rpm callback
-    :param args: argument parser arguments
     :param configs: Dict of dicts of configuration values.
     """
     warning = False
@@ -1037,7 +1029,7 @@ def cmd_build_rpm(args, configs):
     else:
         print("Checking makefile ... OK")
 
-    if do_quilt(QuiltCmd.DEAPPLY, args, configs):
+    if do_quilt(QuiltCmd.DEAPPLY, configs):
         log_error("Quilt de-applying returned error, aborting", configs)
         return ErrCode.QUILT_DEAPPLY_ERROR
 
@@ -1097,26 +1089,26 @@ def cmd_build_rpm(args, configs):
     if not config_get_bool(configs, "srpm") and \
             build_arch in config_get(configs, "spec_file.kernel_arch").split():
         if not config_get_bool(configs, "mock") and \
-                not do_check_rpm_build(args, configs):
+                not do_check_rpm_build(configs):
             log_warn("Binary RPM build check failed, building SRPM only",
                      configs)
-            ret = do_build_srpm(args, configs)
+            ret = do_build_srpm(configs)
         else:
-            ret = do_build_rpm(args, configs, build_arch)
+            ret = do_build_rpm(configs, build_arch)
     else:
         if not config_get_bool(configs, "srpm"):
             print("Because you are not on the target architecture, " +
                   "building SRPM only")
-        ret = do_build_srpm(args, configs)
+        ret = do_build_srpm(configs)
 
-    ret_quilt = do_quilt(QuiltCmd.APPLY, args, configs)
+    ret_quilt = do_quilt(QuiltCmd.APPLY, configs)
 
     # Return ret in case it is non-zero or QUILT_APPLY_ERROR in case of quilt
     # errors or 0 in case everything is fine.
     return ret or ret_quilt and ErrCode.QUILT_APPLY_ERROR
 
 
-def rpm_is_src(pkg, args, configs):
+def rpm_is_src(pkg, configs):
     ret, out = command(["rpm", "-qp", "--qf", "%|SOURCERPM?{0}:{1}|", pkg],
                        configs, cmd_print_lvl=2)
 
@@ -1126,7 +1118,7 @@ def rpm_is_src(pkg, args, configs):
     return out == "1"
 
 
-def rpm_is_debuginfo(pkg, args, configs):
+def rpm_is_debuginfo(pkg, configs):
     ret, out = command(["rpm", "-qp", "--qf", "%{GROUP}", pkg],
                        configs, cmd_print_lvl=2)
 
@@ -1136,7 +1128,7 @@ def rpm_is_debuginfo(pkg, args, configs):
     return out == "Development/Debug"
 
 
-def rpm_get_arch(pkg, args, configs):
+def rpm_get_arch(pkg, configs):
     ret, arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p', pkg], configs,
                         cmd_print_lvl=2)
 
@@ -1146,10 +1138,9 @@ def rpm_get_arch(pkg, args, configs):
     return arch
 
 
-def cmd_build_iso(args, configs):
+def cmd_build_iso(configs):
     """
     CMD build_iso callback
-    :param args: argument parser arguments
     :param configs: Dict of dicts of configuration values.
     """
     def iterate_args(args):
@@ -1173,13 +1164,13 @@ def cmd_build_iso(args, configs):
                           "extension, skipping") % content, configs)
                 continue
 
-            arch = rpm_get_arch(content, args, configs)
+            arch = rpm_get_arch(content, configs)
             if arch is None or not arch:
                 log_warn("Failed to get arch for \"%s\", skipping" % content,
                          configs)
                 continue
 
-            is_src = rpm_is_src(content, args, configs)
+            is_src = rpm_is_src(content, configs)
             if is_src is None:
                 log_warn("Failed to get whether RPM is source RPM for " +
                          "\"%s\", skipping" % content, configs)
@@ -1190,7 +1181,7 @@ def cmd_build_iso(args, configs):
                          "skipping \"%s\"" % content, configs)
                 continue
 
-            if rpm_is_debuginfo(content, args, configs) != False:
+            if rpm_is_debuginfo(content, configs) != False:
                 log_warn("Debuginfo packages are not supported, skipping " +
                          "\"%s\"" % content, configs)
                 continue
@@ -1371,7 +1362,7 @@ def parse_config(filename, args, configs={}):
     return configs
 
 
-def cmd_dump_config(args, configs):
+def cmd_dump_config(configs):
     filename = config_get(configs, "dump_config_name",
                           default=config_get(configs, "config") + ".generated")
     cfgparser = configparser.RawConfigParser()
@@ -1519,10 +1510,10 @@ def main():
     if (args.verbosity >= 2):
         print("Config: %r" % configs)
 
-    ret = args.func(args, configs)
+    ret = args.func(configs)
 
     if config_get(configs, "dump_config"):
-        dump_ret = cmd_dump_config(args, configs)
+        dump_ret = cmd_dump_config(configs)
         ret = ret or dump_ret
 
     return ret
