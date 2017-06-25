@@ -46,7 +46,7 @@ find %{buildroot} -size 0 -delete
 %{_datadir}/ddiskit/templates/spec
 %{_datadir}/ddiskit/templates/config
 %{_datadir}/ddiskit/profiles/*
-%config(noreplace) %{_datadir}/ddiskit/ddiskit.config
+%{_datadir}/ddiskit/ddiskit.config
 
 %changelog
 * Thu Jun 22 2017 Petr Oros <poros@redhat.com> - 3.4-1
