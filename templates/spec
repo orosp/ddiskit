@@ -84,7 +84,17 @@ Summary:	%{DEVEL_SUMMARY}
 
 %post
 modules=( $(find /lib/modules/%{kmod_kernel_version}.%(arch)/extra/kmod-%{kmod_vendor}-%{kmod_name} | grep '\.ko$') )
-printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --add-modules
+printf '%s\n' "${modules[@]}" >> /var/lib/rpm-kmod-posttrans-weak-modules-add
+
+%pretrans -p <lua>
+posix.unlink("/var/lib/rpm-kmod-posttrans-weak-modules-add")
+
+%posttrans
+if [ -f "/var/lib/rpm-kmod-posttrans-weak-modules-add" ]; then
+	modules=( $(cat /var/lib/rpm-kmod-posttrans-weak-modules-add) )
+	rm -rf /var/lib/rpm-kmod-posttrans-weak-modules-add
+	printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --add-modules
+fi
 
 %preun
 rpm -ql %{RPM_NAME}-%{kmod_driver_version}-%{kmod_rpm_release}%{?dist}.$(arch) | grep '\.ko$' > /var/run/rpm-kmod-%{kmod_name}-modules
