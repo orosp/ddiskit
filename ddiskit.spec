@@ -11,7 +11,7 @@ BuildArch:      noarch
 BuildRequires:  python2-devel
 BuildRequires:  python2-setuptools
 Requires:       rpm createrepo genisoimage
-Suggests:       quilt
+Suggests:       quilt git
 Recommends:     kernel-devel redhat-rpm-config rpm-build
 Recommends:     mock
 

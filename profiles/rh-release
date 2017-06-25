@@ -1,1 +1,7 @@
 ## Red Hat release DUP build profile
+
+[defaults]
+## We assume that the sources for Red Hat DUDs come from RH kernel tree
+## Please provide defaults.git_dir in site or user configuration in order
+## to allow check to work.
+check_git_src = 2

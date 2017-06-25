@@ -46,6 +46,7 @@ class ErrCode:
     CONFIG_CHECK_ERROR = 3
     QUILT_DEAPPLY_ERROR = 4
     QUILT_APPLY_ERROR = 5
+    GIT_SRC_CHECK_ERROR = 6
 
     GENERIC_IO_ERROR = 32
     CONFIG_READ_ERROR = 34
@@ -666,6 +667,76 @@ def do_quilt(action, configs, restore_patch=None):
     return 1
 
 
+def do_git_src_check(configs):
+    """
+    Check whether sources put in src correspond to the ones present in the
+    repository at the specified commit.
+
+    Configuration options used:
+        defaults.git_src_check - whether to perform check.
+                                 0 - no, 1 - issue warning, 2 - issue error.
+        defaults.git_dir - patch to the (kernel) git repo (.git)
+        spec_file.git_hash - commit ID to check against
+        spec_file.module_build_dir - directory inside repo/src which should be
+                                     checked
+
+    :param configs: Dict of dicts containing current configuration.
+    :return:        Tuple of two value, the first one signalises check level,
+                    the second is the check result, that is decoded as follows:
+                    0 in case of successful check, positive value in case there
+                    is some difference, negative value in case there are some
+                    issues during the verification attempt, specifically:
+                     * -1 - defaults.git_repo is missing
+                     * -2 - spec_file.git_hash is missing
+                     * -3 - spec_file. module_build_dir is missing
+                     * -1024...-255 - issues with repo check (increase the
+                                      value by 512 in order to get command exit
+                                      code / OS error code)
+                     * -2048...-1025 - issue with git diff call (increase the
+                                       value by 1536 in order to get command
+                                       exit code / OS error code)
+    """
+    check_enabled = int(config_get(configs, "check_git_src", default=0))
+
+    if check_enabled < 1:
+        log_info("Source verification against Git repository " +
+                 "(defaults.check_git_src) is not enabled,skipping.", configs)
+        return (0, 0)
+
+    git_repo = config_get(configs, "defaults.git_dir")
+    git_hash = config_get(configs, "spec_file.git_hash")
+    subdir = config_get(configs, "spec_file.module_build_dir")
+
+    if git_repo is None:
+        log_warn("Path to git repository (defaults.git_dir) is not provided," +
+                 " can't verify integrity of sources against it.", configs)
+        return (check_enabled, -1)
+    if git_hash is None:
+        log_warn("Git commit hash (spec_file.git_hash) is not provided," +
+                 " can't verify integrity of sources against it.", configs)
+        return (check_enabled, -2)
+    if subdir is None:
+        log_warn("Directory inside git repository " +
+                 "(spec_file.module_build_dir) is not provided, " +
+                 "can't verify integrity of sources against it.", configs)
+        return (check_enabled, -3)
+
+    # Check that git is working and the repo is present
+    ret = command(["git", "--git-dir=%s" % git_repo, "--work-tree=src/",
+                   "rev-parse", git_hash, "--"], configs, cmd_print_lvl=2)
+
+    if ret[0]:
+        log_warn(("Git repo check failed (return code %d, output \"%s\"), " +
+                 "can't verify authentity of sources") % ret, configs)
+        return (check_enabled, ret[0] - 512)
+
+    ret = command(["git", "--git-dir=%s" % git_repo, "--work-tree=src/",
+                   "diff", "--stat", "--exit-code", git_hash, "--", subdir],
+                  configs, capture_output=False)[0]
+
+    return (check_enabled, ret if ret <= 1 else ret - 1536)
+
+
 def get_mock_args(configs):
     """
     Constructs list of mock arguments based on the configuration provided.
@@ -1032,6 +1103,16 @@ def cmd_build_rpm(configs):
     if do_quilt(QuiltCmd.DEAPPLY, configs):
         log_error("Quilt de-applying returned error, aborting", configs)
         return ErrCode.QUILT_DEAPPLY_ERROR
+
+    src_check_lvl, src_check_ret = do_git_src_check(configs)
+    if (src_check_lvl >= 2) and src_check_ret:
+        log_error(("Source verification is critical (%d >= 2) and failed " +
+                   "(return code %d), aborting") %
+                  (src_check_lvl, src_check_ret), configs)
+        return ErrCode.GIT_SRC_CHECK_ERROR
+    elif src_check_lvl == 1:
+        log_warn("Sources differ from the contents of the repository",
+                 configs, level=0)
 
     nvv = "%s-%s-%s" % \
         (config_get(configs, "spec_file.module_name"),
@@ -1465,6 +1546,12 @@ def parse_cli():
     parser_build_rpm.add_argument("-l", "--mock-offline", action="store_true",
                                   default=False,
                                   help="Run mock in offline mode")
+    parser_build_rpm.add_argument("-g", "--check-git-src", default=None,
+                                  help="Whether to perform verification of " +
+                                       "sources against git repository. " +
+                                       "0 - do not perform, " +
+                                       "1 - perform check, issue warning, " +
+                                       "2 - perform check, abort on failure")
     parser_build_rpm.set_defaults(func=cmd_build_rpm)
 
     # parser for the "build_iso" command

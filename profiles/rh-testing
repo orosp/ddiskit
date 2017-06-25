@@ -1,5 +1,11 @@
 ## Red Hat testing DUP profile
 
+[defaults]
+## We assume that the sources for Red Hat DUDs come from RH kernel tree
+## Please provide defaults.git_dir in site or user configuration in order
+## to allow check to work.
+check_git_src = 2
+
 [spec_file]
 description_suffix =
 	This RPM has been provided by Red Hat for testing purposes only and is
