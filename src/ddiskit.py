@@ -144,7 +144,7 @@ def val2bool(val):
     return None
 
 
-def command(cmd, args, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
+def command(cmd, configs, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
             capture_output=True):
     """
     Execute shell command and return stdout string
@@ -153,7 +153,9 @@ def command(cmd, args, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
              as a second. In case OSError occurred during the execution, value
              of -256 - errno is returned as the return code.
     """
-    if (args.verbosity >= cmd_print_lvl):
+    verbosity = config_get(configs, "verbosity", default=0)
+
+    if (verbosity >= cmd_print_lvl):
         print("Executing command: %r" % cmd)
     try:
         process = Popen(
@@ -167,16 +169,16 @@ def command(cmd, args, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
         if capture_output:
             result = result.decode()
     except OSError as err:
-        if args.verbosity >= max(1, min(cmd_print_lvl, res_print_lvl)):
+        if verbosity >= max(1, min(cmd_print_lvl, res_print_lvl)):
             print("  Got OSError when tried to execute %r (errno %d): %s" %
                   (cmd, err.errno, err.strerror))
         result = ""
         ret = -256 - err.errno
 
-    if args.verbosity >= res_print_lvl:
+    if verbosity >= res_print_lvl:
         if capture_output:
             print(result)
-        if args.verbosity >= cmd_print_lvl:
+        if verbosity >= cmd_print_lvl:
             print("  Return code for %r:" % cmd, ret)
     return (ret, result)
 
@@ -641,12 +643,12 @@ def do_quilt(action, args, configs, restore_patch=None):
             if not p:
                 continue
 
-            ret = command(["quilt", "push", p], args, cwd=series_dir,
+            ret = command(["quilt", "push", p], configs, cwd=series_dir,
                           cmd_print_lvl=2)[0] or ret
 
         return ret
     elif action == QuiltCmd.DEAPPLY:
-        ret, out = command(["quilt", "applied"], args, cwd=series_dir,
+        ret, out = command(["quilt", "applied"], configs, cwd=series_dir,
                            cmd_print_lvl=2)
 
         do_quilt.saved_patches = out if ret == 0 else None
@@ -657,7 +659,7 @@ def do_quilt(action, args, configs, restore_patch=None):
 
             return 0
 
-        return command(["quilt", "pop", "-a"], args, cwd=series_dir,
+        return command(["quilt", "pop", "-a"], configs, cwd=series_dir,
                        cmd_print_lvl=2)[0]
     else:
         log_warn("Unknown quilt action %d" % action, configs)
@@ -688,7 +690,7 @@ def do_build_rpm(args, configs, arch):
                    configs)
 
         ret, dist = command(["mock", "-q", "-r", mock_cfg, "--chroot",
-                             "rpm --eval %{dist}"], args)
+                             "rpm --eval %{dist}"], configs)
         if ret != 0:
             return 1
 
@@ -716,7 +718,7 @@ def do_build_rpm(args, configs, arch):
                "--define", "_topdir " + os.getcwd() + "/rpm",
                "-ba", spec_path]
 
-    return command(cmd, args, capture_output=False)[0]
+    return command(cmd, configs, capture_output=False)[0]
 
 
 def do_build_srpm(args, configs):
@@ -745,7 +747,7 @@ def do_build_srpm(args, configs):
         cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
                "-bs", spec_path]
 
-    return command(cmd, args, capture_output=False)[0]
+    return command(cmd, configs, capture_output=False)[0]
 
 
 def do_check_rpm_build(args, configs):
@@ -759,7 +761,7 @@ def do_check_rpm_build(args, configs):
     cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
            "--nobuild", "-bc", spec_path]
 
-    return command(cmd, args, capture_output=False)[0] == 0
+    return command(cmd, configs, capture_output=False)[0] == 0
 
 
 def create_dirs(dir_list, caption=None):
@@ -1088,7 +1090,7 @@ def cmd_build_rpm(args, configs):
 
 def rpm_is_src(pkg, args, configs):
     ret, out = command(["rpm", "-qp", "--qf", "%|SOURCERPM?{0}:{1}|", pkg],
-                       args, cmd_print_lvl=2)
+                       configs, cmd_print_lvl=2)
 
     if ret:
         return None
@@ -1098,7 +1100,7 @@ def rpm_is_src(pkg, args, configs):
 
 def rpm_is_debuginfo(pkg, args, configs):
     ret, out = command(["rpm", "-qp", "--qf", "%{GROUP}", pkg],
-                       args, cmd_print_lvl=2)
+                       configs, cmd_print_lvl=2)
 
     if ret:
         return None
@@ -1107,7 +1109,7 @@ def rpm_is_debuginfo(pkg, args, configs):
 
 
 def rpm_get_arch(pkg, args, configs):
-    ret, arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p', pkg], args,
+    ret, arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p', pkg], configs,
                         cmd_print_lvl=2)
 
     if ret:
@@ -1199,7 +1201,7 @@ def cmd_build_iso(args, configs):
             shutil.copy(file, dir)
 
         command(['createrepo', '--pretty', dir],
-                args, res_print_lvl=0, capture_output=False)
+                configs, res_print_lvl=0, capture_output=False)
 
     try:
         with open(dir_tmp + "/disk/rhdd3", 'w') as fout:
@@ -1226,7 +1228,7 @@ def cmd_build_iso(args, configs):
                       '-R', '-uid', '0', '-gid', '0', '-dir-mode', '0555',
                       '-file-mode', '0444', '-o',
                       isofile, dir_tmp + '/disk'],
-                     args, res_print_lvl=0, capture_output=False)
+                     configs, res_print_lvl=0, capture_output=False)
     os.umask(saved_umask)
 
     shutil.rmtree(dir_tmp)
