@@ -1348,8 +1348,11 @@ def parse_config(filename, args, configs={}):
     profile_dir = config_get(configs, "profile_dir")
     profile = config_get(configs, "profile")
     if profile is not None and profile_dir is not None:
-        apply_config_file(get_config_path(profile, profile_dir, extension=""),
-                          configs)
+        profile_path = get_config_path(profile, profile_dir, extension=""),
+        ret = apply_config_file(profile_path, configs)
+        if ret is None or len(ret) == 0:
+            print("Profile \"" + profile_path + "\" not found")
+            return None
 
     if filename is not None:
         ret = apply_config_file(filename, configs)[1]
