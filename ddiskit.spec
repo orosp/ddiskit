@@ -5,7 +5,7 @@ Summary:        Tool for Red Hat Enterprise Linux Driver Update Disk creation
 
 License:        GPLv3
 URL:            https://github.com/orosp/ddiskit
-Source0:        https://github.com/orosp/ddiskit/archive/%{version}.tar.gz
+Source0:        https://github.com/orosp/ddiskit/archive/%{version}/%{name}-%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python-devel
