@@ -667,6 +667,37 @@ def do_quilt(action, args, configs, restore_patch=None):
     return 1
 
 
+def get_mock_args(args, configs):
+    """
+    Constructs list of mock arguments based on the configuration provided.
+
+    Arguments currently supported:
+     * "mock_config" (default "defult.cfg") - "-r CONFIG"
+     * "verbosity" (default 0) - "-q" for verbosity 0, no additional arguments
+                                 for verbosity 1, "-v" for verbosity 2 and
+                                 more.
+     * "mock_offline" (default False) - adds "--offline" in case it is True
+
+    :param args:    Command line arguments.
+    :param configs: Dict of dicts containing current configuration.
+    :return:        Tuple containing array of command line arguments as first
+                    value and retrieved configuration values in second.
+    """
+    res = []
+    mock_cfg = config_get(configs, "mock_config", default="default.cfg")
+
+    res += ["-r", mock_cfg]
+
+    if args.verbosity > 1:
+        res.append("-v")
+    elif not args.verbosity:
+        res.append("-q")
+    if args.mock_offline:
+        res.append("--offline")
+
+    return (res, {"config": mock_cfg, "offline": args.mock_offline})
+
+
 def do_build_rpm(args, configs, arch):
     """
     Binary RPM building routine.
@@ -679,7 +710,7 @@ def do_build_rpm(args, configs, arch):
     spec_path = "rpm/SPECS/%s.spec" % \
         config_get(configs, "spec_file.module_name")
     if args.mock:
-        mock_cfg = config_get(configs, "mock_config", default="default.cfg")
+        mock_args = get_mock_args(args, configs)
 
         # We build RPM out of SRPM and we should build SRPM inside target
         # config
@@ -689,8 +720,8 @@ def do_build_rpm(args, configs, arch):
         log_status("Start binary RPM build for %s using mock... " % arch,
                    configs)
 
-        ret, dist = command(["mock", "-q", "-r", mock_cfg, "--chroot",
-                             "rpm --eval %{dist}"], configs)
+        ret, dist = command(["mock", "-q", "-r", mock_args[1]["config"],
+                             "--chroot", "rpm --eval %{dist}"], configs)
         if ret != 0:
             return 1
 
@@ -702,15 +733,8 @@ def do_build_rpm(args, configs, arch):
                         "{rpm_name}-{module_version}-{module_rpm_release}"),
              dist)
 
-        cmd = ["mock", "--no-cleanup-after", "--rebuild", "-r", mock_cfg]
-
-        if args.verbosity > 1:
-            cmd.append("-v")
-        elif not args.verbosity:
-            cmd.append("-q")
-        if args.mock_offline:
-            cmd.append("--offline")
-
+        cmd = ["mock", "--no-cleanup-after", "--rebuild"]
+        cmd += mock_args[0]
         cmd += ["--arch", arch, "--resultdir", "rpm/RPMS/",
                 "rpm/SRPMS/%s" % srpm_name]
     else:
@@ -732,15 +756,8 @@ def do_build_srpm(args, configs):
     spec_path = "rpm/SPECS/%s.spec" % \
         config_get(configs, "spec_file.module_name")
     if args.mock:
-        cmd = ["mock", "--buildsrpm", "-r", args.mock_config]
-
-        if args.verbosity > 1:
-            cmd.append("-v")
-        elif not args.verbosity:
-            cmd.append("-q")
-        if args.mock_offline:
-            cmd.append("--offline")
-
+        cmd = ["mock", "--buildsrpm"]
+        cmd += get_mock_args(args, configs)[0]
         cmd += ["--spec", spec_path,
                 "--sources", "rpm/SOURCES/", "--resultdir", "rpm/SRPMS/"]
     else:
