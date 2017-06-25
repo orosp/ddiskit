@@ -28,7 +28,7 @@ kernel modules.
 %{__python} setup.py build
 
 %install
-%{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT
+%{__python} setup.py install --skip-build --root %{buildroot}
 find %{buildroot} -size 0 -delete
 
 %check
