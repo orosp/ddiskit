@@ -8,8 +8,8 @@ URL:            https://github.com/orosp/ddiskit
 Source0:        https://github.com/orosp/ddiskit/archive/%{version}/%{name}-%{version}.tar.gz
 
 BuildArch:      noarch
-BuildRequires:  python-devel
-BuildRequires:  python-setuptools
+BuildRequires:  python2-devel
+BuildRequires:  python2-setuptools
 Requires:       rpm createrepo genisoimage
 Suggests:       quilt
 Recommends:     kernel-devel redhat-rpm-config rpm-build
