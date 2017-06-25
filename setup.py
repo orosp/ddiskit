@@ -7,7 +7,7 @@ setup(
     version="3.4",
     author="Petr Oros",
     author_email="poros@redhat.com",
-    description=("Red Hat tool for create Driver Update Disk"),
+    description=("Red Hat tool for Driver Update Disk creation"),
     license="GPLv3",
     url="https://github.com/orosp/ddiskit.git",
     packages=['ddiskit'],
