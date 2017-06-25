@@ -71,7 +71,7 @@ Configuration option name:
 .br
 Default value: none; "/usr/share/ddiskit/" is a hard-coded default.
 .TP
-\fB\-T\fR \fIITEMPLATE_DIR\fR, \fB\-\-template\-dir\fR \fIITEMPLATE_DIR\fR,
+\fB\-T\fR \fITEMPLATE_DIR\fR, \fB\-\-template\-dir\fR \fITEMPLATE_DIR\fR,
 Templates directory, used as a base for searching for spec or module
 configuration templates.
 Please refer to the
@@ -451,7 +451,7 @@ As a result, it is expected that
 are decimal numbers (having no more than 1, 2, 2, and 4 digits, respectively),
 and
 .I rpm_dist
-part is provided in the form of "el\f<Inumber>\fR", where \fI<number>\fR is
+part is provided in the form of "el\fI<number>\fR", where \fI<number>\fR is
 a 1-digit or 2-digit number not less than 6.
 .IP \(bu
 Z-stream kernel version.
@@ -461,7 +461,7 @@ The versions of these packages have the following format:
 .in +4n
 .nf
 
-\fIkernel_version\fR.\fIkernel_patchlevel\fR.\fIkernel_sublevel\fR-\fIrhel_release\fR\fB[\fR.update_release\fB]+\fR.\fIrpm_dist\fR
+\fIkernel_version\fR.\fIkernel_patchlevel\fR.\fIkernel_sublevel\fR-\fIrhel_release\fR\fB[\fR.\fIupdate_release\fR\fB]+\fR.\fIrpm_dist\fR
 
 .fi
 .in
@@ -914,7 +914,7 @@ can handle it.
 .\"
 .SH USAGE EXAMPLE
 .IP 1. 3
-Create initial directory structure and module configuraiton.
+Create initial directory structure and module configuration.
 .in +4n
 .nf
 
