@@ -685,17 +685,19 @@ def get_mock_args(args, configs):
     """
     res = []
     mock_cfg = config_get(configs, "mock_config", default="default.cfg")
+    mock_offline = config_get_bool(configs, "mock_offline")
+    verbosity = config_get(configs, "verbosity", default=0)
 
     res += ["-r", mock_cfg]
 
-    if args.verbosity > 1:
+    if verbosity > 1:
         res.append("-v")
-    elif not args.verbosity:
+    elif not verbosity:
         res.append("-q")
-    if args.mock_offline:
+    if mock_offline:
         res.append("--offline")
 
-    return (res, {"config": mock_cfg, "offline": args.mock_offline})
+    return (res, {"config": mock_cfg, "offline": mock_offline})
 
 
 def do_build_rpm(args, configs, arch):
