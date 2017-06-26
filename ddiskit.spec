@@ -26,7 +26,6 @@ Requires:       kernel-devel redhat-rpm-config rpm-build
 Requires:       mock
 %endif
 
-
 %description -n %{name}
 Ddiskit is a little framework for simplifying creation of proper
 Driver Update Disks (DUD) used for providing new or updated out-of-tree

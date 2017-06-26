@@ -10,8 +10,6 @@ setup(
     description=("Red Hat tool for Driver Update Disk creation"),
     license="GPLv3",
     url="https://github.com/orosp/ddiskit.git",
-    packages=['ddiskit'],
-    package_dir={'ddiskit': 'src/'},
     data_files=[('/usr/share/bash-completion/completions', ['ddiskit']),
                 ('/usr/share/ddiskit/templates',
                     ['templates/spec', 'templates/config']),
@@ -22,9 +20,5 @@ setup(
                 ('/usr/share/man/man1', ['ddiskit.1']),
                 ('/etc', ['etc/ddiskit.config']),
                 ],
-    entry_points={
-        'console_scripts': [
-            'ddiskit=ddiskit.ddiskit:main',
-        ],
-    },
+    scripts=['bin/ddiskit'],
 )
