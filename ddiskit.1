@@ -13,6 +13,7 @@ ddiskit \- Red Hat tool for Driver Update Disk creation
 [\fB\-d\fR]
 [\fB\-o\fR \fIDUMP_CONFIG_NAME\fR]
 [\fB\-q\fR | \fB\-Q\fR]
+[\fB\-C\fR \fIKEY\fR=\fIVALUE\fR]*
 \fIACTION\fR
 [\fIACTION_OPTIONS\fR]...
 .SH DESCRIPTION
@@ -126,6 +127,18 @@ The option sets
 .I defaults.quilt_support
 configuration option to
 .BR False .
+.TP
+\fB\-C\fR \fIKEY\fR=\fIVALUE\fR, \fB\-\-config\-option\fR \fIKEY\fR=\fIVALUE\fR
+Override arbitrary configuration option that have the name
+.I KEY
+with
+.IR VALUE .
+The
+.I KEY
+should follow the "{\fB[\fR\fIsection_name\fR.\fB]\fR\fIkey_name\fR}" syntax,
+and \fIdefaults\fR section is assumed in case \fIsection_name\fR part is
+omitted.
+The argument can be used multiple times in order to override multiple options.
 .\"
 .SS Options for prepare_sources action
 .TP

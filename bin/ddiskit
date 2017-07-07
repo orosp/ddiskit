@@ -1352,10 +1352,27 @@ def apply_args(args, configs):
     :param configs: Dict of dicts of configuration values.
     :return:        Updated configs argument
     """
+
+    if hasattr(apply_args, "first_run"):
+        apply_args.first_run = 0
+    else:
+        apply_args.first_run = 1
+
     if "defaults" not in configs:
         configs["defaults"] = {}
     configs["defaults"].update([(k, v) for k, v in args.__dict__.iteritems()
                                 if v is not None])
+
+    if args.config_option:
+        for arg in args.config_option:
+            kv = arg.split("=", 1)
+            if len(kv) != 2:
+                if apply_args.first_run:
+                    log_warn("Configuration option override arguments " +
+                             "should be provided in the <key>=<value> " +
+                             "format, skipping \"%s\"" % arg, configs, level=0)
+                continue
+            config_set(configs, kv[0].strip(), kv[1])
 
     return configs
 
@@ -1505,6 +1522,8 @@ def parse_cli():
     root_parser.add_argument("-Q", "--quilt-disable", action="store_const",
                              dest="quilt_support", const=False,
                              help="Disable quilt integration")
+    root_parser.add_argument("-C", "--config-option", action="append",
+                             help="Override configuration options")
 
     cmdparsers = root_parser.add_subparsers(title='Commands',
                                             help='main ddiskit commands')
