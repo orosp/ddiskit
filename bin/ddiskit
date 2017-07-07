@@ -315,7 +315,7 @@ def config_get(configs, key, section="defaults", default=None,
             return val
 
         if key[0] in configs and key[1] in configs[key[0]]:
-            return configs[key[0]][key[1]]
+            return str(configs[key[0]][key[1]])
 
         return m.group(0)
 
