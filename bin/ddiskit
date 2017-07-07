@@ -731,8 +731,9 @@ def do_git_src_check(configs):
                  "can't verify authentity of sources") % ret, configs)
         return (check_enabled, ret[0] - 512)
 
+    diff_fmt = "--stat" if config_get(configs, "verbosity") < 2 else "--patch"
     ret = command(["git", "--git-dir=%s" % git_repo, "--work-tree=src/",
-                   "diff", "--stat", "--exit-code", git_hash, "--", subdir],
+                   "diff", diff_fmt, "--exit-code", git_hash, "--", subdir],
                   configs, capture_output=False)[0]
 
     return (check_enabled, ret if ret <= 1 else ret - 1536)
