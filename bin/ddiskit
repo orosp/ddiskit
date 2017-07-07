@@ -1333,6 +1333,21 @@ def cmd_build_iso(configs):
                      configs, res_print_lvl=0, capture_output=False)
     os.umask(saved_umask)
 
+    iso_mode = config_get(configs, "isofile_mode")
+    if not ret and iso_mode is not None:
+        try:
+            iso_mode_numeric = int(iso_mode, 0)
+            log_info("Applying file mode %#o to \"%s\"..." %
+                     (iso_mode_numeric, isofile), configs)
+            os.chmod(isofile, iso_mode_numeric)
+        except ValueError:
+            log_warn("Failed to apply numeric file mode \"%s\"" % iso_mode,
+                     configs, level=0)
+    else:
+        log_info(("mkisofs exit code (%d) is not zero or no ISO file mode " +
+                  "provided in the defaults.iso_file mode, skipping ISO " +
+                  "file mode setting") % ret, configs)
+
     shutil.rmtree(dir_tmp)
 
     log_status("ISO creation ... %s" % ("Failed" if ret else "OK"), configs,
