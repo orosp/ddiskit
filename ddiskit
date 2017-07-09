@@ -99,11 +99,12 @@ EOF
     # $1 - word
     # $2 - prefix
     # $3 - this is config (resolve realtive to current dir and not ocnfig dir)
+    # $4 - glob pattern
     _comp_file()
     {
         comp_replies=$([ "$3" != 1 ] && cd `dirname "$config"`; \
             grep -x -v -F -f <(compgen -d -P "$2" -S '$' -- "$1") \
-                <(compgen -f  -P "$2" -S '$' -- "$1") \
+                <(compgen -f  -P "$2" -S '$' -- "$1" | sed -n "/$4\$$/p") \
                 | sed 's/\$$/ /'; \
             compgen -d -S / -P "$2" -- "$1")
         _comp_append
@@ -118,7 +119,7 @@ EOF
     {
         if [ "${1#*/*}" != "${1}" -o \( -n "$4" -a "${1%$4}" != "$1" \) ]
         then
-            _comp_file "$1" "$2"
+            _comp_file "$1" "$2" 0 "$4"
         else
             comp_replies=$(compgen -P "$2" -W "`ls "$3" | sed -n /$4\$/s/$4\$//p`" -- "$1" | sed 's/$/ /')
             _comp_append
