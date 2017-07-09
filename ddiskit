@@ -16,8 +16,8 @@ _ddiskit()
     local prepare_sources_opts_long="--config --config-template"
     local generate_spec_opts="-c -t"
     local generate_spec_opts_long="--config --spec-template"
-    local build_rpm_opts="-c -a -e -s -m -r -l"
-    local build_rpm_opts_long="--config --tar-all --tar-strict --srpm --mock --mock-config --mock-offline"
+    local build_rpm_opts="-c -a -e -s -m -r -l -g"
+    local build_rpm_opts_long="--config --tar-all --tar-strict --srpm --mock --mock-config --mock-offline --check-git-src"
     local build_iso_opts="-c -i"
     local build_iso_opts_long="--config --isofile"
     local dump_config_opts="-c -o"
@@ -432,15 +432,15 @@ EOF
             fi
 
             case "$w" in
-            --config|--mock-config)
+            --config|--mock-config|--check-git-src)
                 [ "$w" = "--config" ] && before_skip="-c"
                 skip=1
                 continue
                 ;;
-            -[caesmrl]*)
+            -[caesmrlg]*)
                 _strip_opts aesml
 
-                if [ "${#w1}" = 1 -a "${w1#[cr]}" != "$w1" ]
+                if [ "${#w1}" = 1 -a "${w1#[crg]}" != "$w1" ]
                 then
                     before_skip="-$w1"
                     skip=1
@@ -462,6 +462,10 @@ EOF
             _comp_cfg "$cur" "" "$mock_dir" ".cfg"
             return 0
             ;;
+        -g|--check-git-src)
+            _comp_list "$cur" "" 0 1 2
+            return 0
+            ;;
         esac
 
         case "$cur" in
@@ -473,7 +477,11 @@ EOF
             _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$mock_dir" ".cfg"
             return 0
             ;;
-        -[caesmrl]*)
+        --check-git-src=*)
+            _comp_list "${cur#--*=}" "${cur%%=*}=" 0 1 2
+            return 0
+            ;;
+        -[caesmrlg]*)
             w="$cur"
             _strip_opts aesml
 
@@ -489,6 +497,9 @@ EOF
                 _comp_cfg "$w1" "${cur%$w1}" "$mock_dir" ".cfg"
                 return 0
                 ;;
+            g*)
+                _comp_list "${w1}" "${cur%$w1}" 0 1 2
+                return 0
             esac
         ;;
         esac
