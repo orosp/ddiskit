@@ -1470,7 +1470,7 @@ def parse_config(filename, args, configs={}):
             return None
 
     if filename is not None:
-        ret = apply_config_file(filename, configs)[1]
+        ret = apply_config_file(os.path.basename(filename), configs)[1]
         if ret is None or len(ret) == 0:
             print("Config file: " + filename + " not found")
             return None
@@ -1624,6 +1624,10 @@ def main():
     if args is None:
         return ErrCode.ARGS_PARSE_ERROR
     if os.path.isfile(args.config):
+        config_dir = os.path.dirname(args.config)
+        if config_dir:
+            os.chdir(config_dir)
+
         configs = parse_config(args.config, args, default_config)
         if configs is None:
             return ErrCode.CONFIG_READ_ERROR
