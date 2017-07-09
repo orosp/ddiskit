@@ -10,8 +10,8 @@ _ddiskit()
     local cur prev words cword comp_replies
     _get_comp_words_by_ref -n = cur prev words cword
 
-    local global_opts="-v -p -R -T -P -d -o"
-    local global_opts_long="--verbosity --profile --res-dir --template-dir --profile-dir --dump-config --dump-config-name"
+    local global_opts="-v -p -R -T -P -d -o -q -Q"
+    local global_opts_long="--verbosity --profile --res-dir --template-dir --profile-dir --dump-config --dump-config-name --quilt-enable --quilt-disable"
     local prepare_sources_opts="-c -t"
     local prepare_sources_opts_long="--config --config-template"
     local generate_spec_opts="-c -t"
@@ -174,8 +174,8 @@ EOF
             skip=1
             continue
             ;;
-        -[vpRTPdo]*)
-            _strip_opts vd
+        -[vpRTPdoqQ]*)
+            _strip_opts vdqQ
 
             # Then, checking whether the rest is option which requires argument
             # and it is the last character left
@@ -235,9 +235,9 @@ EOF
             _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$profile_dir"
             return 0
             ;;
-        -[vpRTPdo]*)
+        -[vpRTPdoqQ]*)
             w="$cur"
-            _strip_opts vd
+            _strip_opts vdqQ
 
             w="$w1"
             w1="${w:1}"
