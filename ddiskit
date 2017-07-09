@@ -53,6 +53,20 @@ _ddiskit()
             done
     }
 
+    # We need a hack similar to __ltrim_colon_completions, but for the equal
+    # sign.
+    __ltrim_eq_completions()
+    {
+        if [[ "$cur" == *=* && "$COMP_WORDBREAKS" == *=* ]]
+        then
+            local prefix="${cur%=*}="
+            local i=${#COMPREPLY[*]}
+            while [[ $((--i)) -ge 0 ]]; do
+                COMPREPLY[$i]=${COMPREPLY[$i]#"$prefix"}
+            done
+        fi
+    }
+
     # A big kludge needed for preserving trailing white space in the completion
     # options. Appends contents of comp_replies variables to COMPREPLY array,
     # one item per line.
@@ -78,6 +92,7 @@ EOF
     {
         comp_replies=$(compgen -o nospace -d -S / -P "$2" -- "$1")
         _comp_append
+        __ltrim_eq_completions
     }
 
     # $1 - word
@@ -86,6 +101,7 @@ EOF
     {
         comp_replies=$(compgen -o plusdirs -f -P "$2" -- "$1")
         _comp_append
+        __ltrim_eq_completions
     }
 
     # $1 - word
@@ -98,9 +114,11 @@ EOF
         then
             comp_replies=$(compgen -f -P "$2" -- "$1")
             _comp_append
+            __ltrim_eq_completions
         else
             comp_replies=$(compgen -P "$2" -W "`ls "$3" | sed -n /$4\$/s/$4\$//p`" -- "$1")
             _comp_append
+            __ltrim_eq_completions
         fi
     }
 
@@ -116,6 +134,7 @@ EOF
 
         comp_replies=$(compgen -P "$_p" -W "$*" -- "$_w")
         _comp_append
+        __ltrim_eq_completions
     }
 
     for i in $(seq 0 $((COMP_CWORD - 1)) )
