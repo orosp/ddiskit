@@ -110,7 +110,7 @@ _ddiskit()
 
     # $1 - list of options to skip
     # $w1 contains $w with options stripped
-    _strip_opts()
+    _ddiskit_strip_opts()
     {
             local _w="${w:1}"
             w1="${_w#[$1]}"
@@ -125,7 +125,7 @@ _ddiskit()
 
     # We need a hack similar to __ltrim_colon_completions, but for the equal
     # sign.
-    __ltrim_eq_completions()
+    _ddiskit_ltrim_eq_completions()
     {
         if [[ "$cur" == *=* && "$COMP_WORDBREAKS" == *=* ]]
         then
@@ -140,7 +140,7 @@ _ddiskit()
     # A big kludge needed for preserving trailing white space in the completion
     # options. Appends contents of comp_replies variables to COMPREPLY array,
     # one item per line.
-    _comp_append()
+    _ddiskit_comp_append()
     {
         # Early bailout in order to avoid adding single empty option
         [ -n "$comp_replies" ] || return 0
@@ -158,64 +158,64 @@ EOF
 
     # $1 - word
     # $2 - prefix
-    _comp_dir()
+    _ddiskit_comp_dir()
     {
         comp_replies=$(cd `dirname "$config"`; compgen -d -S / -P "$2" -- "$1")
-        _comp_append
-        __ltrim_eq_completions
+        _ddiskit_comp_append
+        _ddiskit_ltrim_eq_completions
     }
 
     # $1 - word
     # $2 - prefix
     # $3 - this is config (resolve realtive to current dir and not ocnfig dir)
     # $4 - glob pattern
-    _comp_file()
+    _ddiskit_comp_file()
     {
         comp_replies=$([ "$3" != 1 ] && cd `dirname "$config"`; \
             grep -x -v -F -f <(compgen -d -P "$2" -S '$' -- "$1") \
                 <(compgen -f  -P "$2" -S '$' -- "$1" | sed -n "/$4\$$/p") \
                 | sed 's/\$$/ /'; \
             compgen -d -S / -P "$2" -- "$1")
-        _comp_append
-        __ltrim_eq_completions
+        _ddiskit_comp_append
+        _ddiskit_ltrim_eq_completions
     }
 
     # $1 - word
     # $2 - prefix
     # $3 - cfg dir
     # $4 - suffix
-    _comp_cfg()
+    _ddiskit_comp_cfg()
     {
         if [ "${1#*/*}" != "${1}" -o \( -n "$4" -a "${1%$4}" != "$1" \) ]
         then
-            _comp_file "$1" "$2" 0 "$4"
+            _ddiskit_comp_file "$1" "$2" 0 "$4"
         else
             comp_replies=$(compgen -P "$2" -W "`ls "$3" | sed -n /$4\$/s/$4\$//p`" -- "$1" | sed 's/$/ /')
-            _comp_append
-            __ltrim_eq_completions
+            _ddiskit_comp_append
+            _ddiskit_ltrim_eq_completions
         fi
     }
 
     # $1 - word
     # $2 - prefix
-    _comp_cfg_opt()
+    _ddiskit_comp_cfg_opt()
     {
         if [ "${1#*=}" != "$1" ]
         then
             local _w="$2${1%%=*}="
             local _w1="${1#*=}"
-            _comp_file "$_w1" "$_w" 0
+            _ddiskit_comp_file "$_w1" "$_w" 0
         else
             comp_replies=$(compgen -o nospace -P "$2" -W "${config_options}" -- "$1" | sed 's/$/ /')
-            _comp_append
-            __ltrim_eq_completions
+            _ddiskit_comp_append
+            _ddiskit_ltrim_eq_completions
         fi
     }
 
     # $1 - word to complete
     # $2 - prefix
     # $@ - word list
-    _comp_list()
+    _ddiskit_comp_list()
     {
         local _w="$1"
         shift
@@ -223,8 +223,8 @@ EOF
         shift
 
         comp_replies=$(compgen -P "$_p" -W "$*" -- "$_w" | sed 's/$/ /')
-        _comp_append
-        __ltrim_eq_completions
+        _ddiskit_comp_append
+        _ddiskit_ltrim_eq_completions
     }
 
     for i in $(seq 1 $((cword - 1)) )
@@ -260,7 +260,7 @@ EOF
             continue
             ;;
         -[vpRTPdoqQC]*)
-            _strip_opts vdqQ
+            _ddiskit_strip_opts vdqQ
 
             # Then, checking whether the rest is option which requires argument
             # and it is the last character left
@@ -294,63 +294,63 @@ EOF
     then
         [ "$skip" = 1 ] && case "$prev" in
         -o|--dump-config-name)
-            _comp_file "$cur"
+            _ddiskit_comp_file "$cur"
             return 0
             ;;
         -R|-P|-T|--res-dir|--profile-dir|--template-dir)
-            _comp_dir "$cur"
+            _ddiskit_comp_dir "$cur"
             return 0
             ;;
         -p|--profile)
-            _comp_cfg "$cur" "" "$profile_dir"
+            _ddiskit_comp_cfg "$cur" "" "$profile_dir"
             return 0
             ;;
         -C|--config-option)
-            _comp_cfg_opt "$cur"
+            _ddiskit_comp_cfg_opt "$cur"
             return 0
             ;;
         esac
 
         case "$cur" in
         --dump-file-name=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}="
+            _ddiskit_comp_file "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         --profile-dir=*|--template-dir=*|--res-dir=*)
-            _comp_dir "${cur#--*=}" "${cur%%=*}="
+            _ddiskit_comp_dir "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         --profile=*)
-            _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$profile_dir"
+            _ddiskit_comp_cfg "${cur#--*=}" "${cur%%=*}=" "$profile_dir"
             return 0
             ;;
         --config-option=*)
-            _comp_cfg_opt "${cur#--config-option=}" "--config-option="
+            _ddiskit_comp_cfg_opt "${cur#--config-option=}" "--config-option="
             return 0
             ;;
 
         -[vpRTPdoqQC]*)
             w="$cur"
-            _strip_opts vdqQ
+            _ddiskit_strip_opts vdqQ
 
             w="$w1"
             w1="${w:1}"
 
             case "$w" in
             o*)
-                _comp_file "$w1" "${cur%$w1}"
+                _ddiskit_comp_file "$w1" "${cur%$w1}"
                 return 0
                 ;;
             P*|R*|T*)
-                _comp_dir "$w1" "${cur%$w1}"
+                _ddiskit_comp_dir "$w1" "${cur%$w1}"
                 return 0
                 ;;
             p*)
-                _comp_cfg "$w1" "${cur%$w1}" "$profile_dir"
+                _ddiskit_comp_cfg "$w1" "${cur%$w1}" "$profile_dir"
                 return 0
                 ;;
             C*)
-                _comp_cfg_opt "$w1" "${cur%$w1}"
+                _ddiskit_comp_cfg_opt "$w1" "${cur%$w1}"
                 return 0
                 ;;
             esac
@@ -359,7 +359,7 @@ EOF
 
         # Modern bash has -o nosort, but it is not present even in the version
         # shipped in Fedora 25, so we should probably avoid adding it for now.
-        _comp_list "$cur" "" "${global_opts} ${global_opts_long} ${cmds}"
+        _ddiskit_comp_list "$cur" "" "${global_opts} ${global_opts_long} ${cmds}"
         return 0
     fi
 
@@ -403,22 +403,22 @@ EOF
 
         [ "$skip" = 1 ] && case "$prev" in
         -c|--config)
-            _comp_file "$cur" "" 1
+            _ddiskit_comp_file "$cur" "" 1
             return 0
             ;;
         -t|--config-template)
-            _comp_cfg "$cur" "" "$template_dir"
+            _ddiskit_comp_cfg "$cur" "" "$template_dir"
             return 0
             ;;
         esac
 
         case "$cur" in
         --config=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}=" 1
+            _ddiskit_comp_file "${cur#--*=}" "${cur%%=*}=" 1
             return 0
             ;;
         --config-template=*)
-            _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$template_dir"
+            _ddiskit_comp_cfg "${cur#--*=}" "${cur%%=*}=" "$template_dir"
             return 0
             ;;
         -[ct]*)
@@ -427,18 +427,18 @@ EOF
 
             case "$w" in
             c*)
-                _comp_file "$w1" "${cur%$w1}" 1
+                _ddiskit_comp_file "$w1" "${cur%$w1}" 1
                 return 0
                 ;;
             t*)
-                _comp_cfg "$w1" "${cur%$w1}" "$template_dir"
+                _ddiskit_comp_cfg "$w1" "${cur%$w1}" "$template_dir"
                 return 0
                 ;;
             esac
         ;;
         esac
 
-        _comp_list "$cur" "" "${prepare_sources_opts} ${prepare_sources_opts_long}"
+        _ddiskit_comp_list "$cur" "" "${prepare_sources_opts} ${prepare_sources_opts_long}"
         return 0
         ;;
     generate_spec)
@@ -478,22 +478,22 @@ EOF
 
         [ "$skip" = 1 ] && case "$prev" in
         -c|--config)
-            _comp_file "$cur" "" 1
+            _ddiskit_comp_file "$cur" "" 1
             return 0
             ;;
         -t|--spec-template)
-            _comp_cfg "$cur" "" "$template_dir"
+            _ddiskit_comp_cfg "$cur" "" "$template_dir"
             return 0
             ;;
         esac
 
         case "$cur" in
         --config=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}=" 1
+            _ddiskit_comp_file "${cur#--*=}" "${cur%%=*}=" 1
             return 0
             ;;
         --spec-template=*)
-            _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$template_dir"
+            _ddiskit_comp_cfg "${cur#--*=}" "${cur%%=*}=" "$template_dir"
             return 0
             ;;
         -[ct]*)
@@ -502,18 +502,18 @@ EOF
 
             case "$w" in
             c*)
-                _comp_file "$w1" "${cur%$w1}" 1
+                _ddiskit_comp_file "$w1" "${cur%$w1}" 1
                 return 0
                 ;;
             t*)
-                _comp_cfg "$w1" "${cur%$w1}" "$template_dir"
+                _ddiskit_comp_cfg "$w1" "${cur%$w1}" "$template_dir"
                 return 0
                 ;;
             esac
         ;;
         esac
 
-        _comp_list "$cur" "" "${generate_spec_opts} ${generate_spec_opts_long}"
+        _ddiskit_comp_list "$cur" "" "${generate_spec_opts} ${generate_spec_opts_long}"
         return 0
         ;;
     build_rpm)
@@ -536,7 +536,7 @@ EOF
                 continue
                 ;;
             -[caesmrlg]*)
-                _strip_opts aesml
+                _ddiskit_strip_opts aesml
 
                 if [ "${#w1}" = 1 -a "${w1#[crg]}" != "$w1" ]
                 then
@@ -553,56 +553,56 @@ EOF
 
         [ "$skip" = 1 ] && case "$prev" in
         -c|--config)
-            _comp_file "$cur" "" 1
+            _ddiskit_comp_file "$cur" "" 1
             return 0
             ;;
         -r|--mock-config)
-            _comp_cfg "$cur" "" "$mock_dir" ".cfg"
+            _ddiskit_comp_cfg "$cur" "" "$mock_dir" ".cfg"
             return 0
             ;;
         -g|--check-git-src)
-            _comp_list "$cur" "" 0 1 2
+            _ddiskit_comp_list "$cur" "" 0 1 2
             return 0
             ;;
         esac
 
         case "$cur" in
         --config=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}=" 1
+            _ddiskit_comp_file "${cur#--*=}" "${cur%%=*}=" 1
             return 0
             ;;
         --mock-config=*)
-            _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$mock_dir" ".cfg"
+            _ddiskit_comp_cfg "${cur#--*=}" "${cur%%=*}=" "$mock_dir" ".cfg"
             return 0
             ;;
         --check-git-src=*)
-            _comp_list "${cur#--*=}" "${cur%%=*}=" 0 1 2
+            _ddiskit_comp_list "${cur#--*=}" "${cur%%=*}=" 0 1 2
             return 0
             ;;
         -[caesmrlg]*)
             w="$cur"
-            _strip_opts aesml
+            _ddiskit_strip_opts aesml
 
             w="${w1}"
             w1="${w:1}"
 
             case "$w" in
             c*)
-                _comp_file "$w1" "${cur%$w1}" 1
+                _ddiskit_comp_file "$w1" "${cur%$w1}" 1
                 return 0
                 ;;
             r*)
-                _comp_cfg "$w1" "${cur%$w1}" "$mock_dir" ".cfg"
+                _ddiskit_comp_cfg "$w1" "${cur%$w1}" "$mock_dir" ".cfg"
                 return 0
                 ;;
             g*)
-                _comp_list "${w1}" "${cur%$w1}" 0 1 2
+                _ddiskit_comp_list "${w1}" "${cur%$w1}" 0 1 2
                 return 0
             esac
         ;;
         esac
 
-        _comp_list "$cur" "" "${build_rpm_opts} ${build_rpm_opts_long}"
+        _ddiskit_comp_list "$cur" "" "${build_rpm_opts} ${build_rpm_opts_long}"
         return 0
         ;;
     build_iso)
@@ -642,22 +642,22 @@ EOF
 
         [ "$skip" = 1 ] && case "$prev" in
         -c|--config)
-            _comp_file "$cur" "" 1
+            _ddiskit_comp_file "$cur" "" 1
             return 0
             ;;
         -i|--isofile)
-            _comp_file "$cur" "" 0 ".iso"
+            _ddiskit_comp_file "$cur" "" 0 ".iso"
             return 0
             ;;
         esac
 
         case "$cur" in
         --config=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}=" 1
+            _ddiskit_comp_file "${cur#--*=}" "${cur%%=*}=" 1
             return 0
             ;;
         --isofile=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}=" 0 ".iso"
+            _ddiskit_comp_file "${cur#--*=}" "${cur%%=*}=" 0 ".iso"
             return 0
             ;;
         -[ci]*)
@@ -666,11 +666,11 @@ EOF
 
             case "$w" in
             c*)
-                _comp_file "$w1" "${cur%$w1}" 1
+                _ddiskit_comp_file "$w1" "${cur%$w1}" 1
                 return 0
                 ;;
             i*)
-                _comp_file "$w1" "${cur%$w1}" 0 ".iso"
+                _ddiskit_comp_file "$w1" "${cur%$w1}" 0 ".iso"
                 return 0
                 ;;
             esac
@@ -680,8 +680,8 @@ EOF
         # XXX Note that these two calls lead to double-trimming attempt
         #     of options, but in case of command line options which do not
         #     contain any equal signs, this is fine.
-        _comp_list "$cur" "" "${build_iso_opts} ${build_iso_opts_long}"
-        _comp_file "$cur" "" 0 ".rpm"
+        _ddiskit_comp_list "$cur" "" "${build_iso_opts} ${build_iso_opts_long}"
+        _ddiskit_comp_file "$cur" "" 0 ".rpm"
         return 0
         ;;
     dump_config)
@@ -721,22 +721,22 @@ EOF
 
         [ "$skip" = 1 ] && case "$prev" in
         -c|--config)
-            _comp_file "$cur" "" 1
+            _ddiskit_comp_file "$cur" "" 1
             return 0
             ;;
         -o|--dump-config-name)
-            _comp_file "$cur"
+            _ddiskit_comp_file "$cur"
             return 0
             ;;
         esac
 
         case "$cur" in
         --config=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}=" 1
+            _ddiskit_comp_file "${cur#--*=}" "${cur%%=*}=" 1
             return 0
             ;;
         --dump-config-name=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}="
+            _ddiskit_comp_file "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         -[co]*)
@@ -745,18 +745,18 @@ EOF
 
             case "$w" in
             c*)
-                _comp_file "$w1" "${cur%$w1}" 1
+                _ddiskit_comp_file "$w1" "${cur%$w1}" 1
                 return 0
                 ;;
             o*)
-                _comp_file "$w1" "${cur%$w1}"
+                _ddiskit_comp_file "$w1" "${cur%$w1}"
                 return 0
                 ;;
             esac
         ;;
         esac
 
-        _comp_list "$cur" "" "${dump_config_opts} ${dump_config_opts_long}"
+        _ddiskit_comp_list "$cur" "" "${dump_config_opts} ${dump_config_opts_long}"
         return 0
         ;;
     *)
