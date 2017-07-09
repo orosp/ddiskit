@@ -76,6 +76,19 @@ _ddiskit()
             fi
     }
 
+    # $1 - word to complete
+    # $2 - prefix
+    # $@ - word list
+    _comp_list()
+    {
+        local _w="$1"
+        shift
+        local _p="$1"
+        shift
+
+        COMPREPLY=( $(compgen -P "$_p" -W "$*" -- "$_w") )
+    }
+
     for i in $(seq 0 $((COMP_CWORD - 1)) )
     do
         w="${COMP_WORDS[$i]}"
@@ -193,7 +206,7 @@ _ddiskit()
 
         # Modern bash has -o nosort, but it is not present even in the version
         # shipped in Fedora 25, so we should probably avoid adding it for now.
-        COMPREPLY=( $(compgen -W "${global_opts} ${global_opts_long} ${cmds}" -- ${cur}) )
+        _comp_list "$cur" "" "${global_opts} ${global_opts_long} ${cmds}"
         return 0
     fi
 
@@ -269,7 +282,7 @@ _ddiskit()
         ;;
         esac
 
-        COMPREPLY=( $(compgen -W "${prepare_sources_opts} ${prepare_sources_opts_long}" -- ${cur}) )
+        _comp_list "$cur" "" "${prepare_sources_opts} ${prepare_sources_opts_long}"
         return 0
         ;;
     generate_spec)
@@ -341,7 +354,7 @@ _ddiskit()
         ;;
         esac
 
-        COMPREPLY=( $(compgen -W "${generate_spec_opts} ${generate_spec_opts_long}" -- ${cur}) )
+        _comp_list "$cur" "" "${generate_spec_opts} ${generate_spec_opts_long}"
         return 0
         ;;
     build_rpm)
@@ -413,7 +426,7 @@ _ddiskit()
         ;;
         esac
 
-        COMPREPLY=( $(compgen -W "${build_rpm_opts} ${build_rpm_opts_long}" -- ${cur}) )
+        _comp_list "$cur" "" "${build_rpm_opts} ${build_rpm_opts_long}"
         return 0
         ;;
     build_iso)
@@ -473,7 +486,7 @@ _ddiskit()
         ;;
         esac
 
-        COMPREPLY=( $(compgen -W "${build_iso_opts} ${build_iso_opts_long}" -- ${cur}) $(compgen -o plusdirs -G "$cur*.rpm" -- "$cur") )
+        _comp_list "$cur" "" "${build_iso_opts} ${build_iso_opts_long}" $(compgen -o plusdirs -G "$cur*.rpm" -- "$cur")
         return 0
         ;;
     dump_config)
@@ -533,7 +546,7 @@ _ddiskit()
         ;;
         esac
 
-        COMPREPLY=( $(compgen -W "${dump_config_opts} ${dump_config_opts_long}" -- ${cur}) )
+        _comp_list "$cur" "" "${dump_config_opts} ${dump_config_opts_long}"
         return 0
         ;;
     *)
