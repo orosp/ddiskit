@@ -27,6 +27,9 @@ _ddiskit()
     local template_dir=/usr/share/ddiskit/templates
     local mock_dir=/etc/mock
 
+    # $w usually stores part of command-line argument which includes option and
+    # its argument.
+    # $w1 is $w with option stripped (just option argument).
     local i j w w1
     local cmd=""
     local cmd_idx=-1
