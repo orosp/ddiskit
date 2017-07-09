@@ -7,11 +7,11 @@ _ddiskit()
     #set -x
 
     COMPREPLY=()
-    local cur="${COMP_WORDS[COMP_CWORD]}"
-    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local cur prev words cword comp_replies
+    _get_comp_words_by_ref -n = cur prev words cword
+
     local global_opts="-v -p -R -T -P -d -o"
     local global_opts_long="--verbosity --profile --res-dir --template-dir --profile-dir --dump-config --dump-config-name"
-    local comp_replies
     local prepare_sources_opts="-c -t"
     local prepare_sources_opts_long="--config --config-template"
     local generate_spec_opts="-c -t"
@@ -137,9 +137,9 @@ EOF
         __ltrim_eq_completions
     }
 
-    for i in $(seq 0 $((COMP_CWORD - 1)) )
+    for i in $(seq 1 $((cword - 1)) )
     do
-        w="${COMP_WORDS[$i]}"
+        w="${words[$i]}"
 
         if [ "$skip" = 1 ]
         then
@@ -179,7 +179,7 @@ EOF
                 before_skip="-$w1"
                 skip=1
 
-                [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                [ "$i" = "$((cword - 1))" ] && prev="${before_skip}"
             fi
 
             continue
@@ -188,7 +188,7 @@ EOF
 
         for j in $cmds
         do
-            if [ "${COMP_WORDS[$i]}" = "$j" ]
+            if [ "${words[$i]}" = "$j" ]
             then
                 cmd=$j
                 cmd_idx=$i
@@ -264,9 +264,9 @@ EOF
 
     case "${cmd}" in
     prepare_sources)
-        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        for i in $(seq "$cmd_idx" $((cword - 1)) )
         do
-            w="${COMP_WORDS[$i]}"
+            w="${words[$i]}"
 
             if [ "$skip" = 1 ]
             then
@@ -287,7 +287,7 @@ EOF
                     before_skip="-$w1"
                     skip=1
 
-                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                    [ "$i" = "$((cword - 1))" ] && prev="${before_skip}"
                 fi
 
                 continue
@@ -336,9 +336,9 @@ EOF
         return 0
         ;;
     generate_spec)
-        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        for i in $(seq "$cmd_idx" $((cword - 1)) )
         do
-            w="${COMP_WORDS[$i]}"
+            w="${words[$i]}"
 
             if [ "$skip" = 1 ]
             then
@@ -359,7 +359,7 @@ EOF
                     before_skip="-$w1"
                     skip=1
 
-                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                    [ "$i" = "$((cword - 1))" ] && prev="${before_skip}"
                 fi
 
                 continue
@@ -408,9 +408,9 @@ EOF
         return 0
         ;;
     build_rpm)
-        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        for i in $(seq "$cmd_idx" $((cword - 1)) )
         do
-            w="${COMP_WORDS[$i]}"
+            w="${words[$i]}"
 
             if [ "$skip" = 1 ]
             then
@@ -431,7 +431,7 @@ EOF
                     before_skip="-$w1"
                     skip=1
 
-                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                    [ "$i" = "$((cword - 1))" ] && prev="${before_skip}"
                 fi
 
                 continue
@@ -483,9 +483,9 @@ EOF
         return 0
         ;;
     build_iso)
-        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        for i in $(seq "$cmd_idx" $((cword - 1)) )
         do
-            w="${COMP_WORDS[$i]}"
+            w="${words[$i]}"
 
             if [ "$skip" = 1 ]
             then
@@ -506,7 +506,7 @@ EOF
                     before_skip="-$w1"
                     skip=1
 
-                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                    [ "$i" = "$((cword - 1))" ] && prev="${before_skip}"
                 fi
 
                 continue
@@ -543,9 +543,9 @@ EOF
         return 0
         ;;
     dump_config)
-        for i in $(seq "$cmd_idx" $((COMP_CWORD - 1)) )
+        for i in $(seq "$cmd_idx" $((cword - 1)) )
         do
-            w="${COMP_WORDS[$i]}"
+            w="${words[$i]}"
 
             if [ "$skip" = 1 ]
             then
@@ -566,7 +566,7 @@ EOF
                     before_skip="-$w1"
                     skip=1
 
-                    [ "$i" = "$((COMP_CWORD - 1))" ] && prev="${before_skip}"
+                    [ "$i" = "$((cword - 1))" ] && prev="${before_skip}"
                 fi
 
                 continue
