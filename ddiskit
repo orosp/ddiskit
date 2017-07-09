@@ -35,16 +35,17 @@ _ddiskit()
     local skip=0
 
     # $1 - list of options to skip
+    # $w1 contains $w with options stripped
     _strip_opts()
     {
-            w="${w:1}"
-            w1="${w#[$1]}"
+            local _w="${w:1}"
+            w1="${_w#[$1]}"
 
             # First, stripping options without arguments
-            while [ "$w" != "$w1" ];
+            while [ "$_w" != "$w1" ];
             do
-                w="$w1"
-                w1="${w#[$1]}"
+                _w="$w1"
+                w1="${_w#[$1]}"
             done
     }
 
@@ -185,6 +186,8 @@ _ddiskit()
         -[vpRTPdo]*)
             w="$cur"
             _strip_opts vd
+
+            w="$w1"
             w1="${w:1}"
 
             case "$w" in
@@ -266,7 +269,7 @@ _ddiskit()
             return 0
             ;;
         -[ct]*)
-            w="${w:1}"
+            w="${cur:1}"
             w1="${w:1}"
 
             case "$w" in
@@ -338,7 +341,7 @@ _ddiskit()
             return 0
             ;;
         -[ct]*)
-            w="${w:1}"
+            w="${cur:1}"
             w1="${w:1}"
 
             case "$w" in
@@ -410,7 +413,10 @@ _ddiskit()
             return 0
             ;;
         -[caesmrl]*)
-            w="${w:1}"
+            w="$cur"
+            _strip_opts aesml
+
+            w="${w1}"
             w1="${w:1}"
 
             case "$w" in
@@ -474,7 +480,7 @@ _ddiskit()
             return 0
             ;;
         -[ci]*)
-            w="${w:1}"
+            w="${cur:1}"
             w1="${w:1}"
 
             case "$w" in
@@ -534,7 +540,7 @@ _ddiskit()
             return 0
             ;;
         -[co]*)
-            w="${w:1}"
+            w="${cur:1}"
             w1="${w:1}"
 
             case "$w" in
