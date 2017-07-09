@@ -11,6 +11,7 @@ _ddiskit()
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
     local global_opts="-v -p -R -T -P -d -o"
     local global_opts_long="--verbosity --profile --res-dir --template-dir --profile-dir --dump-config --dump-config-name"
+    local comp_replies
     local prepare_sources_opts="-c -t"
     local prepare_sources_opts_long="--config --config-template"
     local generate_spec_opts="-c -t"
@@ -52,18 +53,39 @@ _ddiskit()
             done
     }
 
+    # A big kludge needed for preserving trailing white space in the completion
+    # options. Appends contents of comp_replies variables to COMPREPLY array,
+    # one item per line.
+    _comp_append()
+    {
+        # Early bailout in order to avoid adding single empty option
+        [ -n "$comp_replies" ] || return 0
+
+        local _ORIG_IFS="$IFS"
+        IFS=''
+        while read line
+        do
+            COMPREPLY+=("$line")
+        done << EOF
+$comp_replies
+EOF
+        IFS="$_ORIG_IFS"
+    }
+
     # $1 - word
     # $2 - prefix
     _comp_dir()
     {
-        COMPREPLY=( $(compgen -o nospace -d -S / -P "$2" -- "$1") )
+        comp_replies=$(compgen -o nospace -d -S / -P "$2" -- "$1")
+        _comp_append
     }
 
     # $1 - word
     # $2 - prefix
     _comp_file()
     {
-        COMPREPLY=( $(compgen -o plusdirs -f -P "$2" -- "$1") )
+        comp_replies=$(compgen -o plusdirs -f -P "$2" -- "$1")
+        _comp_append
     }
 
     # $1 - word
@@ -74,9 +96,11 @@ _ddiskit()
     {
         if [ "${1#*/*}" != "${1}" -o \( -n "$4" -a "${1%$4}" != "$1" \) ]
         then
-            COMPREPLY=( $(compgen -f -P "$2" -- "$1") )
+            comp_replies=$(compgen -f -P "$2" -- "$1")
+            _comp_append
         else
-            COMPREPLY=( $(compgen -P "$2" -W "`ls "$3" | sed -n /$4\$/s/$4\$//p`" -- "$1") )
+            comp_replies=$(compgen -P "$2" -W "`ls "$3" | sed -n /$4\$/s/$4\$//p`" -- "$1")
+            _comp_append
         fi
     }
 
@@ -90,7 +114,8 @@ _ddiskit()
         local _p="$1"
         shift
 
-        COMPREPLY=( $(compgen -P "$_p" -W "$*" -- "$_w") )
+        comp_replies=$(compgen -P "$_p" -W "$*" -- "$_w")
+        _comp_append
     }
 
     for i in $(seq 0 $((COMP_CWORD - 1)) )
