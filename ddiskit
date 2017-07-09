@@ -10,8 +10,8 @@ _ddiskit()
     local cur prev words cword comp_replies
     _get_comp_words_by_ref -n = cur prev words cword
 
-    local global_opts="-v -p -R -T -P -d -o -q -Q"
-    local global_opts_long="--verbosity --profile --res-dir --template-dir --profile-dir --dump-config --dump-config-name --quilt-enable --quilt-disable"
+    local global_opts="-v -p -R -T -P -d -o -q -Q -C"
+    local global_opts_long="--verbosity --profile --res-dir --template-dir --profile-dir --dump-config --dump-config-name --quilt-enable --quilt-disable --config-option"
     local prepare_sources_opts="-c -t"
     local prepare_sources_opts_long="--config --config-template"
     local generate_spec_opts="-c -t"
@@ -24,6 +24,75 @@ _ddiskit()
     local dump_config_opts_long="--config --dump-config-name"
     local cmds="prepare_sources generate_spec build_rpm build_iso dump_config"
     local config="module.config"
+    local config_options="
+        config=
+        config_name=
+        config_template=
+        dump_config=
+        dump_config_name=
+        isofile=
+        isofile_mode=
+        mock=
+        mock_config=
+        mock_offline=
+        profile=
+        profile_dir=
+        quilt_series_dir=
+        quilt_support=
+        res_dir=
+        spec_template=
+        src_patterns=
+        srpm=
+        tar_all=
+        tar_strict=
+        template_dir=
+        verbosity=
+        defaults.config=
+        defaults.config_name=
+        defaults.config_template=
+        defaults.dump_config=
+        defaults.dump_config_name=
+        defaults.isofile=
+        defaults.isofile_mode=
+        defaults.mock=
+        defaults.mock_config=
+        defaults.mock_offline=
+        defaults.profile=
+        defaults.profile_dir=
+        defaults.quilt_series_dir=
+        defaults.quilt_support=
+        defaults.res_dir=
+        defaults.spec_template=
+        defaults.src_patterns=
+        defaults.srpm=
+        defaults.tar_all=
+        defaults.tar_strict=
+        defaults.template_dir=
+        defaults.verbosity=
+        global.include_srpm=
+        global.module_author=
+        global.module_author_email=
+        global.module_vendor=
+        spec_file.date=
+        spec_file.dependencies=
+        spec_file.firmware=
+        spec_file.firmware_begin=
+        spec_file.firmware_end=
+        spec_file.firmware_files=
+        spec_file.firmware_files_install=
+        spec_file.firmware_include=
+        spec_file.firmware_version=
+        spec_file.kernel_arch=
+        spec_file.kernel_requires=
+        spec_file.kernel_version=
+        spec_file.module_build_dir=
+        spec_file.module_name=
+        spec_file.module_requires=
+        spec_file.module_rpm_release=
+        spec_file.module_version=
+        spec_file.rpm_dist=
+        spec_file.source_patches=
+        spec_file.source_patches_do="
 
     local profile_dir=/usr/share/ddiskit/profiles
     local template_dir=/usr/share/ddiskit/templates
@@ -127,6 +196,22 @@ EOF
         fi
     }
 
+    # $1 - word
+    # $2 - prefix
+    _comp_cfg_opt()
+    {
+        if [ "${1#*=}" != "$1" ]
+        then
+            local _w="$2${1%%=*}="
+            local _w1="${1#*=}"
+            _comp_file "$_w1" "$_w" 0
+        else
+            comp_replies=$(compgen -o nospace -P "$2" -W "${config_options}" -- "$1" | sed 's/$/ /')
+            _comp_append
+            __ltrim_eq_completions
+        fi
+    }
+
     # $1 - word to complete
     # $2 - prefix
     # $@ - word list
@@ -165,21 +250,21 @@ EOF
             profile_dir=${w#--profile-dir=}
             continue
             ;;
-        --profile=*|--res-dir=*|--dump-config-name=*)
+        --profile=*|--res-dir=*|--dump-config-name=*|--config-option=*)
             continue
             ;;
-        --profile|--res-dir|--template-dir|--profile-dir|--dump-config-name)
+        --profile|--res-dir|--template-dir|--profile-dir|--dump-config-name|--config-option)
             [ "$w" = "--profile-dir" ] && before_skip="-P"
             [ "$w" = "--template-dir" ] && before_skip="-T"
             skip=1
             continue
             ;;
-        -[vpRTPdoqQ]*)
+        -[vpRTPdoqQC]*)
             _strip_opts vdqQ
 
             # Then, checking whether the rest is option which requires argument
             # and it is the last character left
-            if [ "${#w1}" = 1 -a "${w1#[pRTPo]}" != "$w1" ]
+            if [ "${#w1}" = 1 -a "${w1#[pRTPoC]}" != "$w1" ]
             then
                 before_skip="-$w1"
                 skip=1
@@ -220,6 +305,10 @@ EOF
             _comp_cfg "$cur" "" "$profile_dir"
             return 0
             ;;
+        -C|--config-option)
+            _comp_cfg_opt "$cur"
+            return 0
+            ;;
         esac
 
         case "$cur" in
@@ -235,7 +324,12 @@ EOF
             _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$profile_dir"
             return 0
             ;;
-        -[vpRTPdoqQ]*)
+        --config-option=*)
+            _comp_cfg_opt "${cur#--config-option=}" "--config-option="
+            return 0
+            ;;
+
+        -[vpRTPdoqQC]*)
             w="$cur"
             _strip_opts vdqQ
 
@@ -253,6 +347,10 @@ EOF
                 ;;
             p*)
                 _comp_cfg "$w1" "${cur%$w1}" "$profile_dir"
+                return 0
+                ;;
+            C*)
+                _comp_cfg_opt "$w1" "${cur%$w1}"
                 return 0
                 ;;
             esac
