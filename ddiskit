@@ -529,7 +529,7 @@ _ddiskit()
         esac
 
         case "$cur" in
-        --config=*|--dump-config-name)
+        --config=*|--dump-config-name=*)
             _comp_file "${cur#--*=}" "${cur%%=*}"
             return 0
             ;;
