@@ -91,7 +91,7 @@ EOF
     # $2 - prefix
     _comp_dir()
     {
-        comp_replies=$(cd `dirname "$config"`; compgen -o nospace -d -S / -P "$2" -- "$1")
+        comp_replies=$(cd `dirname "$config"`; compgen -d -S / -P "$2" -- "$1")
         _comp_append
         __ltrim_eq_completions
     }
@@ -101,7 +101,11 @@ EOF
     # $3 - this is config (resolve realtive to current dir and not ocnfig dir)
     _comp_file()
     {
-        comp_replies=$([ "$3" != 1 ] && cd `dirname "$config"`; compgen -o plusdirs -f -P "$2" -- "$1")
+        comp_replies=$([ "$3" != 1 ] && cd `dirname "$config"`; \
+            grep -x -v -F -f <(compgen -d -P "$2" -S '$' -- "$1") \
+                <(compgen -f  -P "$2" -S '$' -- "$1") \
+                | sed 's/\$$/ /'; \
+            compgen -d -S / -P "$2" -- "$1")
         _comp_append
         __ltrim_eq_completions
     }
@@ -116,7 +120,7 @@ EOF
         then
             _comp_file "$1" "$2"
         else
-            comp_replies=$(compgen -P "$2" -W "`ls "$3" | sed -n /$4\$/s/$4\$//p`" -- "$1")
+            comp_replies=$(compgen -P "$2" -W "`ls "$3" | sed -n /$4\$/s/$4\$//p`" -- "$1" | sed 's/$/ /')
             _comp_append
             __ltrim_eq_completions
         fi
@@ -132,7 +136,7 @@ EOF
         local _p="$1"
         shift
 
-        comp_replies=$(compgen -P "$_p" -W "$*" -- "$_w")
+        comp_replies=$(compgen -P "$_p" -W "$*" -- "$_w" | sed 's/$/ /')
         _comp_append
         __ltrim_eq_completions
     }
@@ -645,4 +649,4 @@ EOF
         ;;
     esac
 }
-complete -F _ddiskit ddiskit
+complete -o nospace -F _ddiskit ddiskit
