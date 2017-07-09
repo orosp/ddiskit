@@ -537,7 +537,7 @@ EOF
             return 0
             ;;
         -i|--isofile)
-            _comp_file "$cur"
+            _comp_file "$cur" "" 0 ".iso"
             return 0
             ;;
         esac
@@ -548,7 +548,7 @@ EOF
             return 0
             ;;
         --isofile=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}="
+            _comp_file "${cur#--*=}" "${cur%%=*}=" 0 ".iso"
             return 0
             ;;
         -[ci]*)
@@ -561,14 +561,18 @@ EOF
                 return 0
                 ;;
             i*)
-                _comp_file "$w1" "${cur%$w1}"
+                _comp_file "$w1" "${cur%$w1}" 0 ".iso"
                 return 0
                 ;;
             esac
         ;;
         esac
 
-        _comp_list "$cur" "" "${build_iso_opts} ${build_iso_opts_long}" $(compgen -o plusdirs -G "$cur*.rpm" -- "$cur")
+        # XXX Note that these two calls lead to double-trimming attempt
+        #     of options, but in case of command line options which do not
+        #     contain any equal signs, this is fine.
+        _comp_list "$cur" "" "${build_iso_opts} ${build_iso_opts_long}"
+        _comp_file "$cur" "" 0 ".rpm"
         return 0
         ;;
     dump_config)
