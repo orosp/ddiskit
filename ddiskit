@@ -219,15 +219,15 @@ EOF
 
         case "$cur" in
         --dump-file-name=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}"
+            _comp_file "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         --profile-dir=*|--template-dir=*|--res-dir=*)
-            _comp_dir "${cur#--*=}" "${cur%%=*}"
+            _comp_dir "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         --profile=*)
-            _comp_cfg "${cur#--*=}" "${cur%%=*}" "$profile_dir"
+            _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$profile_dir"
             return 0
             ;;
         -[vpRTPdo]*)
@@ -308,11 +308,11 @@ EOF
 
         case "$cur" in
         --config=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}"
+            _comp_file "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         --config-template=*)
-            _comp_cfg "${cur#--*=}" "${cur%%=*}" "$template_dir"
+            _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$template_dir"
             return 0
             ;;
         -[ct]*)
@@ -380,11 +380,11 @@ EOF
 
         case "$cur" in
         --config=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}"
+            _comp_file "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         --spec-template=*)
-            _comp_cfg "${cur#--*=}" "${cur%%=*}" "$template_dir"
+            _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$template_dir"
             return 0
             ;;
         -[ct]*)
@@ -452,11 +452,11 @@ EOF
 
         case "$cur" in
         --config=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}"
+            _comp_file "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         --mock-config=*)
-            _comp_cfg "${cur#--*=}" "${cur%%=*}" "$mock_dir" ".cfg"
+            _comp_cfg "${cur#--*=}" "${cur%%=*}=" "$mock_dir" ".cfg"
             return 0
             ;;
         -[caesmrl]*)
@@ -523,7 +523,7 @@ EOF
 
         case "$cur" in
         --config=*|--isofile=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}"
+            _comp_file "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         -[ci]*)
@@ -583,7 +583,7 @@ EOF
 
         case "$cur" in
         --config=*|--dump-config-name=*)
-            _comp_file "${cur#--*=}" "${cur%%=*}"
+            _comp_file "${cur#--*=}" "${cur%%=*}="
             return 0
             ;;
         -[co]*)
