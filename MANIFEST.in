@@ -2,6 +2,7 @@ include ddiskit
 include ddiskit.1
 include ddiskit.config
 include etc/ddiskit.config
+include keyrings/rh-release/fd431d51.key
 include profiles/default
 include profiles/rh-release
 include profiles/rh-testing

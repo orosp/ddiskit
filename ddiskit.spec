@@ -54,11 +54,14 @@ find %{buildroot} -size 0 -delete
 %{_datadir}/bash-completion/completions/ddiskit
 
 %dir %{_datadir}/ddiskit
+%dir %{_datadir}/ddiskit/keyrings
+%dir %{_datadir}/ddiskit/keyrings/rh-release
 %dir %{_datadir}/ddiskit/profiles
 %dir %{_datadir}/ddiskit/templates
 %{_datadir}/ddiskit/templates/spec
 %{_datadir}/ddiskit/templates/config
 %{_datadir}/ddiskit/profiles/*
+%{_datadir}/ddiskit/keyrings/rh-release/*.key
 %{_datadir}/ddiskit/ddiskit.config
 
 %config(noreplace) /etc/ddiskit.config
