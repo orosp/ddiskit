@@ -48,6 +48,7 @@ class ErrCode:
     QUILT_DEAPPLY_ERROR = 4
     QUILT_APPLY_ERROR = 5
     GIT_SRC_CHECK_ERROR = 6
+    GPG_SIGNATURE_CHECK_ERROR = 7
 
     GENERIC_IO_ERROR = 32
     CONFIG_READ_ERROR = 34
@@ -1239,6 +1240,60 @@ def rpm_get_arch(pkg, configs):
     return arch
 
 
+def rpm_check_gpg(pkg, configs):
+    """
+    Performs checking of RPM's GPG signature.
+
+    If rpm_gpg_check.use_keyring boolean option is not enabled, simple sanity
+    check against GPG keys stored in RPM DB is assumed.  Otherwise it is
+    assumed that RPMs should be signed with keys for which public part is
+    present in one of the *.key files in rpm_gpg_check.keyring_dir.
+
+    :param pkg:     RPM package file name.
+    :param configs: Dict of dicts of configuration values.
+    :return:        Tuple, first item is boolean value that signifies whether
+                    GPG signature check has been passed and the second item is
+                    string containing error/informational message.
+    """
+    use_keyring_dir = config_get_bool(configs, 'rpm_gpg_check.use_keyring')
+
+    if use_keyring_dir:
+        keyring = config_get(configs, 'rpm_gpg_check.keyring_dir')
+
+        if not keyring:
+            return (False, "Check against keyring directory " +
+                    "(rpm_gpg_check.use_keyring) is requested and " +
+                    "rpm_gpg_check.keyring_dir is not set (%s)" % keyring)
+
+        keyring = os.path.abspath(str(keyring))
+
+        if not os.path.isdir(keyring):
+            return (False, "\"%s\" is not a directory" % keyring)
+
+        if not [x for x in os.listdir(keyring) if x.endswith(".key") and
+                os.path.isfile(os.path.join(keyring, x)) and
+                os.access(os.path.join(keyring, x), os.R_OK)]:
+            return (False,
+                    "\"%s\" doesn't contain accessible *.key files" % keyring)
+
+        keyring_opts = ['-D', '%%_keyringpath "%s"' % keyring]
+    else:
+        keyring_opts = []
+
+    ret, out = command(['rpm'] + rpm_verbosity_opts(configs) + keyring_opts +
+                       ['-q', '--qf', '%|SIGPGP?{1}:{0}| %|SIGGPG?{1}:{0}|',
+                        '-p', pkg], configs, cmd_print_lvl=2)
+    if ret:
+        return (False, "Can't check presence of GPG signature")
+    if out == "0 0":
+        return (False, "GPG signature is not present")
+
+    ret, out = command(['rpm'] + rpm_verbosity_opts(configs) + keyring_opts +
+                       ['-K', pkg], configs, cmd_print_lvl=2)
+
+    return (not ret, out)
+
+
 def cmd_build_iso(configs):
     """
     CMD build_iso callback
@@ -1255,6 +1310,10 @@ def cmd_build_iso(configs):
             else:
                 raise IOError(errno.ENOENT, os.strerror(errno.ENOENT),
                               content)
+
+    rpm_sign_check = int(config_get(configs, "rpm_gpg_check.check_level",
+                                    default=0))
+    error = 0
 
     src_rpms = []
     bin_rpms = {}  # Binary RPMs are stored per-arch
@@ -1287,6 +1346,21 @@ def cmd_build_iso(configs):
                          "\"%s\"" % content, configs)
                 continue
 
+            if rpm_sign_check:
+                check_ok, check_msg = rpm_check_gpg(content, configs)
+
+                if not check_ok:
+                    log_warn(("Failed to check GPG signature for \"%s\" " +
+                              "(%s)%s") % (content, check_msg,
+                             ". aborting" if rpm_sign_check > 2 else
+                             ", skipping" if rpm_sign_check > 1 else ""),
+                             configs, level=0)
+
+                    if rpm_sign_check > 2:
+                        error = ErrCode.GPG_SIGNATURE_CHECK_ERROR
+                    if rpm_sign_check > 1:
+                        continue
+
             arch = re.sub(re.compile(r'i[0-9]86', re.IGNORECASE), 'i386', arch)
 
             if is_src:
@@ -1300,6 +1374,12 @@ def cmd_build_iso(configs):
                   (content, "source" if is_src else "binary, %s" % arch))
         except OSError as err:
             print(str(err))
+
+    if error:
+        log_error("Errors occurred during the preparation of RPM list, " +
+                  "aborting ISO creation", configs)
+
+        return error
 
     dir_tmp = tempfile.mkdtemp()
     saved_umask = os.umask(0o077)

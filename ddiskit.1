@@ -852,6 +852,10 @@ configuration option is enabled,
 .IP \(bu
 RPM is not a debug information package (RPM has group other than
 "Development/Debug").
+.IP \\(bu
+RPM has a valid GPG signature (if case GPG signature check is enabled; see
+.I RPM SIGNATURE VERIFICATION
+section for the additional information).
 .RE
 .IP \(bu
 All satisfying candidates then copied in a temporary directory.
@@ -976,6 +980,44 @@ discrepancy or other issues during the check.
 .PP
 The source code verification is performed when quilt patches are already
 de-applied.
+.\"
+.\"
+.SH RPM GPG SIGNATURE VERIFICATION
+As a part of ISO build process
+.RI ( build_iso
+action), included RPMs can be checked for the presence and correctness of their
+GPG signature.
+The necessity of check is controlled via the
+.I rpm_gpg_check.check_level
+configuration option, which can have one of the following values:
+.TP 3
+0
+The check is skipped.
+.TP
+1
+The check is performed and the warning is issued in case it is failed.
+.TP
+2
+The check is performed and RPM is skipped if it didn't pass the check.
+.TP
+3
+The check is performed and ISO creation is aborted if on of the RPMs failed the
+check.
+.PP
+The boolean configuration option
+.I rpm_gpg_check.use_keyring
+controls whether specific keyring directory containing specific set of keys
+should be used or just GPG keys present in host's RPM DB.
+In case usage of keyring directory is enabled, configuration option
+.I rpm_gpg_check.keyring_dir
+points to the directory containing public GPG keys.
+Note that in order to use these files, their names should end with ".key"
+(this is, in fact, RPM's implicit assumption).
+.PP
+This check is enabled by default in
+.I rh-release
+profile and allows verifying that RPMs added to the release ISO have Red Hat's
+GPG signature.
 .\"
 .\"
 .SH USAGE EXAMPLE
@@ -1118,6 +1160,8 @@ testing purposes.
 .B /usr/share/ddiskit/profiles/rh-release
 Profile which contains configuration options used for the release DUP RPMs
 by Red Hat.
+This includes enablement of various strict checks (such as Git commit ID and
+RPM GPG signature verification).
 .\"
 .\"
 .SH EXIT STATUS
@@ -1145,6 +1189,9 @@ problem occurred when tried to apply quilt patches.
 .TP
 .B 6
 problem occurred during the sources verification.
+.TP
+.B 7
+problem occurred during RPM GPG signature verification.
 .TP
 .B 32
 generic input/output error.
