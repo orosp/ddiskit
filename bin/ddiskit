@@ -1191,8 +1191,24 @@ def cmd_build_rpm(configs):
     return ret or ret_quilt and ErrCode.QUILT_APPLY_ERROR
 
 
+def rpm_verbosity_opts(configs):
+    if not hasattr(rpm_verbosity_opts, "verbosity"):
+        rpm_verbosity_opts.verbosity = int(config_get(configs, "verbosity",
+                                                      default=0))
+
+    if rpm_verbosity_opts.verbosity <= 1:
+        return []
+
+    if rpm_verbosity_opts.verbosity == 2:
+        return ['-v']
+
+    if rpm_verbosity_opts.verbosity >= 3:
+        return ['-vv']
+
+
 def rpm_is_src(pkg, configs):
-    ret, out = command(["rpm", "-qp", "--qf", "%|SOURCERPM?{0}:{1}|", pkg],
+    ret, out = command(["rpm"] + rpm_verbosity_opts(configs) + ["-qp", "--qf",
+                       "%|SOURCERPM?{0}:{1}|", pkg],
                        configs, cmd_print_lvl=2)
 
     if ret:
@@ -1202,7 +1218,8 @@ def rpm_is_src(pkg, configs):
 
 
 def rpm_is_debuginfo(pkg, configs):
-    ret, out = command(["rpm", "-qp", "--qf", "%{GROUP}", pkg],
+    ret, out = command(["rpm"] + rpm_verbosity_opts(configs) + ["-qp", "--qf",
+                       "%{GROUP}", pkg],
                        configs, cmd_print_lvl=2)
 
     if ret:
@@ -1212,7 +1229,8 @@ def rpm_is_debuginfo(pkg, configs):
 
 
 def rpm_get_arch(pkg, configs):
-    ret, arch = command(['rpm', '-q', '--qf', '%{ARCH}', '-p', pkg], configs,
+    ret, arch = command(['rpm'] + rpm_verbosity_opts(configs) + ['-q', '--qf',
+                        '%{ARCH}', '-p', pkg], configs,
                         cmd_print_lvl=2)
 
     if ret:
