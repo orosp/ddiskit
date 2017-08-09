@@ -1209,7 +1209,7 @@ def rpm_verbosity_opts(configs):
 
 def rpm_is_src(pkg, configs):
     ret, out = command(["rpm"] + rpm_verbosity_opts(configs) + ["-qp", "--qf",
-                       "%|SOURCERPM?{0}:{1}|", pkg],
+                       "%|SOURCERPM?{0}:{1}|", "--nosignature", pkg],
                        configs, cmd_print_lvl=2)
 
     if ret:
@@ -1220,7 +1220,7 @@ def rpm_is_src(pkg, configs):
 
 def rpm_is_debuginfo(pkg, configs):
     ret, out = command(["rpm"] + rpm_verbosity_opts(configs) + ["-qp", "--qf",
-                       "%{GROUP}", pkg],
+                       "%{GROUP}", "--nosignature", pkg],
                        configs, cmd_print_lvl=2)
 
     if ret:
@@ -1231,7 +1231,7 @@ def rpm_is_debuginfo(pkg, configs):
 
 def rpm_get_arch(pkg, configs):
     ret, arch = command(['rpm'] + rpm_verbosity_opts(configs) + ['-q', '--qf',
-                        '%{ARCH}', '-p', pkg], configs,
+                        '%{ARCH}', '--nosignature', '-p', pkg], configs,
                         cmd_print_lvl=2)
 
     if ret:
