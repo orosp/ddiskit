@@ -763,7 +763,7 @@ passing this check.
 Absence of Makefile leads to early termination with a non-zero exit code.
 .IP \(bu
 In case quilt integration (specified via the configuration option
-.IR default.quit_support )
+.IR default.quilt_support )
 is enabled, quilt patches are de-applied.
 .IP \(bu
 Source tarball creation. Tar file named
@@ -828,7 +828,7 @@ an attempt to build binary RPM is performed.
 Otherwise, a source RPM is built.
 .IP \(bu
 In case quilt integration (specified via the configuration option
-.IR default.quit_support )
+.IR default.quilt_support )
 is enabled, quilt patches are applied back.
 .\"
 .SS build_iso
@@ -961,7 +961,7 @@ configuration option.
 The necessity of the check itself, as well as its crucialness is specified via
 the
 .I default.check_git_src
-command option, with the following meaning of its value:
+configuration option, with the following meaning of its value:
 .TP 3
 0
 The check is skipped.
@@ -1205,7 +1205,7 @@ In 2007, the responsibility for maintaining and enhancing
 was passed to Jon Masters, who then developed
 .B ddiskit
 during the RHEL 5 and RHEL 6 era.
-The third reincarnation of
+The third incarnation of
 .B ddiskit
 was conceived in 2016 by Petr Oroš in an attempt to bring more automation to
 the process of Driver Update Disk creation along with RHEL 7 support.
