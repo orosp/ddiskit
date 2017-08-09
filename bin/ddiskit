@@ -1545,6 +1545,8 @@ def parse_config(filename, args, configs={}):
     :param configs:  Pre-existing configuration dict.
     :return:         Resulting configuration dict.
     """
+    apply_args(args, configs)
+
     implicit_configs = [
         os.path.join(config_get(configs, "res_dir", default=RES_DIR),
                      DEFAULT_CFG),
