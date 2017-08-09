@@ -5,3 +5,12 @@
 ## Please provide defaults.git_dir in site or user configuration in order
 ## to allow check to work.
 check_git_src = 2
+
+[rpm_gpg_check]
+## It should be a strict check for release ISOs
+check_level = 3
+## We want to check that specifically Red Hat's key is used and not some random
+## keys present in RPM DB
+use_keyring = 1
+## We assume that the default provided in package/site configuration is sane
+# keyring_dir = {defaults.res_dir}/keyrings/{defaults.profile}
