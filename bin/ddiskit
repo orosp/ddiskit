@@ -1582,7 +1582,7 @@ def parse_config(filename, args, configs={}):
 
 def cmd_dump_config(configs):
     filename = config_get(configs, "dump_config_name",
-                          default=config_get(configs, "config") + ".generated")
+                          default="{config}.generated")
     cfgparser = configparser.RawConfigParser()
 
     for s_name, section in configs.iteritems():
