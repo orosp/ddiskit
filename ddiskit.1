@@ -1094,9 +1094,17 @@ It de-applies quilt patches before building source tarball and applies them
 back after the build.
 .IP \(bu
 It ignores \fBseries\fR file in \fBpatches\fR directory when builds
-a list of patches.
+a list of patches during the
+.I generate_spec
+action, as well as during the tarball creation in the
+.I build_rpm
+action.
 .IP \(bu
-It ignores hidden files by default which avoids inclusion of ".pc" directory.
+It ignores hidden files during the tarball creation in the
+.I build_rpm
+action which avoids inclusion of the
+.B .pc
+directory.
 .PP
 This behaviour (except the last part that is controlled by the
 .I defaults.tar_all
