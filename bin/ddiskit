@@ -81,6 +81,12 @@ USER_CFG = "~/.ddiskitrc"
 
 SRC_PATTERNS = "^Kbuild$|^Kconfig$|^Makefile$|^.*\.[ch]$"
 
+KERNEL_NVR_RE = r"(?P<version>[0-9])\." + \
+                r"(?P<patchlevel>[0-9]{1,2})\." + \
+                r"(?P<sublevel>[0-9]{1,2})-(?P<rpm_release>[0-9]{1,4})"
+KERNEL_Z_PART_RE = r"(?P<rpm_release_add>(\.[0-9]{1,3})+)"
+KERNEL_DIST_RE = r"(?P<rpm_dist>\.el([6-9]|[1-9][0-9]))"
+
 # Default configuration, put here values which can be overwritten by anything,
 # but should be defined somewhere.
 #
@@ -98,6 +104,13 @@ default_config = {
         "quilt_support": True,
         "spec_template": SPEC_TEMPLATE,
         "src_patterns": SRC_PATTERNS,
+
+        "kernel_nvr_re": KERNEL_NVR_RE,
+        "kernel_fixed_re": KERNEL_Z_PART_RE,
+        "kernel_dist_re": KERNEL_DIST_RE,
+        "kernel_flex_verson_re": "{kernel_nvr_re}{kernel_dist_re}",
+        "kernel_fixed_version_re": "{kernel_nvr_re}{kernel_fixed_re}" +
+                                   "{kernel_dist_re}",
         },
     "global": {
         "module_vendor": "ENTER_MODULE_VENDOR",
@@ -105,15 +118,6 @@ default_config = {
         "module_author_email": "ENTER_MODULE_AUTHOR_EMAIL",
         },
     }
-
-kernel_nvr_re = r"(?P<version>[0-9])\." + \
-                r"(?P<patchlevel>[0-9]{1,2})\." + \
-                r"(?P<sublevel>[0-9]{1,2})-(?P<rpm_release>[0-9]{1,4})"
-kernel_z_part_re = r"(?P<rpm_release_add>(\.[0-9]{1,3})+)"
-kernel_dist_re = r"(?P<rpm_dist>\.el([6-9]|[1-9][0-9]))"
-
-kernel_y_re = "^%s%s$" % (kernel_nvr_re, kernel_dist_re)
-kernel_z_re = "^%s%s%s$" % (kernel_nvr_re, kernel_z_part_re, kernel_dist_re)
 
 config_var_re = re.compile(r"{([^{}]*)}")
 spec_var_re = re.compile(r"%{([^{}]*)}")
@@ -546,13 +550,19 @@ def get_kernel_version(ver, configs):
                     indicates whether flexible dependencies can be generated
                     based on this kernel version.
     """
+    kernel_flex_re = configs.get("kernel_flex_version_re", default="%s%s" %
+                                 (KERNEL_NVR_RE, KERNEL_DIST_RE))
+    kernel_fixed_re = configs.get("kernel_fixed_version_re", default="%s%s%s" %
+                                  (KERNEL_NVR_RE, KERNEL_Z_PART_RE,
+                                   KERNEL_DIST_RE))
+
     keys = ("version", "patchlevel", "sublevel", "rpm_release", "rpm_dist")
     optional_keys = ("rpm_release_add", )
 
     ret = None
     matched_re = None
 
-    for r in (kernel_y_re, kernel_z_re):
+    for r in (kernel_flex_re, kernel_fixed_re):
         try:
             m = re.match(r, ver)
             groups = m.groupdict()
@@ -572,7 +582,7 @@ def get_kernel_version(ver, configs):
             matched_re = r
             break
 
-    return (ret, matched_re == kernel_y_re)
+    return (ret, matched_re == kernel_flex_re)
 
 
 def process_configs_for_spec(configs):
@@ -692,15 +702,19 @@ def check_config(configs):
                 if y_ver:
                     continue
                 elif kver:
+                    kernel_y_re = configs.get("kernel_flex_version_re")
                     log_warn("You are using z-stream kernel version! " +
                              "You shouldn't use it. If you don't have good " +
-                             "reason for it, please use the Y-stream kernel " +
-                             "version (3.10.0-123.el7)", configs, level=0)
+                             "reason for it, please use kernel version that" +
+                             "matches regular expression \"%s\"" % kernel_y_re,
+                             configs, level=0)
                     continue
                 else:
+                    kernel_y_re = configs.get("kernel_flex_version_re")
                     log_error(("Invalid kernel version in config file: " +
                                "\"%s\". Valid version is, for example, " +
-                               "3.10.0-123.el7") % val, configs)
+                               "one that matches \"%s\"") % (val, kernel_y_re),
+                              configs)
                     config_critic = True
             elif section == "spec_file" and key == "module_build_dir":
                 if val[0] == "/":

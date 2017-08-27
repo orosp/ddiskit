@@ -558,6 +558,61 @@ The differences between kernel package dependency generation in these cases
 are described in the
 .I Spec file generation
 section.
+.PP
+In order to enforce these checks,
+.B ddiskit
+uses regular expression-based approach: it checks the version provided in the
+.I defaults.kernel_version
+configuration variable against regular expressions set via the
+.I defaults.kernel_flex_version_re
+and
+.I defaults.kernel_fixed_version_re
+configuration options, which contain Python regular expressions (see
+.URL https://docs.python.org/2/library/re.html "Python re module documentation"
+for details about regular expression syntax) for matching Y-stream and Z-stream
+kernel versioning scheme, respectively.
+In order to extract parts of kernel version described above, the following
+regular expression groups are used:
+.TP 18
+.B version
+Kernel's major version
+.RI ( kernel_version
+in the description above).
+.TQ
+.B patchlevel
+Kernel's patch level
+.RI ( kernel_patchlevel ).
+.TQ
+.B sublevel
+Kernel's sub-patch level
+.RI ( kernel_sublevel ).
+.TQ
+.B rpm_release
+Major part of RPM release
+.RI ( rhel_release ).
+.TQ
+.B rpm_release_add
+Remaining part of RPM release
+.RI ( update_release ).
+.TQ
+.B rpm_dist
+RPM release dist part
+.RI ( rpm_dist ).
+.PP
+The default values of the
+.I defaults.kernel_flex_version_re
+and
+.I defaults.kernel_fixed_version_re
+configuration options are set via other configuration options:
+.CS
+kernel_flex_verson_re   = {kernel_nvr_re}{kernel_dist_re}
+kernel_fixed_version_re = {kernel_nvr_re}{kernel_fixed_re}{kernel_dist_re}
+
+kernel_nvr_re   = (?P<version>[0-9])\.(?P<patchlevel>[0-9]{1,2})\.(?P<sublevel>[0-9]{1,2})-(?P<rpm_release>[0-9]{1,4})
+kernel_fixed_re = (?P<rpm_release_add>(\.[0-9]{1,3})+)
+kernel_dist_re  = (?P<rpm_dist>\.el([6-9]|[1-9][0-9]))
+.CE
+This allows for some flexibility in case some tuning of these checks is needed.
 .\"
 .SS Configuration check
 After the configuration has been constructed (and in case module configuration
