@@ -748,7 +748,7 @@ configuration variable.
 .RS
 .IP \(bu 3
 .B patches
-- directory where with patches which should be applied to the source.
+- directory with patches that should be applied to the source.
 .IP \(bu
 .B firmware
 - firmware files.
@@ -1025,13 +1025,13 @@ configuration option, which can have one of the following values:
 The check is skipped.
 .TP
 1
-The check is performed and the warning is issued in case it is failed.
+The check is performed and the warning is issued for each RPM that failed it.
 .TP
 2
-The check is performed and RPM is skipped if it didn't pass the check.
+The check is performed and RPMs that didn't pass the check are skipped.
 .TP
 3
-The check is performed and ISO creation is aborted if on of the RPMs failed the
+The check is performed and ISO creation is aborted if one of RPMs failed the
 check.
 .PP
 The boolean configuration option
@@ -1210,7 +1210,7 @@ error occurred while reading configuration file.
 .TP
 .B 35
 error occurred while writing module configuration file
-.RI ( prepare_source
+.RI ( prepare_sources
 action).
 .TP
 .B 36
