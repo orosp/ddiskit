@@ -1189,7 +1189,7 @@ def get_spec_path(configs):
     return "rpm/SPECS/%s.spec" % configs.get("spec_file.module_name")
 
 
-def cmd_generate_spec(configs):
+def cmd_generate_spec(configs, spec_path=None):
     """
     CMD generate_spec callback
     :param configs: Configuration object.
@@ -1202,9 +1202,14 @@ def cmd_generate_spec(configs):
                   {"f": cfgfile}, configs)
         return ErrCode.CONFIG_READ_ERROR
 
-    spec_path = get_spec_path(configs)
-    if os.path.isfile(spec_path):
-        log_warn("RPM spec file \"%s\" exists!" % spec_path, configs, level=0)
+    if not spec_path:
+        spec_path = get_spec_path(configs)
+        # NB: Current assumption is that when spec_file is provided in
+        #     arguments, caller knows what it is doing in regard of
+        #     already existing file.
+        if os.path.isfile(spec_path):
+            log_warn("RPM spec file \"%s\" exists!" % spec_path, configs,
+                     level=0)
     try:
         template_dir = configs.get("template_dir")
         spec_template = configs.get("spec_template")
