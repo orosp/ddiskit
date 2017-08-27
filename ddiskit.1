@@ -43,7 +43,7 @@ section for the description of "configuration option name" and "default value".
 \fB\-h\fR, \fB\-\-help\fR
 Print a list of options.
 .B ddiskit
-will exit after this action, ignoring the remainder of the command-line.
+will exit after this action, ignoring the remainder of the command line.
 .TP
 \fB\-v\fR, \fB\-\-verbosity\fR
 Increase output verbosity by 1.
@@ -421,12 +421,12 @@ provided is a testing package).
 Note that the values for aforementioned configuration variables can be
 overridden by
 .BR -p " and " -P
-command-line arguments.
+command line arguments.
 .IP \(bu
 Module configuration. This file is usually called "module.config"
 (but can be overridden by
 .B -c
-command-line argument) and contains module-specific configuration.
+command line argument) and contains module-specific configuration.
 It is usually generated from template by
 .I prepare_sources
 action and is self-documented in terms of what values user is expected
@@ -436,16 +436,16 @@ Command-line arguments. They update
 .I defaults
 section of the configuration dictionary, and usually have key name equal
 to the long option name, with dashes replaced with underscores.
-Configuration option name for each specific command-line option is provided
+Configuration option name for each specific command line option is provided
 in the
 .I OPTIONS
 section.
 Unless explicitly specified (with default value being "none"),
-command-line option \fIalways\fR updates the configuration option value.
+command line option \fIalways\fR updates the configuration option value.
 .PP
 These files are applied one after another in aforementioned order, so the
 "last wins" rule applies.
-The exception from the rule are command-line options, which take precedence
+The exception from the rule are command line options, which take precedence
 at each point of configuration generation (during the profile path evaluation,
 for example).
 
@@ -753,7 +753,7 @@ Check for the module configuration file presence (provided in
 .I defaults.config
 configuration variable via the
 .B \-\-config
-command-line option).
+command line option).
 Since some configuration values should be derived directly from it,
 its absence makes the whole operation senseless, thus the early bailout.
 .IP \(bu
@@ -794,7 +794,7 @@ Hidden files (files beginning with dot) are skipped, unless the
 .I defaults.tar_all
 configuration option (controlled via the
 .B \-\-tar\-all
-action-specific command-line option) is set to
+action-specific command line option) is set to
 .BR True .
 .IP \(bu
 Only files matching the pattern set in the
@@ -803,7 +803,7 @@ configuration option are added, if the
 .I defaults.tar_strict
 configuration option (controlled via the
 .B \-\-tar\-strict
-action-specific command-line option) is set to
+action-specific command line option) is set to
 .BR True .
 The default pattern includes only *.c, *.h, Makefile, Kbuild, and Kconfig files,
 which should be suitable for the most cases.
@@ -823,7 +823,7 @@ check (rpmbuild -bc --nobuild) succeeded, and the
 .I defaults.srpm
 configuration option (controlled via the
 .B \-\-srpm
-action-specific command-line option) is not enabled,
+action-specific command line option) is not enabled,
 an attempt to build binary RPM is performed.
 Otherwise, a source RPM is built.
 .IP \(bu
@@ -879,7 +879,7 @@ The name of the ISO is provided in the
 .I defaults.isofile
 option (which can be set via the
 .B \-\-isofile
-action-specific command-line option).
+action-specific command line option).
 In case no explicit ISO file name is provided, it is generated as
 "dd-{\fIspec_file.module_name\fR}-{\fIspec_file.module_version\fR}-{\fIspec_file.module_rpm_release\fR}.{\fIspec_file.rpm_dist\fR}.iso",
 or, in case one of values of these configuration options is not a string,
@@ -912,7 +912,7 @@ This behaviour is controlled by the
 .I defaults.quilt_support
 configuration option, which is accessible via the
 .BR \-\-quilt\-enable " and " \-\-quilt\-disable
-command-line options.
+command line options.
 .\"
 .\"
 .SH MOCK INTEGRATION
@@ -924,7 +924,7 @@ This support is activated via the
 .I defaults.mock
 configuration option which is controlled via the
 .B \-\-mock
-action-specific command-line option.
+action-specific command line option.
 When mock support is enabled, the following changes apply:
 .IP \(bu 3
 .B mock
@@ -1173,7 +1173,7 @@ successful execution.
 generic error (no additional information available).
 .TP
 .B 2
-problems during command-line argument parsing.
+problems during command line argument parsing.
 .TP
 .B 3
 problems during the configuration check phase (see
