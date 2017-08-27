@@ -51,6 +51,7 @@ class ErrCode:
     GIT_SRC_CHECK_ERROR = 6
     GPG_SIGNATURE_CHECK_ERROR = 7
     GIT_CHECKOUT_ERROR = 8
+    SPEC_CHECK_ERROR = 9
 
     GENERIC_IO_ERROR = 32
     CONFIG_READ_ERROR = 34
@@ -1359,6 +1360,62 @@ def cmd_build_rpm(configs):
                   {"f": cfgfile}, configs)
         return ErrCode.CONFIG_READ_ERROR
 
+    # Regenerate/check spec
+    if configs.get_bool("generate_spec_on_build"):
+        ret = cmd_generate_spec(configs)
+        if ret:
+            log_error("spec file generation failed, aborting")
+    else:
+        check_spec = int(configs.get("check_spec_on_build", default=0))
+
+        if check_spec:
+            temp_file = tempfile.mkstemp(".spec")[1]
+            ret = cmd_generate_spec(configs, temp_file)
+
+            if ret:
+                log_warn("Generation of temporary spec file failed",
+                         configs, level=0)
+            else:
+                spec_path = get_spec_path(configs)
+                verbosity = configs.get("verbosity")
+
+                if verbosity >= 1:
+                    diff_fmt = "--patch"
+                else:
+                    diff_fmt = "--quiet"
+
+                # We use git diff because it's pretty and we've used it already
+                # in do_git_src_check()
+                diff_ret = command(["git", "diff", diff_fmt, "--no-index",
+                                    "--exit-code", "--", spec_path, temp_file],
+                                   configs, cmd_print_lvl=2,
+                                   capture_output=False)[0]
+
+                if diff_ret:
+                    log_warn("Generated and existing spec files differ"
+                             if diff_ret > 0 else
+                             "Error occurred during git diff call",
+                             configs, level=0)
+                    ret = ErrCode.SPEC_CHECK_ERROR
+
+            if check_spec == 2 and ret:
+                proceed = val2bool(raw_input("Do you want to proceed (y/n)? "))
+
+                if proceed:
+                    ret = ErrCode.SUCCESS
+
+            if check_spec < 2 or not ret:
+                # We assume that if check_spec level is low, no one wants to
+                # inspect temporary spec file
+                os.unlink(temp_file)
+
+                ret = ErrCode.SUCCESS
+            elif ret:
+                log_error("spec file check failed, aborting", configs)
+
+    if ret:
+        return ret
+
     # check Makefile
     saved_root = ""
     makefile_found = False
@@ -1934,6 +1991,10 @@ def parse_cli():
                                        "0 - do not perform, " +
                                        "1 - perform check, issue warning, " +
                                        "2 - perform check, abort on failure")
+    parser_build_rpm.add_argument("-G", "--generate-spec-on-build",
+                                  action='store_true', default=None,
+                                  help="Regenerate spec faile at the " +
+                                       "beginning of RPM build")
     parser_build_rpm.set_defaults(func=cmd_build_rpm)
 
     # parser for the "build_iso" command

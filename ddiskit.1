@@ -344,6 +344,22 @@ Configuration option name:
 .I defaults.check_get_src
 .br
 Default value: 0
+.TP
+\fB-G\fR, \fB--generate-spec-on-build\fR
+Call the
+.I generate_spec
+action at the beginning of the
+.I build_rpm
+action execution.
+This saves for calling
+.I generate_spec
+action separately each time module configuration or patch list are changed
+(assuming that spec file does not need manual changes after generation).
+.IP
+Configuration option name:
+.I defaults.generate_spec_on_build
+.br
+Default value: 0
 .\"
 .SS Options for build_iso action
 .TP
@@ -892,6 +908,40 @@ command line option).
 Since some configuration values should be derived directly from it,
 its absence makes the whole operation senseless, thus the early bailout.
 .IP \(bu
+Generate (if the
+.I defaults.generate_spec_on_build
+configuration option is set to
+.BR True )
+or check (if the
+.I defaults.check_spec_on_build
+configuration option is set to positive value)
+spec file.
+Depending on the check level provided in the
+.I defaults.check_spec_on build
+configuration option, the latter check may lead to warning or to the termination
+of the action:
+.RS
+.TP 3
+0
+Do not perform the spec file check.
+.TP
+1
+Perform spec file comparison and issue warning in case generated and existing
+spec files differ.
+.TP
+2
+Perform spec file comparison and issue warning in case generated and existing
+spec files differ, user is asked whether he wants to continue.
+.TP
+3
+Perform spec file comparison and abort action execution in case of any errors
+(during spec file generation or comparison).
+.RE
+.IP
+No spec file comparison is performed (regardless of the
+.I defaults.check_spec_on_build
+configuration option value) if spec file generation is enabled (obviously).
+.IP \(bu
 Check for the Makefile presence.
 Presence of file named "Makefile" somewhere in the source tree allows for
 passing this check.
@@ -1316,6 +1366,9 @@ problem occurred during RPM GPG signature verification.
 .TP
 .B 8
 problem occurred during git checkout of source files.
+.TP
+.B 9
+problem occurred during spec file comparison.
 .TP
 .B 32
 generic input/output error.
