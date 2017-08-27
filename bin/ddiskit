@@ -838,7 +838,8 @@ def do_git_src_check(configs):
 
     # Check that git is working and the repo is present
     ret = command(["git", "--git-dir=%s" % git_repo, "--work-tree=src/",
-                   "rev-parse", git_hash, "--"], configs, cmd_print_lvl=2)
+                   "rev-parse", "--revs-only", "--verify", git_hash],
+                  configs, cmd_print_lvl=2)
 
     if ret[0]:
         log_warn(("Git repo check failed (return code %d, output \"%s\"), " +
