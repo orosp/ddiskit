@@ -460,8 +460,11 @@ def command(cmd, configs, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
 
     return (ret, result)
 
+# XXX global variable for log_* functions
+need_newline = False
 
-def log_status(msg, configs, level=0):
+
+def log_status(msg, configs, level=0, newline=True):
     """
     Log execution progress information.
 
@@ -469,8 +472,11 @@ def log_status(msg, configs, level=0):
     :param configs: Configuration object.
     :param level:   Message verbosity level.
     """
+    global need_newline
+
     if configs.get("verbosity", default=0) >= level:
-        print(msg)
+        print(msg, end="\n" if newline else "")
+        need_newline = not newline
 
 
 def log_info(msg, configs, level=2):
@@ -481,8 +487,13 @@ def log_info(msg, configs, level=2):
     :param configs: Configuration object.
     :param level:   Message verbosity level.
     """
+    global need_newline
+
     if configs.get("verbosity", default=0) >= level:
+        if need_newline:
+            print("")
         print("INFO:", msg)
+        need_newline = False
 
 
 def log_warn(msg, configs, level=1):
@@ -493,8 +504,13 @@ def log_warn(msg, configs, level=1):
     :param configs: Configuration object.
     :param level:   Message verbosity level.
     """
+    global need_newline
+
     if configs.get("verbosity", default=0) >= level:
+        if need_newline:
+            print("")
         print("WARNING:", msg)
+        need_newline = False
 
 
 def log_error(msg, configs, level=0):
@@ -505,8 +521,13 @@ def log_error(msg, configs, level=0):
     :param configs: Configuration object.
     :param level:   Message verbosity level.
     """
+    global need_newline
+
     if configs.get("verbosity", default=0) >= level:
+        if need_newline:
+            print("")
         print("ERROR:", msg)
+        need_newline = False
 
 
 def process_configs_for_spec(configs):
