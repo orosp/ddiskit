@@ -605,10 +605,23 @@ depth limit present (which is set to 8 currently).
 .SS Boolean values
 The values which are treated as boolean can have the following
 (case-insensitive) values in order to indicate that the value
-should be evaluated to True:
-.BR 1 ", " t ", " y ", " true ", " yes .
-In order to indicate False value, one of the following string may be used:
-.BR 0 ", " f ", " n ", " false ", " no .
+should be evaluated to
+.IR True :
+.BR 1 ", " t ", " y ", " true ", or " yes .
+In order to indicate
+.I False
+value, one of the following strings may be used:
+.BR 0 ", " f ", " n ", " false ", or " no .
+In case configuration value doesn't evaluate to
+.IR True " or " False
+value, it is evaluated as
+.IR None .
+.I None
+value is treated as
+.I False
+in most places, but sometimes it is important to provide specific choice,
+and in these cases error would occur if boolean value was evaluated to
+.IR None .
 .\"
 .SS Spec file generation
 Before spec file generation takes place, additional configuration processing
