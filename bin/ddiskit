@@ -689,8 +689,15 @@ def apply_config(data, configs, empty_is_nil=True):
                          %{nil}.
     :return:             Replaced content.
     """
-    return spec_var_re.sub(lambda m: configs.get(m.group(1), "spec_file",
-                                                 m.group(0)) or
+    def stringify(v):
+        if not isinstance(v, (str, unicode)):
+            return str(v)
+
+        return v
+
+    return spec_var_re.sub(lambda m: stringify(configs.get(m.group(1),
+                                                           "spec_file",
+                                                           m.group(0))) or
                            ("%{nil}" if empty_is_nil else ""), data)
 
 
