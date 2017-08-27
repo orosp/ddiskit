@@ -113,9 +113,21 @@ default_config = {
                                    "{kernel_dist_re}",
         },
     "global": {
+        "include_srpm": True,
         "module_vendor": "ENTER_MODULE_VENDOR",
         "module_author": "ENTER_MODULE_AUTHOR",
         "module_author_email": "ENTER_MODULE_AUTHOR_EMAIL",
+        },
+    "spec_file": {
+        "module_name": "ENTER_MODULE_NAME",
+        "module_version": "ENTER_MODULE_VERSION",
+        "module_rpm_release": 1,
+        "rpm_dist": "ENTER_RPM_DIST",
+        "kernel_version": "ENTER_KERNEL_VERSION",
+        "kernel_arch": "x86_64 ppc64 ppc64le",
+        "firmware_include": False,
+        "firmware_version": "ENTER_FIRMWARE_VERSION",
+        "devel_package": 0,
         },
     }
 

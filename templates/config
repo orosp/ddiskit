@@ -9,25 +9,25 @@
 ## Driver Update Disc e-mail
 # module_author_email = ENTER_AUTHOR_EMAIL
 ## Include SRPM files into the final ISO
-include_srpm = True
+include_srpm = %{global.include_srpm}
 
 ##
 ## configuration values for the driver spec file
 ##
 [spec_file]
 ## kernel module name
-module_name = ENTER_MODULE_NAME
+module_name = %{spec_file.module_name}
 ## RPM file name expression.
 ## WARNING: don't change rpm_name if you are not sure what you are doing!
 # rpm_name = kmod-{global.module_vendor}-{module_name}
 ## Module version. It's a good idea to make it equivalent to MODULE_VERSION
 ## value, kernel version or some other versioning scheme used for existing DUPs.
 ## Note that dashes are not allowed here (replace them with underscores).
-module_version = ENTER_MODULE_VERSION
+module_version = %{spec_file.module_version}
 ## RPM release version
-module_rpm_release = 1
+module_rpm_release = %{spec_file.module_rpm_release}
 ## RPM %dist override (el7_3, for example)
-rpm_dist = ENTER_DIST_TAG
+rpm_dist = %{spec_file.rpm_dist}
 ## module build dir (drivers/infiniband/hfi1, for example).
 ## If the repository source code verification is in effect, it should be the
 ## same as the subdirectory in the repository.
@@ -36,15 +36,15 @@ module_build_dir = %{spec_file.module_build_dir}
 ## RHEL 7.2: 3.10.0-327.el7
 ## RHEL 7.3: 3.10.0-514.el7
 ## RHEL 7.4: 3.10.0-693.el7
-kernel_version = ENTER_KERNEL_VERSION
+kernel_version = %{spec_file.kernel_version}
 ## target kernel exclusive arch (x86_64 ppc64 ppc64le, for example)
-kernel_arch = x86_64 ppc64 ppc64le
+kernel_arch = %{spec_file.kernel_arch}
 ## Install dependencies
 ## When DUD has firmware enabled, dependency on the firmware RPM will be added
 ## automatically
-dependencies = 
+dependencies = %{spec_file.dependencies}
 ## Build dependencies
-build_dependencies = 
+build_dependencies = %{spec_file.build_dependencies}
 ## module summary in the spec file
 # summary = {module_name} module for Driver Update Program
 ## module description in the spec file
@@ -63,9 +63,9 @@ git_hash = %{spec_file.git_hash}
 ## src/firmware directory.
 ##
 ## enable firmware sub-package
-firmware_include = False
+firmware_include = %{spec_file.firmware_include}
 ## firmware package version
-firmware_version = ENTER_FIRMWARE_VERSION
+firmware_version = %{spec_file.firmware_version}
 ## firmware summary in the spec file
 # firmware_summary = {module_name} firmware for Driver Update Program
 ## firmware description in the spec file
@@ -79,7 +79,7 @@ firmware_version = ENTER_FIRMWARE_VERSION
 ## copied/merged manually by dependent module's Makefile.
 ##
 ## Whether to supply development package. 0/1
-devel_package = 0
+devel_package = %{spec_file.devel_package}
 ## development package summary in the spec file
 # devel_summary = {module_name} development files for Driver Update Program
 ## development package description in the spec file
