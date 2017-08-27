@@ -59,6 +59,7 @@ class ErrCode:
     SOURCE_ARCHIVE_WRITE_ERROR = 41
     MAKEFILE_NOT_FOUND = 42
     DD_ID_WRITE_ERROR = 45
+    CONFIG_DUMP_WRITE_ERROR = 47
 
 
 class QuiltCmd:
@@ -1658,6 +1659,7 @@ def cmd_dump_config(configs):
     except IOError as err:
         print("Failed")
         log_error(str(err), configs)
+        return ErrCode.CONFIG_DUMP_WRITE_ERROR
 
     return ErrCode.SUCCESS
 
