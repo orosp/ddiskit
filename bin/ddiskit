@@ -974,8 +974,7 @@ def do_build_rpm(configs, arch):
 
     log_status("Start RPM build for %s %s... " %
                (arch, "using mock " if use_mock else ""), configs)
-    spec_path = "rpm/SPECS/%s.spec" % \
-        configs.get("spec_file.module_name")
+    spec_path = get_spec_path(configs)
     if use_mock:
         mock_args = get_mock_args(configs)
 
@@ -1022,8 +1021,7 @@ def do_build_srpm(configs):
 
     log_status("Start SRPM build %s... " % ("using mock " if use_mock else ""),
                configs)
-    spec_path = "rpm/SPECS/%s.spec" % \
-        configs.get("spec_file.module_name")
+    spec_path = get_spec_path(configs)
     if use_mock:
         cmd = ["mock", "--buildsrpm"]
         cmd += get_mock_args(configs)[0]
@@ -1041,8 +1039,7 @@ def do_check_rpm_build(configs):
     Check whether RPM can be built on the host.
     :param configs: Configuration object.
     """
-    spec_path = "rpm/SPECS/%s.spec" % \
-        configs.get("spec_file.module_name")
+    spec_path = get_spec_path(configs)
     cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
            "--nobuild", "-bc", spec_path]
 
@@ -1163,6 +1160,17 @@ def cmd_prepare_sources(configs):
     return result
 
 
+def get_spec_path(configs):
+    """
+    Generate path to the RPM spec file (relative to current work directory,
+    i.e. module configuration directory).
+
+    :param configs: Configuration object.
+    :return:        String with patch to the spec file.
+    """
+    return "rpm/SPECS/%s.spec" % configs.get("spec_file.module_name")
+
+
 def cmd_generate_spec(configs):
     """
     CMD generate_spec callback
@@ -1176,8 +1184,7 @@ def cmd_generate_spec(configs):
                   {"f": cfgfile}, configs)
         return ErrCode.CONFIG_READ_ERROR
 
-    spec_path = "rpm/SPECS/%s.spec" % \
-        configs.get("spec_file.module_name")
+    spec_path = get_spec_path(configs)
     if os.path.isfile(spec_path):
         log_warn("RPM spec file \"%s\" exists!" % spec_path, configs, level=0)
     try:
