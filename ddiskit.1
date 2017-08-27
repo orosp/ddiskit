@@ -783,7 +783,10 @@ its absence makes the whole operation senseless, thus the early bailout.
 Check for the Makefile presence.
 Presence of file named "Makefile" somewhere in the source tree allows for
 passing this check.
-Absence of Makefile leads to early termination with a non-zero exit code.
+Absence of Makefile leads to early termination with a relevant exit code
+(please refer to the
+.I EXIT STATUS
+section for details).
 .IP \(bu
 In case quilt integration (specified via the configuration option
 .IR default.quilt_support )
