@@ -106,9 +106,11 @@ default_config = {
         },
     }
 
-kernel_nvr_re = r"[0-9]\.[0-9]{1,2}\.[0-9]{1,2}-[0-9]{1,4}"
-kernel_z_part_re = r"(\.[0-9]{1,3})+"
-kernel_dist_re = r"\.el([6-9]|[1-9][0-9])"
+kernel_nvr_re = r"(?P<version>[0-9])\." + \
+                r"(?P<patchlevel>[0-9]{1,2})\." + \
+                r"(?P<sublevel>[0-9]{1,2})-(?P<rpm_release>[0-9]{1,4})"
+kernel_z_part_re = r"(?P<rpm_release_add>(\.[0-9]{1,3})+)"
+kernel_dist_re = r"(?P<rpm_dist>\.el([6-9]|[1-9][0-9]))"
 
 kernel_y_re = "^%s%s$" % (kernel_nvr_re, kernel_dist_re)
 kernel_z_re = "^%s%s%s$" % (kernel_nvr_re, kernel_z_part_re, kernel_dist_re)
@@ -532,6 +534,47 @@ def log_error(msg, configs, level=-128):
         need_newline = False
 
 
+def get_kernel_version(ver, configs):
+    """
+    Matches kernel version string and returns parsed kernel version.
+
+    :param ver:     Version string.
+    :param configs: Configuration object.
+    :return:        Tuple. First element is dict with keys version, patchlevel,
+                    sublevel, rpm_release, rpm_release_add, rpm_dist, or None,
+                    if kernel version string wasn't matched. Second element
+                    indicates whether flexible dependencies can be generated
+                    based on this kernel version.
+    """
+    keys = ("version", "patchlevel", "sublevel", "rpm_release", "rpm_dist")
+    optional_keys = ("rpm_release_add", )
+
+    ret = None
+    matched_re = None
+
+    for r in (kernel_y_re, kernel_z_re):
+        try:
+            m = re.match(r, ver)
+            groups = m.groupdict()
+
+            ret = dict()
+
+            for i in keys:
+                ret[i] = groups[i]
+            for i in optional_keys:
+                ret[i] = groups.get(i, "")
+        except:
+            log_info("Kernel version \"%s\" doesn't match \"%s\"" % (ver, r),
+                     configs)
+            ret = None
+
+        if ret:
+            matched_re = r
+            break
+
+    return (ret, matched_re == kernel_y_re)
+
+
 def process_configs_for_spec(configs):
     """
     Process configuration before spec file generation.
@@ -567,16 +610,21 @@ def process_configs_for_spec(configs):
 
     # kernel_requires
     kernel_ver_string = configs.get("spec_file.kernel_version", default="")
-    if re.match(kernel_y_re, kernel_ver_string):
-        kernel_version = re.split(r'[\.-]', kernel_ver_string)
-        kernel_version_str = "%s.%s.%s-" % (kernel_version[0],
-                                            kernel_version[1],
-                                            kernel_version[2])
-        kernel_requires = "Requires:	kernel >= %s%s.%s\n" % \
-            (kernel_version_str, kernel_version[3], kernel_version[4])
-        kernel_requires += "Requires:	kernel < %s%s.%s" % \
-            (kernel_version_str, int(kernel_version[3]) + 1, kernel_version[4])
-    elif re.match(kernel_z_re, kernel_ver_string):
+    kernel_ver, flex_deps = get_kernel_version(kernel_ver_string, configs)
+
+    if flex_deps:
+        kver = "%s.%s.%s" % (kernel_ver["version"],
+                             kernel_ver["patchlevel"],
+                             kernel_ver["sublevel"])
+        rpm_release = int(kernel_ver["rpm_release"])
+        rpm_release_add = kernel_ver["rpm_release_add"]
+        rpm_dist = kernel_ver["rpm_dist"]
+
+        kernel_requires = "Requires:	kernel >= %s-%s%s%s\n" % \
+            (kver, rpm_release, rpm_release_add, rpm_dist)
+        kernel_requires += "Requires:	kernel < %s-%s%s%s" % \
+            (kver, rpm_release + 1, rpm_release_add, rpm_dist)
+    elif kernel_ver:
         kernel_requires = "Requires:	kernel = " + kernel_ver_string
 
     configs.humble_set("kernel_requires", kernel_requires)
@@ -640,9 +688,10 @@ def check_config(configs):
                               (section, key, val), configs)
                     config_critic = True
             elif section == "spec_file" and key == "kernel_version":
-                if re.match(kernel_y_re, val):
+                kver, y_ver = get_kernel_version(val, configs)
+                if y_ver:
                     continue
-                elif re.match(kernel_z_re, val):
+                elif kver:
                     log_warn("You are using z-stream kernel version! " +
                              "You shouldn't use it. If you don't have good " +
                              "reason for it, please use the Y-stream kernel " +
