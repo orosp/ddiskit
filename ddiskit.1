@@ -56,7 +56,7 @@ It is tailored to the process used for developing and releasing
 Driver Update Disks, and, while can be used for creating driver packaged for
 Red Hat-based distributions in general, it also worth considering other tools
 for the similar purpose, like
-.BR dkms " or " akmods .
+.BR dkms "(8) or " akmods (1).
 
 .SH OPTIONS
 Please refer to the
@@ -271,7 +271,7 @@ Default value: False
 .TP
 \fB-m\fR, \fB--mock\fR
 Enable
-.B mock
+.BR mock (1)
 usage for building RPM.
 See the
 .I MOCK SUPPORT
@@ -901,7 +901,9 @@ option.
 .\"
 .SH QUILT INTEGRATION
 .B ddiskit
-supports quilt patch workflow.
+supports
+.BR quilt (1)
+patch workflow.
 Specifically:
 .IP \(bu 3
 It de-applies quilt patches before building source tarball and applies them
@@ -931,7 +933,7 @@ configuration option which is controlled via the
 action-specific command line option.
 When mock support is enabled, the following changes apply:
 .IP \(bu 3
-.B mock
+.BR mock (1)
 is called instead of
 .B rpmbuild
 for source and binary RPM creation.
