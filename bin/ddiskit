@@ -434,8 +434,7 @@ def command(cmd, configs, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
     """
     verbosity = configs.get("verbosity", default=0)
 
-    if (verbosity >= cmd_print_lvl):
-        print("Executing command: %r" % cmd)
+    log_status("Executing command: %r" % cmd, configs, level=cmd_print_lvl)
     try:
         process = Popen(
             args=cmd,
@@ -448,17 +447,18 @@ def command(cmd, configs, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
         if capture_output:
             result = result.decode()
     except OSError as err:
-        if verbosity >= max(1, min(cmd_print_lvl, res_print_lvl)):
-            print("  Got OSError when tried to execute %r (errno %d): %s" %
-                  (cmd, err.errno, err.strerror))
+        log_error("Got OSError when tried to execute %r (errno %d): %s" %
+                  (cmd, err.errno, err.strerror), configs,
+                  level=max(1, min(cmd_print_lvl, res_print_lvl)))
         result = ""
         ret = -256 - err.errno
 
-    if verbosity >= res_print_lvl:
-        if capture_output:
-            print(result)
-        if verbosity >= cmd_print_lvl:
-            print("  Return code for %r:" % cmd, ret)
+    if capture_output:
+        log_status(result, configs, level=res_print_lvl)
+
+    log_status("  Return code for %r: %d" % (cmd, ret), configs,
+               level=cmd_print_lvl)
+
     return (ret, result)
 
 
@@ -599,7 +599,7 @@ def check_config(configs):
     :return: Fixed config or None
     """
     config_critic = False
-    print("Checking config ... ")
+    log_status("Checking config ... ", configs)
     for section in ["global", "spec_file"]:
         if not configs.has_section(section):
             log_error("required section \"%s\" hasn't been found!", configs)
@@ -614,42 +614,40 @@ def check_config(configs):
                         not configs.get_bool("spec_file.firmware_include"):
                     continue
                 else:
-                    print("FAIL: key: %s.%s value: %s is a default value" %
-                          (section, key, val))
+                    log_error("key: %s.%s value: %s is a default value" %
+                              (section, key, val), configs)
                     config_critic = True
             elif section == "spec_file" and key == "kernel_version":
                 if re.match(kernel_y_re, val):
                     continue
                 elif re.match(kernel_z_re, val):
-                    print("WARNING: You are using z-stream kernel version! " +
-                          "You shouldn't use it.")
-                    print("         If you don't have good reason for it, " +
-                          "please use the Y-stream kernel version " +
-                          "(3.10.0-123.el7)")
+                    log_warn("You are using z-stream kernel version! " +
+                             "You shouldn't use it. If you don't have good " +
+                             "reason for it, please use the Y-stream kernel " +
+                             "version (3.10.0-123.el7)", configs, level=0)
                     continue
                 else:
-                    print("FAIL: Invalid kernel version in config file: %s" %
-                          val)
-                    print("      Valid version is, for example, " +
-                          "3.10.0-123.el7")
+                    log_error(("Invalid kernel version in config file: " +
+                               "\"%s\". Valid version is, for example, " +
+                               "3.10.0-123.el7") % val, configs)
                     config_critic = True
             elif section == "spec_file" and key == "module_build_dir":
                 if val[0] == "/":
                     val = val[1:]
                     configs.set(key, val, section)
-                    print("WARNING: Leading \"/\" in module_build_dir, " +
-                          "fixing ... OK")
+                    log_warn("Leading \"/\" in module_build_dir, fixing.",
+                             configs)
                 if val[-1] == "/":
                     val = val[:-1]
                     configs.set(key, val, section)
-                    print("WARNING: Trailing \"/\" in module_build_dir, " +
-                          "fixing ... OK")
+                    log_warn("Trailing \"/\" in module_build_dir, fixing.",
+                             configs)
 
     if config_critic:
-        print("Unrecoverable failure, please fix the aforementioned " +
-              "issues and run ddiskit again.")
+        log_error("Unrecoverable failure, please fix the aforementioned " +
+                  "issues and run ddiskit again.", configs)
         return None
-    print("Config check ... OK")
+    log_status("Config check ... OK", configs)
     return configs
 
 
@@ -875,8 +873,8 @@ def do_build_rpm(configs, arch):
     """
     use_mock = configs.get_bool("mock")
 
-    print("Start RPM build for %s %s... " %
-          (arch, "using mock " if use_mock else ""))
+    log_status("Start RPM build for %s %s... " %
+               (arch, "using mock " if use_mock else ""), configs)
     spec_path = "rpm/SPECS/%s.spec" % \
         configs.get("spec_file.module_name")
     if use_mock:
@@ -923,7 +921,8 @@ def do_build_srpm(configs):
     """
     use_mock = configs.get_bool("mock")
 
-    print("Start SRPM build %s... " % ("using mock " if use_mock else "", ))
+    log_status("Start SRPM build %s... " % ("using mock " if use_mock else ""),
+               configs)
     spec_path = "rpm/SPECS/%s.spec" % \
         configs.get("spec_file.module_name")
     if use_mock:
@@ -1002,7 +1001,7 @@ def cmd_prepare_sources(configs):
                     fout.write(read_data)
             print("OK")
     except IOError as err:
-        print(str(err))
+        log_error(str(err), configs)
         return ErrCode.CONFIG_WRITE_ERROR
 
     create_dirs(["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS",
@@ -1011,7 +1010,8 @@ def cmd_prepare_sources(configs):
     create_dirs(["src", "src/patches", "src/firmware"],
                 "Creating directory structure for source code")
 
-    print("Put your module source code in src directory.")
+    log_status("Put your module source code in src directory.",
+               configs)
 
     return ErrCode.SUCCESS
 
@@ -1024,15 +1024,15 @@ def cmd_generate_spec(configs):
     cfgfile = configs.get("config", default="module.config")
 
     if configs is None or not os.path.isfile(cfgfile):
-        print(("Configuration file \"%(f)s\" was not found, use " +
-               "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
-              {"f": cfgfile})
+        log_error(("Configuration file \"%(f)s\" was not found, use " +
+                   "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
+                  {"f": cfgfile}, configs)
         return ErrCode.CONFIG_READ_ERROR
 
     spec_path = "rpm/SPECS/%s.spec" % \
         configs.get("spec_file.module_name")
     if os.path.isfile(spec_path):
-        print("RPM spec file \"%s\" exists!" % spec_path)
+        log_warn("RPM spec file \"%s\" exists!" % spec_path, configs, level=0)
     try:
         template_dir = configs.get("template_dir")
         spec_template = configs.get("spec_template")
@@ -1040,7 +1040,7 @@ def cmd_generate_spec(configs):
                   default_dir=template_dir), 'r') as fin:
             read_data = fin.read()
     except IOError as err:
-        print(str(err))
+        log_error(str(err), configs)
         return ErrCode.SPEC_TEMPLATE_READ_ERROR
 
     cwd = os.getcwd()
@@ -1050,7 +1050,7 @@ def cmd_generate_spec(configs):
     patches_do = ""
     if os.path.isdir(src_root + "patches") and \
             os.listdir(src_root + "patches"):
-        print("Patches found, adding to the spec file:")
+        log_status("Patches found, adding to the spec file:", configs)
         os.chdir(src_root + "patches")
         index = 0
         patches = "# Source code patches"
@@ -1058,15 +1058,16 @@ def cmd_generate_spec(configs):
             # Hack for series file inside patches directory
             if files == "series" and configs.get_bool("quilt_support"):
                 if configs.get("verbosity") >= 2:
-                    print("  Skipping %s" % files)
+                    log_status("  Skipping %s" % files, configs)
                 continue
 
-            print("  Patch%d: %s" % (index, files))
+            log_status("  Patch%d: %s" % (index, files), configs)
             patches += "\nPatch%d:\t%s" % (index, files)
             patches_do += "\n%%patch%d -p1" % index
             index = index + 1
     else:
-        print("Patch directory is empty or nonexistent, skipping")
+        log_status("Patch directory is empty or nonexistent, skipping",
+                   configs)
 
     configs.set("spec_file.source_patches", patches)
     configs.set("spec_file.source_patches_do", patches_do)
@@ -1076,17 +1077,17 @@ def cmd_generate_spec(configs):
     if os.path.isdir(src_root + "firmware") and \
             os.listdir(src_root + "firmware"):
         if not configs.get_bool("spec_file.firmware_include"):
-            print("\n  WARNING: Firmware directory contains files, but " +
-                  "firmware package is disabled in config!\n")
+            log_warn("Firmware directory contains files, but firmware " +
+                     "package is disabled in config!", configs, level=0)
         else:
             fw_files = ""
             fw_install = ""
-            print("Firmware found, adding to the spec file:")
+            log_status("Firmware found, adding to the spec file:", configs)
             for root, dirs, files in os.walk(src_root + "firmware/"):
                 for file in files:
                     fpath = os.path.join(root[len(src_root + "firmware/"):],
                                          file)
-                    print("  Firmware: %s" % fpath)
+                    log_status("  Firmware: %s" % fpath, configs)
                     fw_files += "/lib/firmware/%s\n" % fpath
                     fw_install += \
                         ("install -m 644 -D source/firmware/%(f)s " +
@@ -1095,15 +1096,16 @@ def cmd_generate_spec(configs):
             configs.set("spec_file.firmware_files", fw_files)
             configs.set("spec_file.firmware_files_install", fw_install)
     else:
-        print("Firmware directory is empty or nonexistent, skipping")
+        log_status("Firmware directory is empty or nonexistent, skipping",
+                   configs)
 
     source_fail = False
     for arch in configs.get("spec_file.kernel_arch").split():
         kernel_dir = "/usr/src/kernels/%s.%s" % \
             (configs.get("spec_file.kernel_version"), arch)
         if not os.path.isdir(kernel_dir):
-            print("WARNING: kernel source code was not found: \"%s\"" %
-                  kernel_dir)
+            log_warn("Kernel source code is not found: \"%s\"" % kernel_dir,
+                     configs, level=0)
             source_fail = True
 
     if source_fail:
@@ -1140,8 +1142,8 @@ def filter_tar_info(configs, nvv):
 
         if not configs.get_bool("tar_all") and \
                 any([x.startswith(".") for x in ti.name.split("/")]):
-            if configs.get("verbosity") >= 1:
-                print("  Skipping hidden file: %s" % ti.name)
+            log_status("  Skipping hidden file: %s" % ti.name, configs,
+                       level=1)
 
             return None
 
@@ -1149,13 +1151,12 @@ def filter_tar_info(configs, nvv):
 
         if ti.isfile() and ti.name.split("/")[0] != "firmware" and \
                 not filter_tar_info_args.src_patterns.match(fn):
-            print("  Unexpected file: %s" % ti.name)
+            log_status("  Unexpected file: %s" % ti.name, configs)
 
             if configs.get_bool("tar_strict"):
                 return None
 
-        if configs.get("verbosity") >= 2:
-            print("  Adding: %s" % ti.name)
+        log_status("  Adding: %s" % ti.name, configs, level=2)
 
         ti.name = os.path.join(nvv, ti.name)
 
@@ -1176,9 +1177,9 @@ def cmd_build_rpm(configs):
     cfgfile = configs.get("config", default="module.config")
 
     if configs is None or not os.path.isfile(cfgfile):
-        print(("Configuration file \"%(f)s\" was not found, use " +
-               "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
-              {"f": cfgfile})
+        log_error(("Configuration file \"%(f)s\" was not found, use " +
+                   "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
+                  {"f": cfgfile}, configs)
         return ErrCode.CONFIG_READ_ERROR
 
     # check Makefile
@@ -1193,11 +1194,11 @@ def cmd_build_rpm(configs):
     saved_root = saved_root.replace(src_root, "")
 
     if not makefile_found:
-        print("Makefile not found -> Please create one in " + src_root +
-              saved_root)
+        log_error("Makefile not found -> Please create one in %s" %
+                  (src_root + saved_root), configs)
         return ErrCode.MAKEFILE_NOT_FOUND
     else:
-        print("Checking makefile ... OK")
+        log_status("Checking makefile ... OK", configs)
 
     if do_quilt(QuiltCmd.DEAPPLY, configs):
         log_error("Quilt de-applying returned error, aborting", configs)
@@ -1218,7 +1219,7 @@ def cmd_build_rpm(configs):
          configs.get("global.module_vendor"),
          configs.get("spec_file.module_version"))
     archive = "rpm/SOURCES/" + nvv + ".tar.bz2"
-    print("Writing archive " + archive + " ...")
+    log_status("Writing archive \"%s\" ..." % archive, configs)
 
     cwd = os.getcwd()
 
@@ -1233,9 +1234,9 @@ def cmd_build_rpm(configs):
                 if os.path.isdir("firmware") and os.listdir("firmware"):
                     if not configs.get_bool("spec_file.firmware_include"):
                         warning = True
-                        print("  WARNING: Firmware directory contains " +
-                              "files, but firmware package is disabled in " +
-                              "config!")
+                        log_warn("Firmware directory contains files, but " +
+                                 "firmware package is disabled in config!",
+                                 configs, level=0)
                         continue
                 else:
                     log_status("  Skipping: %s" % files, configs, level=1)
@@ -1244,23 +1245,24 @@ def cmd_build_rpm(configs):
                     filter=filter_tar_info(configs, nvv))
         tar.close()
     except Exception as err:
-        print(str(err))
+        log_error(str(err), configs)
         return ErrCode.SOURCE_ARCHIVE_WRITE_ERROR
     else:
         if not warning:
-            print("Finished writing the archive.")
+            log_status("Finished writing the archive.", configs)
 
     os.chdir(cwd)
 
     if os.path.isdir(src_root + "patches") and \
             os.listdir(src_root + "patches"):
-        print("Copying patches into rpm/SOURCES:")
+        log_status("Copying patches into rpm/SOURCES:", configs)
         os.chdir(src_root + "patches")
         for files in os.listdir("."):
             shutil.copyfile(files, "../../rpm/SOURCES/" + files)
-            print("  Copying: " + files)
+            log_status("  Copying: %s" % files, configs)
     else:
-        print("Patch directory not found or empty -> skipping")
+        log_warn("Patch directory not found or empty -> skipping",
+                 configs, level=0)
 
     os.chdir(cwd)
 
@@ -1270,14 +1272,14 @@ def cmd_build_rpm(configs):
         if not configs.get_bool("mock") and \
                 not do_check_rpm_build(configs):
             log_warn("Binary RPM build check failed, building SRPM only",
-                     configs)
+                     configs, level=0)
             ret = do_build_srpm(configs)
         else:
             ret = do_build_rpm(configs, build_arch)
     else:
         if not configs.get_bool("srpm"):
-            print("Because you are not on the target architecture, " +
-                  "building SRPM only")
+            log_warn("Because you are not on the target architecture, " +
+                     "building SRPM only", configs, level=0)
         ret = do_build_srpm(configs)
 
     ret_quilt = do_quilt(QuiltCmd.APPLY, configs)
@@ -1463,10 +1465,11 @@ def cmd_build_iso(configs):
                     bin_rpms[arch] = []
                 bin_rpms[arch].append(content)
 
-            print("Including \"%s\" (%s)" %
-                  (content, "source" if is_src else "binary, %s" % arch))
+            log_status("Including \"%s\" (%s)" %
+                       (content, "source" if is_src else "binary, %s" % arch),
+                       configs)
         except OSError as err:
-            print(str(err))
+            log_warn(str(err), configs, level=0)
 
     if error:
         log_error("Errors occurred during the preparation of RPM list, " +
@@ -1500,7 +1503,7 @@ def cmd_build_iso(configs):
         with open(dir_tmp + "/disk/rhdd3", 'w') as fout:
             fout.write("Driver Update Disk version 3")
     except IOError as err:
-        print(str(err))
+        log_error(str(err), configs)
         return ErrCode.DD_ID_WRITE_ERROR
 
     isofile = configs.get("isofile")
@@ -1568,18 +1571,20 @@ def apply_config_file(filename, configs):
     try:
         for section in cfgparser.sections():
             if "." in section:
-                print("WARNING: section \"%s\" (config file \"%s\") contains" +
-                      " dot in its name, ignored." % (section, filename))
+                log_warn(("section \"%s\" (config file \"%s\") contains" +
+                          " dot in its name, ignored.") % (section, filename),
+                         configs, level=0)
                 continue
             for key, val in cfgparser.items(section):
                 if "." in key:
-                    print("WARNING: key \"%s\" in section \"%s\" (config " +
-                          "file \"%s\") contains dot in its name, ignored." %
-                          (key, section, filename))
+                    log_warn(("key \"%s\" in section \"%s\" (config " +
+                              "file \"%s\") contains dot in its name, " +
+                              "ignored.") % (key, section, filename),
+                             configs, level=0)
                     continue
                 configs.set(key, val, section)
     except configparser.Error as err:
-        print(str(err))
+        log_error(str(err), configs)
         return (configs, None)
 
     return (configs, res)
@@ -1626,13 +1631,14 @@ def parse_config(filename, args, configs):
         profile_path = get_config_path(profile, profile_dir, extension=""),
         ret = apply_config_file(profile_path, configs)
         if ret is None or len(ret) == 0:
-            print("Profile \"" + profile_path + "\" not found")
+            log_error("Profile \"" + profile_path + "\" not found", configs)
             return None
 
     if filename is not None:
         ret = apply_config_file(os.path.basename(filename), configs)[1]
         if ret is None or len(ret) == 0:
-            print("Config file: " + filename + " not found")
+            log_error("Configuration file \"%s\" not found" % filename,
+                      configs)
             return None
 
     configs.apply_args(args)
@@ -1653,7 +1659,7 @@ def cmd_dump_config(configs):
             print("OK")
     except IOError as err:
         print("Failed")
-        print(str(err))
+        log_error(str(err), configs)
 
     return ErrCode.SUCCESS
 
