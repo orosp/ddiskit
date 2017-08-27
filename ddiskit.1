@@ -648,11 +648,11 @@ If resource name does not have slashes, then it is considered that this name
 refers to the file in the provided directory.
 .IP \(bu
 Otherwise, it is interpreted as a path relative to the current working
-directory.
+directory (which is the directory the where module configuration resides).
 .PP
 For example, profile "my-profile" is searched relative to profile directory
 ("/usr/share/ddiskit/profiles" by default), but profile "./my-profile"
-is searched relative to current directory.
+is searched relative to modules configuration directory.
 .\"
 .SS Configuration value evaluation
 Configuration option values can reference other configuration options using
