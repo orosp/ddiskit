@@ -10,6 +10,7 @@
 from __future__ import print_function
 
 import argparse
+import codecs
 import errno
 import functools
 import os
@@ -359,7 +360,7 @@ class DDiskitConfig(object):
 
         return self
 
-    def apply_args(self, args):
+    def apply_args(self, args, encoding=sys.stdin.encoding or 'utf-8'):
         """
         Puts command-line args as a values of "defaults" section of
         configuration dict, so it could be used for providing defaults when
@@ -369,16 +370,25 @@ class DDiskitConfig(object):
                         as returned by argparse.ArgumentParser.parse_args()
         :return:        Updated config instance.
         """
+        def unicodify(v):
+            if isinstance(v, str):
+                return unicode(v, encoding=encoding)
+
+            return v
+
         discarded_args = []
 
         if "defaults" not in self._cfg:
             self._cfg["defaults"] = {}
-        self._cfg["defaults"].update([(k, v) for k, v
-                                      in args.__dict__.iteritems()
+        self._cfg["defaults"].update([(unicodify(k), unicodify(v))
+                                      for k, v in args.__dict__.iteritems()
                                       if v is not None])
 
         if args.config_option:
             for arg in args.config_option:
+                if isinstance(arg, str):
+                    arg = unicode(arg, encoding=encoding)
+
                 kv = arg.split("=", 1)
                 if len(kv) != 2:
                     discarded_args.append(arg)
@@ -1143,11 +1153,12 @@ def cmd_prepare_sources(configs):
         else:
             template_dir = configs.get("template_dir")
             config_template = configs.get("config_template")
-            with open(get_config_path(config_template, extension="",
-                      default_dir=template_dir), 'r') as fin:
+            with codecs.open(get_config_path(config_template, extension="",
+                             default_dir=template_dir), 'r',
+                             encoding='utf-8') as fin:
                 read_data = apply_config(fin.read(), configs,
                                          empty_is_nil=False)
-                with open(cfgfile, 'w+') as fout:
+                with codecs.open(cfgfile, 'w+', encoding='utf-8') as fout:
                     fout.write(read_data)
             log_status("OK", configs)
     except IOError as err:
@@ -1190,8 +1201,9 @@ def cmd_generate_spec(configs):
     try:
         template_dir = configs.get("template_dir")
         spec_template = configs.get("spec_template")
-        with open(get_config_path(spec_template, extension="",
-                  default_dir=template_dir), 'r') as fin:
+        with codecs.open(get_config_path(spec_template, extension="",
+                         default_dir=template_dir), 'r',
+                         encoding='utf-8') as fin:
             read_data = fin.read()
     except IOError as err:
         log_error(str(err), configs)
@@ -1273,7 +1285,7 @@ def cmd_generate_spec(configs):
     read_data = apply_config(read_data, configs)
     log_status("Writing spec into %s ... " % spec_path, configs, newline=False)
     try:
-        with open(spec_path, 'w') as fout:
+        with codecs.open(spec_path, 'w', encoding='utf-8') as fout:
             fout.write(read_data)
     except IOError as err:
         log_error(str(err), configs)
@@ -1808,7 +1820,7 @@ def cmd_dump_config(configs):
     cfgparser = configs.dump_config()
 
     try:
-        with open(filename, "w") as f:
+        with codecs.open(filename, "w", encoding="utf-8") as f:
             cfgparser.write(f)
             log_status("OK", configs)
     except IOError as err:
