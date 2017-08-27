@@ -106,6 +106,7 @@ default_config = {
         "quilt_support": True,
         "spec_template": SPEC_TEMPLATE,
         "src_patterns": SRC_PATTERNS,
+        "mock_config": "default",
 
         "kernel_nvr_re": KERNEL_NVR_RE,
         "kernel_fixed_re": KERNEL_Z_PART_RE,
@@ -1983,7 +1984,7 @@ def parse_cli():
                                   default=None, help="Build src RPM")
     parser_build_rpm.add_argument("-m", "--mock", action="store_true",
                                   default=None, help="Build using mock")
-    parser_build_rpm.add_argument("-r", "--mock-config", default='default',
+    parser_build_rpm.add_argument("-r", "--mock-config", default=None,
                                   help="Mock config")
     parser_build_rpm.add_argument("-l", "--mock-offline", action="store_true",
                                   default=None,
