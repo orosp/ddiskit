@@ -982,7 +982,7 @@ def create_dirs(dir_list, configs, caption=None):
     :return:         True if there were no errors, otherwise False.
     """
     if caption is not None:
-        print(caption, end=" ... ")
+        log_status("%s ... " % caption, configs, newline=False)
 
     dir_creation_ok = True
     for dirs in dir_list:
@@ -990,12 +990,11 @@ def create_dirs(dir_list, configs, caption=None):
             if not os.path.exists(dirs):
                 os.makedirs(dirs)
         except OSError as err:
-            if caption is not None and dir_creation_ok:
-                print("")
-            print(str(err))
+            log_error(str(err), configs)
             dir_creation_ok = False
-    if caption is not None and dir_creation_ok:
-        print("OK")
+
+    if caption is not None:
+        log_status("OK", configs)
 
     return dir_creation_ok
 
@@ -1008,9 +1007,10 @@ def cmd_prepare_sources(configs):
     cfgfile = configs.get("config", default="module.config")
 
     try:
-        print("Writing new config file (" + cfgfile + ")... ", end="")
+        log_status("Writing new config file (%s) ... " % cfgfile,
+                   configs, newline=False)
         if os.path.isfile(cfgfile):
-            print("File exists")
+            log_status("File exists, skipping", configs)
         else:
             template_dir = configs.get("template_dir")
             config_template = configs.get("config_template")
@@ -1019,7 +1019,7 @@ def cmd_prepare_sources(configs):
                 read_data = fin.read()
                 with open(cfgfile, 'w+') as fout:
                     fout.write(read_data)
-            print("OK")
+            log_status("OK", configs)
     except IOError as err:
         log_error(str(err), configs)
         return ErrCode.CONFIG_WRITE_ERROR
@@ -1138,15 +1138,15 @@ def cmd_generate_spec(configs):
     process_configs_for_spec(configs)
 
     read_data = apply_config(read_data, configs)
-    print("Writing spec into %s ... " % spec_path, end="")
+    log_status("Writing spec into %s ... " % spec_path, configs, newline=False)
     try:
         with open(spec_path, 'w') as fout:
             fout.write(read_data)
     except IOError as err:
-        print(str(err))
+        log_error(str(err), configs)
         return ErrCode.SPEC_WRITE_ERROR
 
-    print("OK")
+    log_status("OK", configs)
 
     return ErrCode.SUCCESS
 
@@ -1669,16 +1669,15 @@ def parse_config(filename, args, configs):
 def cmd_dump_config(configs):
     filename = configs.get("dump_config_name", default="{config}.generated")
 
-    print("Dumping config ... ", end="")
+    log_status("Dumping config ... ", configs, newline=False)
 
     cfgparser = configs.dump_config()
 
     try:
         with open(filename, "w") as f:
             cfgparser.write(f)
-            print("OK")
+            log_status("OK", configs)
     except IOError as err:
-        print("Failed")
         log_error(str(err), configs)
         return ErrCode.CONFIG_DUMP_WRITE_ERROR
 
