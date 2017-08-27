@@ -1130,11 +1130,10 @@ def cmd_generate_spec(configs):
             source_fail = True
 
     if source_fail:
-        print("         It probably will not be possible to build all RPMs " +
-              "on this system")
-        print(("         You can try to install kernel-devel-%s package in " +
-               "order to fix this") %
-              configs.get("spec_file.kernel_version"))
+        log_warn(("It probably will not be possible to build all RPMs " +
+                  "on this system. You can try to install kernel-devel-%s " +
+                  "package in order to fix this") %
+                 configs.get("spec_file.kernel_version"), configs, level=0)
 
     process_configs_for_spec(configs)
 
