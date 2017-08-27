@@ -1319,7 +1319,7 @@ def filter_tar_info(configs, nvv):
         ti.gid = 0
         ti.mtime = time.time()
 
-        if not configs.get_bool("tar_all") and \
+        if not filter_tar_info_args.tar_all and \
                 any([x.startswith(".") for x in ti.name.split("/")]):
             log_status("  Skipping hidden file: %s" % ti.name, configs,
                        level=1)
@@ -1332,7 +1332,7 @@ def filter_tar_info(configs, nvv):
                 not filter_tar_info_args.src_patterns.match(fn):
             log_status("  Unexpected file: %s" % ti.name, configs)
 
-            if configs.get_bool("tar_strict"):
+            if filter_tar_info_args.tar_strict:
                 return None
 
         log_status("  Adding: %s" % ti.name, configs, level=2)
@@ -1341,6 +1341,8 @@ def filter_tar_info(configs, nvv):
 
         return ti
 
+    filter_tar_info_args.tar_all = configs.get_bool("tar_all")
+    filter_tar_info_args.tar_strict = configs.get_bool("tar_strict")
     filter_tar_info_args.src_patterns = \
         re.compile(configs.get("src_patterns", default=SRC_PATTERNS))
 
