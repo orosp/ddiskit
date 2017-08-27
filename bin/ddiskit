@@ -1466,9 +1466,10 @@ def cmd_build_iso(configs):
 
                 if not check_ok:
                     log_warn(("Failed to check GPG signature for \"%s\" " +
-                              "(%s)%s") % (content, check_msg,
-                             ". aborting" if rpm_sign_check > 2 else
-                             ", skipping" if rpm_sign_check > 1 else ""),
+                              "(%s)%s") %
+                             (content, check_msg,
+                              ", aborting" if rpm_sign_check > 2 else
+                              ", skipping" if rpm_sign_check > 1 else ""),
                              configs, level=0)
 
                     if rpm_sign_check > 2:
