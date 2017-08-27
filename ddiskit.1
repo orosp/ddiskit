@@ -931,12 +931,14 @@ Specifically:
 It de-applies quilt patches before building source tarball and applies them
 back after the build.
 .IP \(bu
-It ignores hidden files by default which avoids inclusion of ".pc" directory.
-.IP \(bu
 It ignores \fBseries\fR file in \fBpatches\fR directory when builds
 a list of patches.
+.IP \(bu
+It ignores hidden files by default which avoids inclusion of ".pc" directory.
 .PP
-This behaviour is controlled by the
+This behaviour (except the last part that is controlled by the
+.I defaults.tar_all
+configuration option) is controlled by the
 .I defaults.quilt_support
 configuration option, which is accessible via the
 .BR --quilt-enable " and " --quilt-disable
