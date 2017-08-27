@@ -1678,7 +1678,7 @@ def parse_cli():
     root_parser.add_argument("-P", "--profile-dir",
                              help="Profiles dir (%s by default)" % PROFILE_DIR)
     root_parser.add_argument("-d", "--dump-config", action='store_true',
-                             default=False,
+                             default=None,
                              help="Dump derived configuration after command " +
                                   "execution")
     root_parser.add_argument("-o", "--dump-config-name",
@@ -1720,19 +1720,19 @@ def parse_cli():
     parser_build_rpm.add_argument("-c", "--config", default='module.config',
                                   help="Config file")
     parser_build_rpm.add_argument("-a", "--tar-all", action='store_true',
-                                  default=False,
+                                  default=None,
                                   help="Tar all files, including hidden ones")
     parser_build_rpm.add_argument("-e", "--tar-strict", action='store_true',
-                                  default=False,
+                                  default=None,
                                   help="Tar only expected files")
     parser_build_rpm.add_argument("-s", "--srpm", action='store_true',
-                                  default=False, help="Build src RPM")
+                                  default=None, help="Build src RPM")
     parser_build_rpm.add_argument("-m", "--mock", action="store_true",
-                                  default=False, help="Build using mock")
+                                  default=None, help="Build using mock")
     parser_build_rpm.add_argument("-r", "--mock-config", default='default',
                                   help="Mock config")
     parser_build_rpm.add_argument("-l", "--mock-offline", action="store_true",
-                                  default=False,
+                                  default=None,
                                   help="Run mock in offline mode")
     parser_build_rpm.add_argument("-g", "--check-git-src", default=None,
                                   help="Whether to perform verification of " +
