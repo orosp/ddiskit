@@ -864,17 +864,17 @@ directories) and add to the list of candidate files which satisfy the
 following criteria:
 .RS
 .IP \(bu 3
-File name ends with ".rpm",
+file name ends with ".rpm",
 .IP \(bu
 .BR rpmquery (1)
-successfully retrieved information regarding RPM architecture from the package.
+successfully retrieves information regarding RPM architecture from the package,
 .IP \(bu
 RPM is a binary package or RPM is a source package and the
 .I global.include_srpm
 configuration option is enabled,
 .IP \(bu
 RPM is not a debug information package (RPM has group other than
-"Development/Debug").
+"Development/Debug"),
 .IP \\(bu
 RPM has a valid GPG signature (if case GPG signature check is enabled; see
 .I RPM SIGNATURE VERIFICATION
