@@ -890,6 +890,7 @@ def do_build_rpm(configs, arch):
     Binary RPM building routine.
 
     :param configs: Configuration object.
+    :param arch:    Architecture to build RPM for.
     """
     use_mock = configs.get_bool("mock")
 
