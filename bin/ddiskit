@@ -37,7 +37,7 @@ class ErrCode:
 
     For now, exit code space is divided as follows:
      * 1..15 - generic/logic error
-     * 32..47 - I/O errors
+     * 32..63 - I/O errors
     """
 
     SUCCESS = 0
@@ -49,6 +49,7 @@ class ErrCode:
     QUILT_APPLY_ERROR = 5
     GIT_SRC_CHECK_ERROR = 6
     GPG_SIGNATURE_CHECK_ERROR = 7
+    GIT_CHECKOUT_ERROR = 8
 
     GENERIC_IO_ERROR = 32
     CONFIG_READ_ERROR = 34
@@ -60,6 +61,7 @@ class ErrCode:
     MAKEFILE_NOT_FOUND = 42
     DD_ID_WRITE_ERROR = 45
     CONFIG_DUMP_WRITE_ERROR = 47
+    DIRECTORY_CREATION_ERROR = 49
 
 
 class QuiltCmd:
@@ -1007,6 +1009,59 @@ def cmd_prepare_sources(configs):
     :param configs: Configuration object.
     """
     cfgfile = configs.get("config", default="module.config")
+    result = ErrCode.SUCCESS
+
+    ret = create_dirs(["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS",
+                       "rpm/SOURCES", "rpm/SPECS", "rpm/SRPMS"], configs,
+                      "Creating directory structure for RPM build")
+    ret &= create_dirs(["src", "src/patches", "src/firmware"], configs,
+                       "Creating directory structure for source code")
+
+    if not ret:
+        log_error("Directory structure creation failed", configs)
+        result = ErrCode.DIRECTORY_CREATION_ERROR
+
+    src_dirs = configs.get("git_src_directory")
+    revspec = ""
+    src_copied = False
+
+    if src_dirs:
+        src_dirs = src_dirs.split()
+        repo = configs.get("git_dir")
+        revspec = configs.get("git_revision", default="HEAD")
+
+        ret, revision = command(["git", "--git-dir=%s" % repo,
+                                 "--work-tree=src/", "rev-parse",
+                                 "--revs-only", "--verify", revspec],
+                                configs, cmd_print_lvl=2)
+
+        if ret:
+            log_error(("Failed parsing revision specification \"%s\" for " +
+                       "repository \"%s\", can't copy sources") %
+                      (revspec, repo), configs)
+            result = ErrCode.GIT_SRC_CHECK_ERROR
+        else:
+            revspec = revision.split()[0]
+            ret, out = command(["git", "--git-dir=%s" % repo,
+                                "--work-tree=src/", "checkout",
+                                revspec, "--"] + src_dirs, configs)
+
+            if ret:
+                log_error(("Checkout of directories %r, from repository " +
+                           "\"%s\" at revision \"%s\" failed (exit code " +
+                           "%d): %s") % (src_dirs, repo, revspec, ret, out),
+                          configs)
+                result = ErrCode.GIT_CHECKOUT_ERROR
+            else:
+                log_info("Successfully checked out %r" % src_dirs, configs,
+                         level=0)
+                src_copied = True
+    else:
+        log_info("No source directories to check out, skipping", configs)
+        src_dirs = ["ENTER_MODULE_BUILD_DIR"]
+
+    configs.set("spec_file.module_build_dir", src_dirs[0])
+    configs.set("spec_file.git_hash", revspec)
 
     try:
         log_status("Writing new config file (%s) ... " % cfgfile,
@@ -1018,24 +1073,19 @@ def cmd_prepare_sources(configs):
             config_template = configs.get("config_template")
             with open(get_config_path(config_template, extension="",
                       default_dir=template_dir), 'r') as fin:
-                read_data = fin.read()
+                read_data = apply_config(fin.read(), configs,
+                                         empty_is_nil=False)
                 with open(cfgfile, 'w+') as fout:
                     fout.write(read_data)
             log_status("OK", configs)
     except IOError as err:
         log_error(str(err), configs)
-        return ErrCode.CONFIG_WRITE_ERROR
+        result = ErrCode.CONFIG_WRITE_ERROR
 
-    create_dirs(["rpm", "rpm/BUILD", "rpm/BUILDROOT", "rpm/RPMS",
-                 "rpm/SOURCES", "rpm/SPECS", "rpm/SRPMS"], configs,
-                "Creating directory structure for RPM build")
-    create_dirs(["src", "src/patches", "src/firmware"], configs,
-                "Creating directory structure for source code")
+    if result == ErrCode.SUCCESS and not src_copied:
+        log_status("Put your module source code in src directory.", configs)
 
-    log_status("Put your module source code in src directory.",
-               configs)
-
-    return ErrCode.SUCCESS
+    return result
 
 
 def cmd_generate_spec(configs):
@@ -1731,6 +1781,16 @@ def parse_cli():
                                         help="Config file")
     parser_prepare_sources.add_argument("-t", "--config-template",
                                         help="Config file template")
+    parser_prepare_sources.add_argument("-g", "--git-dir",
+                                        help="Directory containing source " +
+                                             "repository")
+    parser_prepare_sources.add_argument("-r", "--git-revision",
+                                        help="Git commit to source from")
+    parser_prepare_sources.add_argument("-d", "--git-src-directory",
+                                        help="Whitespace-separated list of " +
+                                             "directories in the git " +
+                                             "repository that contains " +
+                                             "module source files")
     parser_prepare_sources.set_defaults(func=cmd_prepare_sources)
 
     # parser for the "generate_spec" command

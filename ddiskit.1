@@ -196,6 +196,34 @@ Configuration option name:
 .I defaults.config_template
 .br
 Default value: none; "config" is a hard-coded default.
+.TP
+\fB-g\fR \fIGIT_DIRECTORY\fR, \fB--git-dir\fR \fIGIT_DIRECTORY\fR
+Path to
+.B .git
+directory containing repository from where source files should be checked out.
+.IP
+Configuration option name:
+.I defaults.git_dir
+.br
+Default value: none
+.TP
+\fB-r\fR \fIREVISION\fR, \fB--git-revision\fR \fIREVISION\fR
+Revision specification at which source files should be checked out from the
+repository.
+.IP
+Configuration option name:
+.I defaults.git_revision
+.br
+Default value: "HEAD"
+.TP
+\fB-d\fR \fIDIRECTORIES\fR, \fB--git-src-directory\fR \fIDIRECTORIES\fR
+Whitespace-separated list of paths which should be checked out from the
+repository.
+.IP
+Configuration option name:
+.I defaults.git_src_directory
+.br
+Default value: none
 .\"
 .SS Options for generate_spec action
 .TP
@@ -703,7 +731,7 @@ resulting spec file.
 .SS prepare_sources
 Prepare initial file and directory structure.
 This action creates directories where various files are expected to be placed
-and copies (into a file set in
+and creates (into a file set in
 .B --config
 option) module configuration from the template file (which path is determined
 by the
@@ -741,8 +769,8 @@ artifacts.
 .IP \(bu
 .B src
 - directory where module sources are expected to be placed.
-There are not explicit constrains on the file layout, but it is expected
-that the main make file is placed in a directory provided in the
+There are not explicit constrains on the kernel module source file layout, but
+it is expected that the main make file is placed in a directory provided in the
 .I spec_file.module_build_dir
 configuration variable.
 .RS
@@ -753,6 +781,35 @@ configuration variable.
 .B firmware
 - firmware files.
 .RE
+.PP
+Additionally, if the
+.I defaults.git_src_directory
+configuration option is set,
+source files placed inside directories listed in this whitespace-separated list
+checked out (inside the
+.B src
+directory) from the repository pointed by the
+.I defaults.git_dir
+configuration option at the revision which specification is set in the
+.I defaults.git_revision
+configuration option (the actual revision to checkout is the output of
+.BR git\ rev-parse (1)
+command invocation with the aforementioned specification supplied to it).
+.PP
+Before configuration template is processed, the following configuration options
+are also set:
+.IP \(bu 3
+.I spec_file.module_build_dir
+- set to the value of first element of whitespace-separated list stored in the
+.I defaults.git_src_directory
+configuration option, or to "ENTER_MODULE_BUILD_DIR", if it is empty.
+.IP \(bu
+.I spec_file.git_hash
+- set to the value returned by
+.BR get\ rev-parse (1)
+call with
+.I defaults.git_revision
+revision specification supplied.
 .\"
 .SS generate_spec
 Generate spec file from the spec template (which path is determined by the
@@ -1202,6 +1259,9 @@ problem occurred during the sources verification.
 .B 7
 problem occurred during RPM GPG signature verification.
 .TP
+.B 8
+problem occurred during git checkout of source files.
+.TP
 .B 32
 generic input/output error.
 .TP
@@ -1240,7 +1300,10 @@ action).
 Driver Update Disk signature write error.
 .TP
 .B 47
-Configuration dump file write error.
+configuration dump file write error.
+.TP
+.B 49
+directory structure creation error.
 .\"
 .\"
 .SH REPORTING BUGS

@@ -31,7 +31,7 @@ rpm_dist = ENTER_DIST_TAG
 ## module build dir (drivers/infiniband/hfi1, for example).
 ## If the repository source code verification is in effect, it should be the
 ## same as the subdirectory in the repository.
-module_build_dir = ENTER_BUILD_DIR
+module_build_dir = %{spec_file.module_build_dir}
 ## target kernel version (3.10.0-123.el7, for example)
 ## RHEL 7.2: 3.10.0-327.el7
 ## RHEL 7.3: 3.10.0-514.el7
@@ -51,7 +51,7 @@ build_dependencies =
 # description = {module_name} module for Driver Update Program
 ## Upstream commit from which the code was taken. Provide for the purposes of
 ## sources verification.
-# git_hash = ENTER_GIT_HASH
+git_hash = %{spec_file.git_hash}
 
 ##
 ## firmware section
