@@ -873,7 +873,7 @@ def do_build_rpm(configs, arch):
 
     :param configs: Configuration object.
     """
-    use_mock = configs.get("mock")
+    use_mock = configs.get_bool("mock")
 
     print("Start RPM build for %s %s... " %
           (arch, "using mock " if use_mock else ""))
@@ -921,7 +921,7 @@ def do_build_srpm(configs):
 
     :param configs: Configuration object.
     """
-    use_mock = configs.get("mock")
+    use_mock = configs.get_bool("mock")
 
     print("Start SRPM build %s... " % ("using mock " if use_mock else "", ))
     spec_path = "rpm/SPECS/%s.spec" % \
@@ -1138,7 +1138,7 @@ def filter_tar_info(configs, nvv):
         ti.gid = 0
         ti.mtime = time.time()
 
-        if not configs.get("tar_all") and \
+        if not configs.get_bool("tar_all") and \
                 any([x.startswith(".") for x in ti.name.split("/")]):
             if configs.get("verbosity") >= 1:
                 print("  Skipping hidden file: %s" % ti.name)
@@ -1151,7 +1151,7 @@ def filter_tar_info(configs, nvv):
                 not filter_tar_info_args.src_patterns.match(fn):
             print("  Unexpected file: %s" % ti.name)
 
-            if configs.get("tar_strict"):
+            if configs.get_bool("tar_strict"):
                 return None
 
         if configs.get("verbosity") >= 2:
@@ -1796,7 +1796,7 @@ def main():
 
     ret = args.func(configs)
 
-    if configs.get("dump_config"):
+    if configs.get_bool("dump_config"):
         dump_ret = cmd_dump_config(configs)
         ret = ret or dump_ret
 
