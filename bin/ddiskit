@@ -432,8 +432,6 @@ def command(cmd, configs, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
              as a second. In case OSError occurred during the execution, value
              of -256 - errno is returned as the return code.
     """
-    verbosity = configs.get("verbosity", default=0)
-
     log_status("Executing command: %r" % cmd, configs, level=cmd_print_lvl)
     try:
         process = Popen(
