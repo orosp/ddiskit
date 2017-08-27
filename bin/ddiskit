@@ -240,7 +240,7 @@ class DDiskitConfig(object):
             :return:  Value to substitute it with: configuration value in case
                       it exists or unchanged value in case it does not.
             """
-            key = map(str.lower, m.group(1).split('.', 1))
+            key = map(lambda s: s.lower(), m.group(1).split('.', 1))
 
             if len(key) == 1:
                 key.insert(0, section)
@@ -269,7 +269,7 @@ class DDiskitConfig(object):
         elif section in self._cfg and key in self._cfg[section]:
             val = self._cfg[section][key]
 
-        if not isinstance(val, str):
+        if not isinstance(val, (str, unicode)):
             return val
 
         while max_subst_depth > 0:
