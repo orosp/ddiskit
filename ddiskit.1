@@ -1,21 +1,31 @@
+.\" Like .OP, but with ellipsis at the end in order to signify that option
+.\" can be provided multiple times. Based on .OP definition in groff's
+.\" an-ext.tmac.
+.de OM
+.  ie \\n(.$-1 \
+.    RI "[\fB\\$1\fP" "\ \\$2" "]...\&"
+.  el \
+.    RB "[" "\\$1" "]...\&"
+..
 .TH DDISKIT "1"
 .mso www.tmac
 .SH NAME
 ddiskit \- Red Hat tool for Driver Update Disk creation
 .SH SYNOPSIS
-.B ddiskit
-[\fB\-h\fR]
-[\fB\-v\fR]*
-[\fB\-p\fR \fIPROFILE\fR]
-[\fB\-R\fR \fIRES_DIR\fR]
-[\fB\-T\fR \fITEMPLATE_DIR\fR]
-[\fB\-P\fR \fIPROFILE_DIR\fR]
-[\fB\-d\fR]
-[\fB\-o\fR \fIDUMP_CONFIG_NAME\fR]
-[\fB\-q\fR | \fB\-Q\fR]
-[\fB\-C\fR \fIKEY\fR=\fIVALUE\fR]*
-\fIACTION\fR
-[\fIACTION_OPTIONS\fR]...
+.SY ddiskit
+.OP -h
+.OP -vvv
+.OP -qQ
+.OP -p PROFILE
+.OP -R RES_DIR
+.OP -T TEMPLATE_DIR
+.OP -P PROFILE_DIR
+.OP -d
+.OP -o DUMP_CONFIG_NAME
+.OM -C KEY\fR=\fIVALUE\fR
+.I ACTION
+.OM \fIACTION_OPTIONS\fR
+.YS
 .SH DESCRIPTION
 .B ddiskit
 aids and simplifies the creation of out-of-tree kernel module RPMs and
