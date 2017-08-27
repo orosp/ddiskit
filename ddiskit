@@ -26,7 +26,6 @@ _ddiskit()
     local config="module.config"
     local config_options="
         config=
-        config_name=
         config_template=
         dump_config=
         dump_config_name=
@@ -48,7 +47,6 @@ _ddiskit()
         template_dir=
         verbosity=
         defaults.config=
-        defaults.config_name=
         defaults.config_template=
         defaults.dump_config=
         defaults.dump_config_name=
