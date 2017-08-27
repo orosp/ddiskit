@@ -114,6 +114,282 @@ config_var_re = re.compile(r"{([^{}]*)}")
 spec_var_re = re.compile(r"%{([^{}]*)}")
 
 
+class DDiskitConfig(object):
+    def __init__(self, cfg={}):
+        # Some sanity checks
+        for k, v in cfg.iteritems():
+            if not isinstance(k, basestring) or not isinstance(v, dict):
+                raise TypeError("cfg must be a dict of dicts with strings " +
+                                "as keys")
+            if "." in k:
+                raise ValueError("dict keys in cfg shouldn't contain dots")
+
+            for k, v in v.iteritems():
+                if not isinstance(k, basestring):
+                    raise TypeError("cfg dicts' keys must be strings")
+                if "." in k:
+                    raise ValueError("dict keys in cfg shouldn't contain dots")
+
+        self._cfg = cfg
+
+    def __str__(self):
+        res = []
+
+        for sk, sv in self._cfg.iteritems():
+            res.append("[%s]" % sk)
+
+            for ik, iv in sv.iteritems():
+                res.append("\t%s = %r" % (ik, iv))
+
+        return "\n".join(res)
+
+    def __repr__(self):
+        def get_class_name(i):
+            """ Returns class name for an object instance. """
+            if hasattr(i, "__class__"):
+                c = i.__class__
+            else:
+                c = type(i)
+
+            if hasattr(c, "__qualname__"):
+                return c.__qualname__
+            else:
+                return c.__name__
+
+        return "%s(cfg=%r)" % (get_class_name(self), self._cfg)
+
+    def has_section(self, section):
+        return section in self._cfg
+
+    def iterkeys(self, section):
+        return self._cfg[section].iterkeys() if section else []
+
+    def get(self, key, section="defaults", default=None, max_subst_depth=8,
+            overrides=None):
+        """
+        Retrieve a value from configuration dict and perform substitution on
+        it.
+
+        So, let's reimplement ConfigParser's interpolation, in a better(tm)
+        way.
+
+        There are three main differences:
+         * Syntax. ConfigParser uses %(name)s and ddiskit historically sticks
+           with {name}.
+         * Support for cross-section references, {section.name}.
+         * It doesn't fail on exceeding of substitution depth
+
+        :param key:             Key to return value for. Can be in dot-less
+                                form (in this case value of "section" parameter
+                                is used) or in the form "section.key".
+        :param section:         Section where key is resides. By default it has
+                                value "defaults", which makes retrieving
+                                arguments/defaults less verbose:
+                                configs.get("arg_name")
+        :param default:         Default value which is used in case section/key
+                                is absent.
+        :param max_subst_depth: Maximum number of substitution rounds
+                                performed. Providing value of 0 in this
+                                argument allows retrieving raw value.
+        :param overrides:       Dict (which is expected to be small) of local
+                                overrides for configuration values. Keys are
+                                can be dotless strings (in this case they are
+                                assumed to belong to the section provided in
+                                section argument) or contain dot (which is
+                                interpreted as "section.key"); with the former
+                                having priority over the latter during the
+                                matching process. Note that keys in this dict
+                                are not normalised (converted to lower case)
+                                and compared against normalised key/section
+                                values.
+        :return:                Value of the requested key (or default), with
+                                substitution performed no more than
+                                max_subst_depth times.
+        """
+        def check_overrides(s, k):
+            """
+            Check whether key is overridden.
+
+            :param s: Configuration option section.
+            :param k: Configuration option key name.
+            :return:  2-value tuple; first element is a boolean value which
+                      signalises whether the key is overridden; second value is
+                      the overriding value.
+            """
+            if overrides is None:
+                return (False, None)
+
+            if s == section and k in overrides:
+                return (True, overrides[k])
+
+            full_key = "%s.%s" % (s, k)
+            if full_key in overrides:
+                return (True, overrides[full_key])
+
+            return (False, None)
+
+        def config_subst(m):
+            """
+            Callback for performing substitution in the configuration value.
+
+            :param m: Match object, containing information about substring
+                      matching variable substitution regex.
+            :return:  Value to substitute it with: configuration value in case
+                      it exists or unchanged value in case it does not.
+            """
+            key = map(str.lower, m.group(1).split('.', 1))
+
+            if len(key) == 1:
+                key.insert(0, section)
+
+            override, val = check_overrides(key[0], key[1])
+
+            if override:
+                return val
+
+            if key[0] in self._cfg and key[1] in self._cfg[key[0]]:
+                return self._cfg[key[0]][key[1]]
+
+            return m.group(0)
+
+        if key.find(".") >= 0:
+            section, key = key.split(".", 1)
+
+        val = default
+        section = section.lower()
+        key = key.lower()
+
+        override, override_val = check_overrides(section, key)
+
+        if override:
+            val = override_val
+        elif section in self._cfg and key in self._cfg[section]:
+            val = self._cfg[section][key]
+
+        if not isinstance(val, str):
+            return val
+
+        while max_subst_depth > 0:
+            max_subst_depth -= 1
+            new_val, cnt = config_var_re.subn(config_subst, val)
+
+            if cnt == 0 or new_val == val:
+                break
+
+            val = new_val
+
+        return val
+
+    def get_bool(self, key, section="defaults", default=None,
+                 max_subst_depth=8, overrides=None):
+        """
+        Simple wrapper for val2bool(self.get()). Parameters are the same as
+        for get() method, return value is the same as for val2bool() method.
+        """
+        return val2bool(self.get(key, section, default, max_subst_depth,
+                                 overrides))
+
+    def set(self, key, val, section="defaults"):
+        """
+        Set value in configuration dict.
+
+        :param key:     Key to change. Can be in dot-less form (in this case
+                        value of "section" parameter is used) or in the
+                        "section.key" form.
+        :param val:     New value.
+        :param section: Section where key is resides. By default it has value
+                        "defaults", which makes updating arguments/defaults
+                        less verbose: configs.set("arg_name", val)
+        :return:        Updated configuration dict.
+        """
+        if key.find(".") >= 0:
+            section, key = key.split(".", 1)
+
+        section = section.lower()
+        key = key.lower()
+
+        if section not in self._cfg:
+            self._cfg[section] = {}
+
+        self._cfg[section][key] = val
+
+        return self
+
+    def humble_set(self, key, val, section="spec_file"):
+        """
+        Set value in case it is not set already. Used primarily for "spec_file"
+        section.
+
+        Implemented as a wrapper around get()/set(), which makes
+        it somewhat less efficient, but not too much.
+
+        :param key:     Key to change. Can be in dot-less form (in this case
+                        value of "section" parameter is used) or in the
+                        "section.key" form.
+        :param val:     New value.
+        :param section: Section where key is resides. By default it has value
+                        "spec_file", which makes providing fallback values for
+                        spec file less verbose:
+                        configs.humble_set("arg_name", val)
+        :return:        Updated configuration dict.
+        """
+        if self.get(key, section, max_subst_depth=0) is None:
+            self.set(key, val, section)
+
+        return self
+
+    def apply_args(self, args):
+        """
+        Puts command-line args as a values of "defaults" section of
+        configuration dict, so it could be used for providing defaults when
+        specific argument is not provided.
+
+        :param args:    Namespace instance containing command line arguments,
+                        as returned by argparse.ArgumentParser.parse_args()
+        :return:        Updated config instance.
+        """
+        discarded_args = []
+
+        if "defaults" not in self._cfg:
+            self._cfg["defaults"] = {}
+        self._cfg["defaults"].update([(k, v) for k, v
+                                      in args.__dict__.iteritems()
+                                      if v is not None])
+
+        if args.config_option:
+            for arg in args.config_option:
+                kv = arg.split("=", 1)
+                if len(kv) != 2:
+                    discarded_args.append(arg)
+                    continue
+                self.set(kv[0].strip(), kv[1])
+
+        return (self, discarded_args)
+
+    def dump_config(self, cfgparser=None):
+        """
+        Dump contents of config object into configparser.RawConfigParser
+        object.
+
+        :param cfgparser: Existing configparser.RawConfigParser object in case
+                          the creation of new one is not needed.
+        :returns:         configparser.RawConfigParser object filled with
+                          configuration values.
+        """
+        if cfgparser is None:
+            cfgparser = configparser.RawConfigParser()
+
+        for s_name, section in self._cfg.iteritems():
+            cfgparser.add_section(s_name)
+
+            for i_name, item in section.iteritems():
+                if s_name == "defaults" and i_name == "func":
+                    continue
+                cfgparser.set(s_name, i_name, item)
+
+        return cfgparser
+
+
 def val2bool(val):
     """
     Convert (string) value to some boolean one or None in case it doesn't look
@@ -156,7 +432,7 @@ def command(cmd, configs, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
              as a second. In case OSError occurred during the execution, value
              of -256 - errno is returned as the return code.
     """
-    verbosity = config_get(configs, "verbosity", default=0)
+    verbosity = configs.get("verbosity", default=0)
 
     if (verbosity >= cmd_print_lvl):
         print("Executing command: %r" % cmd)
@@ -191,10 +467,10 @@ def log_status(msg, configs, level=0):
     Log execution progress information.
 
     :param msg:     Message to log.
-    :param configs: Dict of dicts containing current configuration.
+    :param configs: Configuration object.
     :param level:   Message verbosity level.
     """
-    if config_get(configs, "verbosity", default=0) >= level:
+    if configs.get("verbosity", default=0) >= level:
         print(msg)
 
 
@@ -203,10 +479,10 @@ def log_info(msg, configs, level=2):
     Log informational message.
 
     :param msg:     Message to log.
-    :param configs: Dict of dicts containing current configuration.
+    :param configs: Configuration object.
     :param level:   Message verbosity level.
     """
-    if config_get(configs, "verbosity", default=0) >= level:
+    if configs.get("verbosity", default=0) >= level:
         print("INFO:", msg)
 
 
@@ -215,10 +491,10 @@ def log_warn(msg, configs, level=1):
     Log warning message.
 
     :param msg:     Message to log.
-    :param configs: Dict of dicts containing current configuration.
+    :param configs: Configuration object.
     :param level:   Message verbosity level.
     """
-    if config_get(configs, "verbosity", default=0) >= level:
+    if configs.get("verbosity", default=0) >= level:
         print("WARNING:", msg)
 
 
@@ -227,189 +503,11 @@ def log_error(msg, configs, level=0):
     Log error message.
 
     :param msg:     Message to log.
-    :param configs: Dict of dicts containing current configuration.
+    :param configs: Configuration object.
     :param level:   Message verbosity level.
     """
-    if config_get(configs, "verbosity", default=0) >= level:
+    if configs.get("verbosity", default=0) >= level:
         print("ERROR:", msg)
-
-
-def config_get(configs, key, section="defaults", default=None,
-               max_subst_depth=8, overrides=None):
-    """
-    Retrieve a value from configuration dict and perform substitution on it.
-
-    So, let's reimplement ConfigParser's interpolation, in a better(tm) way.
-
-    There are three main differences:
-     * Syntax. ConfigParser uses %(name)s and ddiskit historically sticks with
-       {name}.
-     * Support for cross-section references, {section.name}.
-     * It doesn't fail on exceeding of substitution depth
-
-    :param configs:         Dict of dicts containing current configuration.
-    :param key:             Key to return value for. Can be in dot-less form
-                            (in this case value of "section" parameter is used)
-                            or in the form "section.key".
-    :param section:         Section where key is resides. By default it has
-                            value "defaults", which makes retrieving
-                            arguments/defaults less verbose:
-                            config_get(configs, "arg_name")
-    :param default:         Default value which is used in case section/key is
-                            absent.
-    :param max_subst_depth: Maximum number of substitution rounds performed.
-                            Providing value of 0 in this argument allows
-                            retrieving raw value.
-    :param overrides:       Dict (which is expected to be small) of local
-                            overrides for configuration values. Keys are can be
-                            dotless strings (in this case they are assumed to
-                            belong to the section provided in section argument)
-                            or contain dot (which is interpreted as
-                            "section.key"); with the former having priority
-                            over the latter during the matching process. Note
-                            that keys in this dict are not normalised
-                            (converted to lower case) and compared against
-                            normalised key/section values.
-    :return:                Value of the requested key (or default), with
-                            substitution performed no more than max_subst_depth
-                            times.
-    """
-    def check_overrides(s, k):
-        """
-        Check whether key is overridden.
-
-        :param s: Configuration option section.
-        :param k: Configuration option key name.
-        :return:  2-value tuple; first element is a boolean value which
-                  signalises whether the key is overridden; second value is the
-                  overriding value.
-        """
-        if overrides is None:
-            return (False, None)
-
-        if s == section and k in overrides:
-            return (True, overrides[k])
-
-        full_key = "%s.%s" % (s, k)
-        if full_key in overrides:
-            return (True, overrides[full_key])
-
-        return (False, None)
-
-    def config_subst(m):
-        """
-        Callback for performing substitution in the configuration value.
-
-        :param m: Match object, containing information about substring matching
-                  variable substitution regex.
-        :return:  Value to substitute it with: configuration value in case it
-                  exists or unchanged value in case it does not.
-        """
-        key = map(str.lower, m.group(1).split('.', 1))
-
-        if len(key) == 1:
-            key.insert(0, section)
-
-        override, val = check_overrides(key[0], key[1])
-
-        if override:
-            return val
-
-        if key[0] in configs and key[1] in configs[key[0]]:
-            return str(configs[key[0]][key[1]])
-
-        return m.group(0)
-
-    if key.find(".") >= 0:
-        section, key = key.split(".", 1)
-
-    val = default
-    section = section.lower()
-    key = key.lower()
-
-    override, override_val = check_overrides(section, key)
-
-    if override:
-        val = override_val
-    elif section in configs and key in configs[section]:
-        val = configs[section][key]
-
-    if not isinstance(val, str):
-        return val
-
-    while max_subst_depth > 0:
-        max_subst_depth -= 1
-        new_val, cnt = config_var_re.subn(config_subst, val)
-
-        if cnt == 0 or new_val == val:
-            break
-
-        val = new_val
-
-    return val
-
-
-def config_get_bool(configs, key, section="defaults", default=None,
-                    max_subst_depth=8, overrides=None):
-    """
-    Simple wrapper for val2bool(config_get()). Parameters are the same as for
-    config_get() method, return value is the same as for val2bool() mathod.
-    """
-    return val2bool(config_get(configs, key, section, default, max_subst_depth,
-                               overrides))
-
-
-def config_set(configs, key, val, section="defaults"):
-    """
-    Set value in configuration dict.
-
-    :param configs: Dict of dicts containing current configuration.
-    :param key:     Key to change. Can be in dot-less form (in this case value
-                    of "section" parameter is used) or in the "section.key"
-                    form.
-    :param val:     New value.
-    :param section: Section where key is resides. By default it has value
-                    "defaults", which makes updating arguments/defaults less
-                    verbose: config_set(configs, "arg_name", val)
-    :return:        Updated configuration dict.
-    """
-    if key.find(".") >= 0:
-        section, key = key.split(".", 1)
-
-    section = section.lower()
-    key = key.lower()
-
-    if section not in configs:
-        configs[section] = {}
-
-    configs[section][key] = val
-
-    return configs
-
-
-def config_humble_set(configs, key, val, section="spec_file"):
-    """
-    Set value in case it is not set already. Used primarily for "spec_file"
-    section.
-
-    Implemented as a wrapper around config_get()/config_set(), which makes it
-    somewhat less efficient, but not too much.
-
-    :param configs: Dict of dicts containing current configuration.
-    :param key:     Key to change. Can be in dot-less form (in this case value
-                    of "section" parameter is used) or in the "section.key"
-                    form.
-    :param val:     New value.
-    :param section: Section where key is resides. By default it has value
-                    "spec_file", which makes providing fallback values for spec
-                    file less verbose:
-                    config_humble_set(configs, "arg_name", val)
-    :return:        Updated configuration dict.
-    """
-    if config_get(configs, key, section, max_subst_depth=0) is None:
-        config_set(configs, key, val, section)
-
-    return configs
 
 
 def process_configs_for_spec(configs):
@@ -432,22 +530,21 @@ def process_configs_for_spec(configs):
     pre-created configuration dump file (changes in spec template not
     withstanding).
 
-    :param configs: Configuration dict to process.
+    :param configs: Configuration object.
     :return:        Updated configuration dict.
     """
     # no firmware? -> remove all firmware definitions from spec file
-    have_fw = config_get_bool(configs, "firmware_include", "spec_file", False)
-    config_set(configs, "spec_file.firmware_begin", "%%if %d" % int(have_fw))
-    config_set(configs, "spec_file.firmware_end", "%endif")
+    have_fw = configs.get_bool("firmware_include", "spec_file", False)
+    configs.set("spec_file.firmware_begin", "%%if %d" % int(have_fw))
+    configs.set("spec_file.firmware_end", "%endif")
 
     # generic keys code
     # date of creation
-    config_humble_set(configs, "date",
-                      datetime.__format__(datetime.now(), "%a %b %d %Y"))
+    configs.humble_set("date",
+                       datetime.__format__(datetime.now(), "%a %b %d %Y"))
 
     # kernel_requires
-    kernel_ver_string = config_get(configs, "spec_file.kernel_version",
-                                   default="")
+    kernel_ver_string = configs.get("spec_file.kernel_version", default="")
     if re.match(kernel_y_re, kernel_ver_string):
         kernel_version = re.split(r'[\.-]', kernel_ver_string)
         kernel_version_str = "%s.%s.%s-" % (kernel_version[0],
@@ -460,17 +557,16 @@ def process_configs_for_spec(configs):
     elif re.match(kernel_z_re, kernel_ver_string):
         kernel_requires = "Requires:	kernel = " + kernel_ver_string
 
-    config_humble_set(configs, "kernel_requires", kernel_requires)
+    configs.humble_set("kernel_requires", kernel_requires)
 
     # module_requires - deprecated
-    module_dep_string = config_get(configs, "spec_file.dependencies",
-                                   default="")
+    module_dep_string = configs.get("spec_file.dependencies", default="")
     if module_dep_string != "":
         module_requires = "Requires:	" + module_dep_string
     else:
         module_requires = ""
 
-    config_humble_set(configs, "module_requires", module_requires)
+    configs.humble_set("module_requires", module_requires)
 
     return configs
 
@@ -485,38 +581,37 @@ def apply_config(data, configs, empty_is_nil=True):
     value.
 
     :param data:         Input content with tags to replace.
-    :param configs:      Configuration dictionary.
+    :param configs:      Configuration object.
     :param empty_is_nil: Whether to replace tags with corresponding
                          configuration values evaluated to empty string with
                          %{nil}.
     :return:             Replaced content.
     """
-    return spec_var_re.sub(lambda m: config_get(configs, m.group(1),
-                                                "spec_file", m.group(0)) or
+    return spec_var_re.sub(lambda m: configs.get(m.group(1), "spec_file",
+                                                 m.group(0)) or
                            ("%{nil}" if empty_is_nil else ""), data)
 
 
 def check_config(configs):
     """
     Check config and repair non-critical mistakes.
-    :param configs: config to check
+    :param configs: Configuration object to check.
     :return: Fixed config or None
     """
     config_critic = False
     print("Checking config ... ")
     for section in ["global", "spec_file"]:
-        if section not in configs:
+        if not configs.has_section(section):
             log_error("required section \"%s\" hasn't been found!", configs)
             config_critic = True
             continue
 
-        for key in configs[section]:
-            val = config_get(configs, key, section)
+        for key in configs.iterkeys(section):
+            val = configs.get(key, section)
 
             if val == "ENTER_" + key.upper():
                 if section == "spec_file" and key == "firmware_version" and \
-                        not config_get_bool(configs,
-                                            "spec_file.firmware_include"):
+                        not configs.get_bool("spec_file.firmware_include"):
                     continue
                 else:
                     print("FAIL: key: %s.%s value: %s is a default value" %
@@ -541,12 +636,12 @@ def check_config(configs):
             elif section == "spec_file" and key == "module_build_dir":
                 if val[0] == "/":
                     val = val[1:]
-                    config_set(configs, key, val, section)
+                    configs.set(key, val, section)
                     print("WARNING: Leading \"/\" in module_build_dir, " +
                           "fixing ... OK")
                 if val[-1] == "/":
                     val = val[:-1]
-                    config_set(configs, key, val, section)
+                    configs.set(key, val, section)
                     print("WARNING: Trailing \"/\" in module_build_dir, " +
                           "fixing ... OK")
 
@@ -615,14 +710,14 @@ def do_quilt(action, configs, restore_patch=None):
      * QuiltCmd.APPLY - restore patches provided in restore_patch argument,
                         or, in case it is None, retrieve previously stored
                         patches the from the function object.
-    :param configs:       Dict of dicts containing current configuration.
+    :param configs:       Configuration object.
     :param restore_patch: List of patches to restore (used by QuiltCmd.APPLY
                           action).
     :return:              0 in case of success, non-zero return code in case of
                           errors.
     """
-    series_dir = config_get(configs, "quilt_series_dir", default="src")
-    quilt_enabled = config_get_bool(configs, "quilt_support")
+    series_dir = configs.get("quilt_series_dir", default="src")
+    quilt_enabled = configs.get_bool("quilt_support")
 
     if not quilt_enabled:
         log_warn(("Quilt support is not enabled (got \"%s\" instead), " +
@@ -682,7 +777,7 @@ def do_git_src_check(configs):
         spec_file.module_build_dir - directory inside repo/src which should be
                                      checked
 
-    :param configs: Dict of dicts containing current configuration.
+    :param configs: Configuration object.
     :return:        Tuple of two value, the first one signalises check level,
                     the second is the check result, that is decoded as follows:
                     0 in case of successful check, positive value in case there
@@ -698,16 +793,16 @@ def do_git_src_check(configs):
                                        value by 1536 in order to get command
                                        exit code / OS error code)
     """
-    check_enabled = int(config_get(configs, "check_git_src", default=0))
+    check_enabled = int(configs.get("check_git_src", default=0))
 
     if check_enabled < 1:
         log_info("Source verification against Git repository " +
                  "(defaults.check_git_src) is not enabled,skipping.", configs)
         return (0, 0)
 
-    git_repo = config_get(configs, "defaults.git_dir")
-    git_hash = config_get(configs, "spec_file.git_hash")
-    subdir = config_get(configs, "spec_file.module_build_dir")
+    git_repo = configs.get("defaults.git_dir")
+    git_hash = configs.get("spec_file.git_hash")
+    subdir = configs.get("spec_file.module_build_dir")
 
     if git_repo is None:
         log_warn("Path to git repository (defaults.git_dir) is not provided," +
@@ -732,7 +827,7 @@ def do_git_src_check(configs):
                  "can't verify authentity of sources") % ret, configs)
         return (check_enabled, ret[0] - 512)
 
-    diff_fmt = "--stat" if config_get(configs, "verbosity") < 2 else "--patch"
+    diff_fmt = "--stat" if configs.get("verbosity") < 2 else "--patch"
     ret = command(["git", "--git-dir=%s" % git_repo, "--work-tree=src/",
                    "diff", diff_fmt, "--exit-code", git_hash, "--", subdir],
                   configs, capture_output=False)[0]
@@ -751,14 +846,14 @@ def get_mock_args(configs):
                                  more.
      * "mock_offline" (default False) - adds "--offline" in case it is True
 
-    :param configs: Dict of dicts containing current configuration.
+    :param configs: Configuration object.
     :return:        Tuple containing array of command line arguments as first
                     value and retrieved configuration values in second.
     """
     res = []
-    mock_cfg = config_get(configs, "mock_config", default="default.cfg")
-    mock_offline = config_get_bool(configs, "mock_offline")
-    verbosity = config_get(configs, "verbosity", default=0)
+    mock_cfg = configs.get("mock_config", default="default.cfg")
+    mock_offline = configs.get_bool("mock_offline")
+    verbosity = configs.get("verbosity", default=0)
 
     res += ["-r", mock_cfg]
 
@@ -776,14 +871,14 @@ def do_build_rpm(configs, arch):
     """
     Binary RPM building routine.
 
-    :param configs: Dict of dicts of configuration values.
+    :param configs: Configuration object.
     """
-    use_mock = config_get(configs, "mock")
+    use_mock = configs.get("mock")
 
     print("Start RPM build for %s %s... " %
           (arch, "using mock " if use_mock else ""))
     spec_path = "rpm/SPECS/%s.spec" % \
-        config_get(configs, "spec_file.module_name")
+        configs.get("spec_file.module_name")
     if use_mock:
         mock_args = get_mock_args(configs)
 
@@ -804,8 +899,8 @@ def do_build_rpm(configs, arch):
             dist = dist[:-1]
 
         srpm_name = "%s%s.src.rpm" % \
-            (config_get(configs, "", "spec_file",
-                        "{rpm_name}-{module_version}-{module_rpm_release}"),
+            (configs.get("", "spec_file",
+                         "{rpm_name}-{module_version}-{module_rpm_release}"),
              dist)
 
         cmd = ["mock", "--no-cleanup-after", "--rebuild"]
@@ -824,13 +919,13 @@ def do_build_srpm(configs):
     """
     Source RPM building routine.
 
-    :param configs: Dict of dicts of configuration values.
+    :param configs: Configuration object.
     """
-    use_mock = config_get(configs, "mock")
+    use_mock = configs.get("mock")
 
     print("Start SRPM build %s... " % ("using mock " if use_mock else "", ))
     spec_path = "rpm/SPECS/%s.spec" % \
-        config_get(configs, "spec_file.module_name")
+        configs.get("spec_file.module_name")
     if use_mock:
         cmd = ["mock", "--buildsrpm"]
         cmd += get_mock_args(configs)[0]
@@ -846,10 +941,10 @@ def do_build_srpm(configs):
 def do_check_rpm_build(configs):
     """
     Check whether RPM can be built on the host.
-    :param configs: Dict of dicts of configuration values.
+    :param configs: Configuration object.
     """
     spec_path = "rpm/SPECS/%s.spec" % \
-        config_get(configs, "spec_file.module_name")
+        configs.get("spec_file.module_name")
     cmd = ["rpmbuild", "--define", "_topdir " + os.getcwd() + "/rpm",
            "--nobuild", "-bc", spec_path]
 
@@ -861,7 +956,8 @@ def create_dirs(dir_list, caption=None):
     Try to create supplied list of directories, return information whether it
     was successful or there were errors.
 
-    :param dir_list: List of directories to create
+    :param dir_list: List of directories to create.
+    :param configs:  Configuration object.
     :param caption:  Caption to print during the directory creation process.
                      If None, nothing is printed.
     :return:         True if there were no errors, otherwise False.
@@ -888,17 +984,17 @@ def create_dirs(dir_list, caption=None):
 def cmd_prepare_sources(configs):
     """
     CMD prepare_sources callback
-    :param configs: Dict of dicts of configuration values.
+    :param configs: Configuration object.
     """
-    cfgfile = config_get(configs, "config", default="module.config")
+    cfgfile = configs.get("config", default="module.config")
 
     try:
         print("Writing new config file (" + cfgfile + ")... ", end="")
         if os.path.isfile(cfgfile):
             print("File exists")
         else:
-            template_dir = config_get(configs, "template_dir")
-            config_template = config_get(configs, "config_template")
+            template_dir = configs.get("template_dir")
+            config_template = configs.get("config_template")
             with open(get_config_path(config_template, extension="",
                       default_dir=template_dir), 'r') as fin:
                 read_data = fin.read()
@@ -923,23 +1019,23 @@ def cmd_prepare_sources(configs):
 def cmd_generate_spec(configs):
     """
     CMD generate_spec callback
-    :param configs: Dict of dicts of configuration values.
+    :param configs: Configuration object.
     """
-    cfgfile = config_get(configs, "config", default="module.config")
+    cfgfile = configs.get("config", default="module.config")
 
-    if configs is None or len(configs) == 0 or not os.path.isfile(cfgfile):
+    if configs is None or not os.path.isfile(cfgfile):
         print(("Configuration file \"%(f)s\" was not found, use " +
                "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
               {"f": cfgfile})
         return ErrCode.CONFIG_READ_ERROR
 
     spec_path = "rpm/SPECS/%s.spec" % \
-        config_get(configs, "spec_file.module_name")
+        configs.get("spec_file.module_name")
     if os.path.isfile(spec_path):
         print("RPM spec file \"%s\" exists!" % spec_path)
     try:
-        template_dir = config_get(configs, "template_dir")
-        spec_template = config_get(configs, "spec_template")
+        template_dir = configs.get("template_dir")
+        spec_template = configs.get("spec_template")
         with open(get_config_path(spec_template, extension="",
                   default_dir=template_dir), 'r') as fin:
             read_data = fin.read()
@@ -960,8 +1056,8 @@ def cmd_generate_spec(configs):
         patches = "# Source code patches"
         for files in sorted(os.listdir(".")):
             # Hack for series file inside patches directory
-            if files == "series" and config_get_bool(configs, "quilt_support"):
-                if config_get(configs, "verbosity") >= 2:
+            if files == "series" and configs.get_bool("quilt_support"):
+                if configs.get("verbosity") >= 2:
                     print("  Skipping %s" % files)
                 continue
 
@@ -972,14 +1068,14 @@ def cmd_generate_spec(configs):
     else:
         print("Patch directory is empty or nonexistent, skipping")
 
-    config_set(configs, "spec_file.source_patches", patches)
-    config_set(configs, "spec_file.source_patches_do", patches_do)
+    configs.set("spec_file.source_patches", patches)
+    configs.set("spec_file.source_patches_do", patches_do)
 
     os.chdir(cwd)
 
     if os.path.isdir(src_root + "firmware") and \
             os.listdir(src_root + "firmware"):
-        if not config_get_bool(configs, "spec_file.firmware_include"):
+        if not configs.get_bool("spec_file.firmware_include"):
             print("\n  WARNING: Firmware directory contains files, but " +
                   "firmware package is disabled in config!\n")
         else:
@@ -996,15 +1092,15 @@ def cmd_generate_spec(configs):
                         ("install -m 644 -D source/firmware/%(f)s " +
                          "$RPM_BUILD_ROOT/lib/firmware/%(f)s\n") % {"f": fpath}
 
-            config_set(configs, "spec_file.firmware_files", fw_files)
-            config_set(configs, "spec_file.firmware_files_install", fw_install)
+            configs.set("spec_file.firmware_files", fw_files)
+            configs.set("spec_file.firmware_files_install", fw_install)
     else:
         print("Firmware directory is empty or nonexistent, skipping")
 
     source_fail = False
-    for arch in config_get(configs, "spec_file.kernel_arch").split():
+    for arch in configs.get("spec_file.kernel_arch").split():
         kernel_dir = "/usr/src/kernels/%s.%s" % \
-            (config_get(configs, "spec_file.kernel_version"), arch)
+            (configs.get("spec_file.kernel_version"), arch)
         if not os.path.isdir(kernel_dir):
             print("WARNING: kernel source code was not found: \"%s\"" %
                   kernel_dir)
@@ -1015,7 +1111,7 @@ def cmd_generate_spec(configs):
               "on this system")
         print(("         You can try to install kernel-devel-%s package in " +
                "order to fix this") %
-              config_get(configs, "spec_file.kernel_version"))
+              configs.get("spec_file.kernel_version"))
 
     process_configs_for_spec(configs)
 
@@ -1042,9 +1138,9 @@ def filter_tar_info(configs, nvv):
         ti.gid = 0
         ti.mtime = time.time()
 
-        if not config_get(configs, "tar_all") and \
+        if not configs.get("tar_all") and \
                 any([x.startswith(".") for x in ti.name.split("/")]):
-            if config_get(configs, "verbosity") >= 1:
+            if configs.get("verbosity") >= 1:
                 print("  Skipping hidden file: %s" % ti.name)
 
             return None
@@ -1055,10 +1151,10 @@ def filter_tar_info(configs, nvv):
                 not filter_tar_info_args.src_patterns.match(fn):
             print("  Unexpected file: %s" % ti.name)
 
-            if config_get(configs, "tar_strict"):
+            if configs.get("tar_strict"):
                 return None
 
-        if config_get(configs, "verbosity") >= 2:
+        if configs.get("verbosity") >= 2:
             print("  Adding: %s" % ti.name)
 
         ti.name = os.path.join(nvv, ti.name)
@@ -1066,7 +1162,7 @@ def filter_tar_info(configs, nvv):
         return ti
 
     filter_tar_info_args.src_patterns = \
-        re.compile(config_get(configs, "src_patterns", default=SRC_PATTERNS))
+        re.compile(configs.get("src_patterns", default=SRC_PATTERNS))
 
     return functools.partial(filter_tar_info_args, configs=configs, nvv=nvv)
 
@@ -1074,12 +1170,12 @@ def filter_tar_info(configs, nvv):
 def cmd_build_rpm(configs):
     """
     CMD build_rpm callback
-    :param configs: Dict of dicts of configuration values.
+    :param configs: Configuration object.
     """
     warning = False
-    cfgfile = config_get(configs, "config", default="module.config")
+    cfgfile = configs.get("config", default="module.config")
 
-    if configs is None or len(configs) == 0 or not os.path.isfile(cfgfile):
+    if configs is None or not os.path.isfile(cfgfile):
         print(("Configuration file \"%(f)s\" was not found, use " +
                "'ddiskit prepare_sources -c \"%(f)s\"' to create it") %
               {"f": cfgfile})
@@ -1118,9 +1214,9 @@ def cmd_build_rpm(configs):
                  configs, level=0)
 
     nvv = "%s-%s-%s" % \
-        (config_get(configs, "spec_file.module_name"),
-         config_get(configs, "global.module_vendor"),
-         config_get(configs, "spec_file.module_version"))
+        (configs.get("spec_file.module_name"),
+         configs.get("global.module_vendor"),
+         configs.get("spec_file.module_version"))
     archive = "rpm/SOURCES/" + nvv + ".tar.bz2"
     print("Writing archive " + archive + " ...")
 
@@ -1135,8 +1231,7 @@ def cmd_build_rpm(configs):
                 continue
             if "firmware" == files:
                 if os.path.isdir("firmware") and os.listdir("firmware"):
-                    if not config_get_bool(configs,
-                                           "spec_file.firmware_include"):
+                    if not configs.get_bool("spec_file.firmware_include"):
                         warning = True
                         print("  WARNING: Firmware directory contains " +
                               "files, but firmware package is disabled in " +
@@ -1170,9 +1265,9 @@ def cmd_build_rpm(configs):
     os.chdir(cwd)
 
     build_arch = os.uname()[4]
-    if not config_get_bool(configs, "srpm") and \
-            build_arch in config_get(configs, "spec_file.kernel_arch").split():
-        if not config_get_bool(configs, "mock") and \
+    if not configs.get_bool("srpm") and \
+            build_arch in configs.get("spec_file.kernel_arch").split():
+        if not configs.get_bool("mock") and \
                 not do_check_rpm_build(configs):
             log_warn("Binary RPM build check failed, building SRPM only",
                      configs)
@@ -1180,7 +1275,7 @@ def cmd_build_rpm(configs):
         else:
             ret = do_build_rpm(configs, build_arch)
     else:
-        if not config_get_bool(configs, "srpm"):
+        if not configs.get_bool("srpm"):
             print("Because you are not on the target architecture, " +
                   "building SRPM only")
         ret = do_build_srpm(configs)
@@ -1194,8 +1289,7 @@ def cmd_build_rpm(configs):
 
 def rpm_verbosity_opts(configs):
     if not hasattr(rpm_verbosity_opts, "verbosity"):
-        rpm_verbosity_opts.verbosity = int(config_get(configs, "verbosity",
-                                                      default=0))
+        rpm_verbosity_opts.verbosity = int(configs.get("verbosity", default=0))
 
     if rpm_verbosity_opts.verbosity <= 1:
         return []
@@ -1250,15 +1344,15 @@ def rpm_check_gpg(pkg, configs):
     present in one of the *.key files in rpm_gpg_check.keyring_dir.
 
     :param pkg:     RPM package file name.
-    :param configs: Dict of dicts of configuration values.
+    :param configs: Configuration object.
     :return:        Tuple, first item is boolean value that signifies whether
                     GPG signature check has been passed and the second item is
                     string containing error/informational message.
     """
-    use_keyring_dir = config_get_bool(configs, 'rpm_gpg_check.use_keyring')
+    use_keyring_dir = configs.get_bool('rpm_gpg_check.use_keyring')
 
     if use_keyring_dir:
-        keyring = config_get(configs, 'rpm_gpg_check.keyring_dir')
+        keyring = configs.get('rpm_gpg_check.keyring_dir')
 
         if not keyring:
             return (False, "Check against keyring directory " +
@@ -1297,7 +1391,7 @@ def rpm_check_gpg(pkg, configs):
 def cmd_build_iso(configs):
     """
     CMD build_iso callback
-    :param configs: Dict of dicts of configuration values.
+    :param configs: Configuration object.
     """
     def iterate_args(args):
         for content in args:
@@ -1311,13 +1405,12 @@ def cmd_build_iso(configs):
                 raise IOError(errno.ENOENT, os.strerror(errno.ENOENT),
                               content)
 
-    rpm_sign_check = int(config_get(configs, "rpm_gpg_check.check_level",
-                                    default=0))
+    rpm_sign_check = int(configs.get("rpm_gpg_check.check_level", default=0))
     error = 0
 
     src_rpms = []
     bin_rpms = {}  # Binary RPMs are stored per-arch
-    for content in iterate_args(config_get(configs, "filelist")):
+    for content in iterate_args(configs.get("filelist")):
         try:
             if not content.endswith(".rpm"):
                 log_warn(("File name \"%s\" does not end with .rpm " +
@@ -1336,7 +1429,7 @@ def cmd_build_iso(configs):
                          "\"%s\", skipping" % content, configs)
                 continue
 
-            if not config_get_bool(configs, "global.include_srpm") and is_src:
+            if not configs.get_bool("global.include_srpm") and is_src:
                 log_warn("Source RPMs are disabled in configuration, " +
                          "skipping \"%s\"" % content, configs)
                 continue
@@ -1410,19 +1503,19 @@ def cmd_build_iso(configs):
         print(str(err))
         return ErrCode.DD_ID_WRITE_ERROR
 
-    isofile = config_get(configs, "isofile")
+    isofile = configs.get("isofile")
     if isofile is None:
         # Try to use info from config for constructing file name
         try:
             isofile = "dd-" + \
-                config_get(configs, "spec_file.module_name") + "-" + \
-                config_get(configs, "spec_file.module_version") + "-" + \
-                config_get(configs, "spec_file.module_rpm_release") + "." + \
-                config_get(configs, "spec_file.rpm_dist") + ".iso"
+                configs.get("spec_file.module_name") + "-" + \
+                configs.get("spec_file.module_version") + "-" + \
+                configs.get("spec_file.module_rpm_release") + "." + \
+                configs.get("spec_file.rpm_dist") + ".iso"
         except TypeError:
             isofile = "dd.iso"
 
-    config_set(configs, "isofile", isofile)
+    configs.set("isofile", isofile)
 
     ret, _ = command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8',
                       '-R', '-uid', '0', '-gid', '0', '-dir-mode', '0555',
@@ -1431,7 +1524,7 @@ def cmd_build_iso(configs):
                      configs, res_print_lvl=0, capture_output=False)
     os.umask(saved_umask)
 
-    iso_mode = config_get(configs, "isofile_mode")
+    iso_mode = configs.get("isofile_mode")
     if not ret and iso_mode is not None:
         try:
             iso_mode_numeric = int(iso_mode, 0)
@@ -1454,52 +1547,15 @@ def cmd_build_iso(configs):
     return ret
 
 
-def apply_args(args, configs):
-    """
-    Puts command-line args as a values of "defaults" section of configuration
-    file, so it could be used for providing defaults when specific argument
-    is not provided.
-
-    :param args:    Namespace instance containing command line arguments, as
-                    returned by argparse.ArgumentParser.parse_args()
-    :param configs: Dict of dicts of configuration values.
-    :return:        Updated configs argument
-    """
-
-    if hasattr(apply_args, "first_run"):
-        apply_args.first_run = 0
-    else:
-        apply_args.first_run = 1
-
-    if "defaults" not in configs:
-        configs["defaults"] = {}
-    configs["defaults"].update([(k, v) for k, v in args.__dict__.iteritems()
-                                if v is not None])
-
-    if args.config_option:
-        for arg in args.config_option:
-            kv = arg.split("=", 1)
-            if len(kv) != 2:
-                if apply_args.first_run:
-                    log_warn("Configuration option override arguments " +
-                             "should be provided in the <key>=<value> " +
-                             "format, skipping \"%s\"" % arg, configs, level=0)
-                continue
-            config_set(configs, kv[0].strip(), kv[1])
-
-    return configs
-
-
-def apply_config_file(filename, configs={}):
+def apply_config_file(filename, configs):
     """
     Read configuration file and apply it to a configuration dict.
 
-    Ignores sections and keys containing dot as it breaks config_get/config_set
+    Ignores sections and keys containing dot as it breaks configs get/set
     (and we do not use such section/key names anyway).
 
     :param filename: Path to configuration file.
-    :param configs:  Configuration dict to merge configuration file contents
-                     into.
+    :param configs:  Configuration object.
     :return:         Tuple containing updated configs value (useful in case no
                      starting configuration has been provided) and reading
                      result (None in case of configparser errors and result of
@@ -1521,7 +1577,7 @@ def apply_config_file(filename, configs={}):
                           "file \"%s\") contains dot in its name, ignored." %
                           (key, section, filename))
                     continue
-                config_set(configs, key, val, section)
+                configs.set(key, val, section)
     except configparser.Error as err:
         print(str(err))
         return (configs, None)
@@ -1529,7 +1585,7 @@ def apply_config_file(filename, configs={}):
     return (configs, res)
 
 
-def parse_config(filename, args, configs={}):
+def parse_config(filename, args, configs):
     """
     Parse configuration file.
 
@@ -1542,14 +1598,18 @@ def parse_config(filename, args, configs={}):
     :param filename: Path to input file.
     :param args:     Namespace instance containing command line arguments, as
                      returned by argparse.ArgumentParser.parse_args()
-    :param configs:  Pre-existing configuration dict.
+    :param configs:  Configuration object.
     :return:         Resulting configuration dict.
     """
-    apply_args(args, configs)
+    _, discarded_args = configs.apply_args(args)
+
+    for a in discarded_args:
+        log_warn("Configuration option override arguments should be " +
+                 "provided in the <key>=<value> format, skipping \"%s\"" % a,
+                 configs, level=0)
 
     implicit_configs = [
-        os.path.join(config_get(configs, "res_dir", default=RES_DIR),
-                     DEFAULT_CFG),
+        os.path.join(configs.get("res_dir", default=RES_DIR), DEFAULT_CFG),
         SYSTEM_CFG,
         os.path.expanduser(USER_CFG),
         ]
@@ -1558,10 +1618,10 @@ def parse_config(filename, args, configs={}):
         apply_config_file(cfg, configs)
 
     # Apply args here in order to derive profile to use
-    apply_args(args, configs)
+    configs.apply_args(args)
 
-    profile_dir = config_get(configs, "profile_dir")
-    profile = config_get(configs, "profile")
+    profile_dir = configs.get("profile_dir")
+    profile = configs.get("profile")
     if profile is not None and profile_dir is not None:
         profile_path = get_config_path(profile, profile_dir, extension=""),
         ret = apply_config_file(profile_path, configs)
@@ -1575,25 +1635,17 @@ def parse_config(filename, args, configs={}):
             print("Config file: " + filename + " not found")
             return None
 
-    apply_args(args, configs)
+    configs.apply_args(args)
 
     return configs
 
 
 def cmd_dump_config(configs):
-    filename = config_get(configs, "dump_config_name",
-                          default="{config}.generated")
-    cfgparser = configparser.RawConfigParser()
-
-    for s_name, section in configs.iteritems():
-        cfgparser.add_section(s_name)
-
-        for i_name, item in section.iteritems():
-            if s_name == "defaults" and i_name == "func":
-                continue
-            cfgparser.set(s_name, i_name, item)
+    filename = configs.get("dump_config_name", default="{config}.generated")
 
     print("Dumping config ... ", end="")
+
+    cfgparser = configs.dump_config()
 
     try:
         with open(filename, "w") as f:
@@ -1728,21 +1780,23 @@ def main():
         if config_dir:
             os.chdir(config_dir)
 
-        configs = parse_config(args.config, args, default_config)
+        configs = parse_config(args.config, args,
+                               DDiskitConfig(default_config))
         if configs is None:
             return ErrCode.CONFIG_READ_ERROR
         configs = check_config(configs)
         if configs is None:
             return ErrCode.CONFIG_CHECK_ERROR
     else:
-        configs = parse_config(None, args, default_config)
+        configs = parse_config(None, args,
+                               DDiskitConfig(default_config))
 
     if (args.verbosity >= 2):
         print("Config: %r" % configs)
 
     ret = args.func(configs)
 
-    if config_get(configs, "dump_config"):
+    if configs.get("dump_config"):
         dump_ret = cmd_dump_config(configs)
         ret = ret or dump_ret
 
