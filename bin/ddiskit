@@ -1818,8 +1818,7 @@ def main():
         configs = parse_config(None, args,
                                DDiskitConfig(default_config))
 
-    if (args.verbosity >= 2):
-        print("Config: %r" % configs)
+    log_info("Config:\n%s" % configs, configs)
 
     ret = args.func(configs)
 
