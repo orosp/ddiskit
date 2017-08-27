@@ -1492,6 +1492,9 @@ def cmd_build_rpm(configs):
         log_status("Copying patches into rpm/SOURCES:", configs)
         os.chdir(src_root + "patches")
         for files in os.listdir("."):
+            if files == "series" and configs.get_bool("quilt_support"):
+                log_status("  Skipping: %s" % files, configs)
+                continue
             shutil.copyfile(files, "../../rpm/SOURCES/" + files)
             log_status("  Copying: %s" % files, configs)
     else:
