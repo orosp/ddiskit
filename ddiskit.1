@@ -51,12 +51,12 @@ Please refer to the
 section for the description of "configuration option name" and "default value".
 .SS General options
 .TP
-\fB\-h\fR, \fB\-\-help\fR
+\fB-h\fR, \fB--help\fR
 Print a list of options.
 .B ddiskit
 will exit after this action, ignoring the remainder of the command line.
 .TP
-\fB\-v\fR, \fB\-\-verbosity\fR
+\fB-v\fR, \fB--verbosity\fR
 Increase output verbosity by 1.
 Value of 1 means verbose output (it toggles printing of most of executed
 commands and all warnings), and value of 2 is useful for debugging
@@ -68,7 +68,7 @@ Configuration option name:
 .br
 Default value: 0
 .TP
-\fB\-p\fR \fIPROFILE\fR, \fB\-\-profile\fR \fIPROFILE\fR
+\fB-p\fR \fIPROFILE\fR, \fB--profile\fR \fIPROFILE\fR
 Configuration profile to use.
 Please refer to the
 .I Configuration generation
@@ -79,7 +79,7 @@ Configuration option name:
 .br
 Default value: none; "default" is provided in package configuration
 .TP
-\fB\-R\fR \fIRES_DIR\fR, \fB\-\-res\-dir\fR \fIRES_DIR\fR
+\fB-R\fR \fIRES_DIR\fR, \fB--res-dir\fR \fIRES_DIR\fR
 Resources directory.
 Used as a base of evaluation for template and profile directory paths.
 .IP
@@ -88,7 +88,7 @@ Configuration option name:
 .br
 Default value: none; "/usr/share/ddiskit/" is a hard-coded default.
 .TP
-\fB\-T\fR \fITEMPLATE_DIR\fR, \fB\-\-template\-dir\fR \fITEMPLATE_DIR\fR,
+\fB-T\fR \fITEMPLATE_DIR\fR, \fB--template-dir\fR \fITEMPLATE_DIR\fR,
 Templates directory, used as a base for searching for spec or module
 configuration templates.
 Please refer to the
@@ -100,7 +100,7 @@ Configuration option name:
 .br
 Default value: none; "{res_dir}/templates" is a hard-coded default.
 .TP
-\fB\-P\fR \fIPROFILE_DIR\fR, \fB\-\-profile\-dir\fR \fIPROFILE_DIR\fR
+\fB-P\fR \fIPROFILE_DIR\fR, \fB--profile-dir\fR \fIPROFILE_DIR\fR
 Profiles directory, used as a base for searching for profiles.
 Please refer to the
 .I File path evaluation
@@ -111,7 +111,7 @@ Configuration option name:
 .br
 Default value: none; "{res_dir}/profiles" is a hard-coded default.
 .TP
-\fB\-d\fR, \fB\-\-dump-config\fR
+\fB-d\fR, \fB--dump-config\fR
 Dump the derived configuration after performing the action.
 .IP
 Configuration option name:
@@ -119,7 +119,7 @@ Configuration option name:
 .br
 Default value: False
 .TP
-\fB\-o\fR \fIDUMP_CONFIG_NAME\fR, \fB\-\-dump\-config\-name\fR \fIDUMP_CONFIG_NAME\fR
+\fB-o\fR \fIDUMP_CONFIG_NAME\fR, \fB--dump-config-name\fR \fIDUMP_CONFIG_NAME\fR
 Path to the file targeted for the configuration dump.
 .IP
 Configuration option name:
@@ -127,7 +127,7 @@ Configuration option name:
 .br
 Default value: none; "{config}.generated" is a hard-coded default.
 .TP
-\fB\-q\fR, \fB\-\-quilt\-enable\fR
+\fB-q\fR, \fB--quilt-enable\fR
 Enable quilt support.
 Please refer to the
 .I QUILT INTEGRATION
@@ -137,14 +137,14 @@ The option sets
 configuration option to
 .BR True .
 .TP
-\fB\-Q\fR, \fB\-\-quilt\-disable\fR
+\fB-Q\fR, \fB--quilt-disable\fR
 Disable quilt support.
 The option sets
 .I defaults.quilt_support
 configuration option to
 .BR False .
 .TP
-\fB\-C\fR \fIKEY\fR=\fIVALUE\fR, \fB\-\-config\-option\fR \fIKEY\fR=\fIVALUE\fR
+\fB-C\fR \fIKEY\fR=\fIVALUE\fR, \fB--config-option\fR \fIKEY\fR=\fIVALUE\fR
 Override arbitrary configuration option that have the name
 .I KEY
 with
@@ -158,7 +158,7 @@ The argument can be used multiple times in order to override multiple options.
 .\"
 .SS Options for prepare_sources action
 .TP
-\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+\fB-c\fR \fICONFIG\fR, \fB--config\fR \fICONFIG\fR
 Path to the module configuration file.
 .IP
 Configuration option name:
@@ -166,7 +166,7 @@ Configuration option name:
 .br
 Default value: "module.config"
 .TP
-\fB\-t\fR \fICONFIG_TEMPLATE\fR, \fB\-\-config\-template\fR \fICONFIG_TEMPLATE\fR
+\fB-t\fR \fICONFIG_TEMPLATE\fR, \fB--config-template\fR \fICONFIG_TEMPLATE\fR
 Configuration file template.
 Please refer to the
 .I File path evaluation
@@ -180,7 +180,7 @@ Default value: none; "config" is a hard-coded default.
 .\"
 .SS Options for generate_spec action
 .TP
-\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+\fB-c\fR \fICONFIG\fR, \fB--config\fR \fICONFIG\fR
 Path to the module configuration file.
 .IP
 Configuration option name:
@@ -188,7 +188,7 @@ Configuration option name:
 .br
 Default value: "module.config"
 .TP
-\fB\-t\fR \fISPEC_TEMPLATE\fR, \fB\-\-spec\-template\fR \fISPEC_TEMPLATE\fR
+\fB-t\fR \fISPEC_TEMPLATE\fR, \fB--spec-template\fR \fISPEC_TEMPLATE\fR
 RPM spec file template.
 Please refer to the
 .I File path evaluation
@@ -201,7 +201,7 @@ Default value: none; "spec" is a hard-coded default.
 .\"
 .SS Options for build_rpm action
 .TP
-\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+\fB-c\fR \fICONFIG\fR, \fB--config\fR \fICONFIG\fR
 Path to the module configuration file.
 .IP
 Configuration option name:
@@ -209,7 +209,7 @@ Configuration option name:
 .br
 Default value: "module.config"
 .TP
-\fB\-a\fR, \fB\-\-tar\-all\fR
+\fB-a\fR, \fB--tar-all\fR
 Tar all files, including hidden ones (files with names starting with dot).
 Otherwise, only files with names starting with non-dot character will be added
 to the source tarball.
@@ -224,7 +224,7 @@ Configuration option name:
 .br
 Default value: False
 .TP
-\fB\-e\fR, \fB\-\-tar\-strict\fR
+\fB-e\fR, \fB--tar-strict\fR
 Tar only expected files.
 Only the files with names matching the regular expression pattern provided in
 .I defaults.src_patterns
@@ -240,7 +240,7 @@ Configuration option name:
 .br
 Default value: False
 .TP
-\fB\-s\fR, \fB\-\-srpm\fR
+\fB-s\fR, \fB--srpm\fR
 Force building of source RPM instead of binary one.
 .B ddiskit
 has several heuristics (whether host architecture is among architectures
@@ -256,7 +256,7 @@ Configuration option name:
 .br
 Default value: False
 .TP
-\fB\-m\fR, \fB\-\-mock\fR
+\fB-m\fR, \fB--mock\fR
 Enable
 .B mock
 usage for building RPM.
@@ -269,7 +269,7 @@ Configuration option name:
 .br
 Default value: False
 .TP
-\fB\-r\fR \fIMOCK_CONFIG\fR, \fB\-\-mock\-config\fR \fIMOCK_CONFIG\fR
+\fB-r\fR \fIMOCK_CONFIG\fR, \fB--mock-config\fR \fIMOCK_CONFIG\fR
 Which mock configuration should be used for building RPM.
 .IP
 Configuration option name:
@@ -277,9 +277,9 @@ Configuration option name:
 .br
 Default value: "default"
 .TP
-\fB\-l\fR, \fB\-\-mock\-offline\fR
+\fB-l\fR, \fB--mock-offline\fR
 Whether to pass
-.B \-\-offline
+.B --offline
 option to
 .BR mock .
 .IP
@@ -288,7 +288,7 @@ Configuration option name:
 .br
 Default value: False
 .TP
-\fB\-g\fR \fILEVEL\fR, \fB\-\-check\-git\-src\fR \fILEVEL\fI
+\fB-g\fR \fILEVEL\fR, \fB--check-git-src\fR \fILEVEL\fI
 Set the level of source code repository authenticity check. See the
 .I SOURCE CODE VERIFICATION
 section for the details.
@@ -300,7 +300,7 @@ Default value: 0
 .\"
 .SS Options for build_iso action
 .TP
-\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+\fB-c\fR \fICONFIG\fR, \fB--config\fR \fICONFIG\fR
 Path to the module configuration file.
 .IP
 Configuration option name:
@@ -308,7 +308,7 @@ Configuration option name:
 .br
 Default value: "module.config"
 .TP
-\fB\-i\fR \fIISOFILE\fR, \fB\-\-isofile\fR \fIISOFILE\fR
+\fB-i\fR \fIISOFILE\fR, \fB--isofile\fR \fIISOFILE\fR
 File name for the output ISO.
 .IP
 Configuration option name:
@@ -320,7 +320,7 @@ action description section.
 .\"
 .SS Options for dump_config action
 .TP
-\fB\-c\fR \fICONFIG\fR, \fB\-\-config\fR \fICONFIG\fR
+\fB-c\fR \fICONFIG\fR, \fB--config\fR \fICONFIG\fR
 Path to the module configuration file.
 .IP
 Configuration option name:
@@ -328,9 +328,9 @@ Configuration option name:
 .br
 Default value: "module.config"
 .TP
-\fB\-o\fR \fIDUMP_CONFIG_NAME\fR, \fB\-\-dump\-config\-name\fR \fIDUMP_CONFIG_NAME\fR
+\fB-o\fR \fIDUMP_CONFIG_NAME\fR, \fB--dump-config-name\fR \fIDUMP_CONFIG_NAME\fR
 Name of the file where to store configuration dump.
-This is the same option as the \fB\-o\fR option in the
+This is the same option as the \fB-o\fR option in the
 .I General options
 section, and present here only for convenience.
 .IP
@@ -692,7 +692,7 @@ resulting spec file.
 Prepare initial file and directory structure.
 This action creates directories where various files are expected to be placed
 and copies (into a file set in
-.B \-\-config
+.B --config
 option) module configuration from the template file (which path is determined
 by the
 .IR defaults.template_dir " and " defaults.config_template
@@ -763,7 +763,7 @@ The RPM build action includes several steps:
 Check for the module configuration file presence (provided in
 .I defaults.config
 configuration variable via the
-.B \-\-config
+.B --config
 command line option).
 Since some configuration values should be derived directly from it,
 its absence makes the whole operation senseless, thus the early bailout.
@@ -804,7 +804,7 @@ is displayed regarding the matter.
 Hidden files (files beginning with dot) are skipped, unless the
 .I defaults.tar_all
 configuration option (controlled via the
-.B \-\-tar\-all
+.B --tar-all
 action-specific command line option) is set to
 .BR True .
 .IP \(bu
@@ -813,7 +813,7 @@ Only files matching the pattern set in the
 configuration option are added, if the
 .I defaults.tar_strict
 configuration option (controlled via the
-.B \-\-tar\-strict
+.B --tar-strict
 action-specific command line option) is set to
 .BR True .
 The default pattern includes only *.c, *.h, Makefile, Kbuild, and Kconfig files,
@@ -833,7 +833,7 @@ architectures,
 check (rpmbuild -bc --nobuild) succeeded, and the
 .I defaults.srpm
 configuration option (controlled via the
-.B \-\-srpm
+.B --srpm
 action-specific command line option) is not enabled,
 an attempt to build binary RPM is performed.
 Otherwise, a source RPM is built.
@@ -889,7 +889,7 @@ command.
 The name of the ISO is provided in the
 .I defaults.isofile
 option (which can be set via the
-.B \-\-isofile
+.B --isofile
 action-specific command line option).
 In case no explicit ISO file name is provided, it is generated as
 "dd-{\fIspec_file.module_name\fR}-{\fIspec_file.module_version\fR}-{\fIspec_file.module_rpm_release\fR}.{\fIspec_file.rpm_dist\fR}.iso",
@@ -922,7 +922,7 @@ a list of patches.
 This behaviour is controlled by the
 .I defaults.quilt_support
 configuration option, which is accessible via the
-.BR \-\-quilt\-enable " and " \-\-quilt\-disable
+.BR --quilt-enable " and " --quilt-disable
 command line options.
 .\"
 .\"
@@ -934,7 +934,7 @@ for building RPM.
 This support is activated via the
 .I defaults.mock
 configuration option which is controlled via the
-.B \-\-mock
+.B --mock
 action-specific command line option.
 When mock support is enabled, the following changes apply:
 .IP \(bu 3
