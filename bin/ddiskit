@@ -1321,7 +1321,7 @@ def filter_tar_info(configs, nvv):
 
         if not filter_tar_info_args.tar_all and \
                 any([x.startswith(".") for x in ti.name.split("/")]):
-            log_status("  Skipping hidden file: %s" % ti.name, configs,
+            log_status("  Hidden file, skipping: %s" % ti.name, configs,
                        level=1)
 
             return None
@@ -1330,7 +1330,10 @@ def filter_tar_info(configs, nvv):
 
         if ti.isfile() and ti.name.split("/")[0] != "firmware" and \
                 not filter_tar_info_args.src_patterns.match(fn):
-            log_status("  Unexpected file: %s" % ti.name, configs)
+            log_status("  Unexpected file%s: %s" %
+                       (", skipping"
+                        if filter_tar_info_args.tar_strict else "", ti.name),
+                       configs)
 
             if filter_tar_info_args.tar_strict:
                 return None
