@@ -513,7 +513,7 @@ def log_warn(msg, configs, level=1):
         need_newline = False
 
 
-def log_error(msg, configs, level=0):
+def log_error(msg, configs, level=-128):
     """
     Log error message.
 
