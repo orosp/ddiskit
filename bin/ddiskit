@@ -1366,6 +1366,8 @@ def cmd_build_rpm(configs):
                   {"f": cfgfile}, configs)
         return ErrCode.CONFIG_READ_ERROR
 
+    ret = ErrCode.SUCCESS
+
     # Regenerate/check spec
     if configs.get_bool("generate_spec_on_build"):
         ret = cmd_generate_spec(configs)
