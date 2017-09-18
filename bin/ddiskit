@@ -1766,7 +1766,8 @@ def cmd_build_iso(configs):
 
     configs.set("isofile", isofile)
 
-    ret, _ = command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8',
+    label = configs.get("isolabel", default="OEMDRV")
+    ret, _ = command(['mkisofs', '-V', label, '-input-charset', 'UTF-8',
                       '-R', '-uid', '0', '-gid', '0', '-dir-mode', '0555',
                       '-file-mode', '0444', '-o',
                       isofile, dir_tmp + '/disk'],
