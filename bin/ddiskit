@@ -1766,7 +1766,8 @@ def cmd_build_iso(configs):
 
     configs.set("isofile", isofile)
 
-    ret, _ = command(['mkisofs', '-V', 'OEMDRV', '-input-charset', 'UTF-8',
+    label = configs.get("isolabel", default="OEMDRV")
+    ret, _ = command(['mkisofs', '-V', label, '-input-charset', 'UTF-8',
                       '-R', '-uid', '0', '-gid', '0', '-dir-mode', '0555',
                       '-file-mode', '0444', '-o',
                       isofile, dir_tmp + '/disk'],
@@ -1836,7 +1837,7 @@ def apply_config_file(filename, configs):
     return (configs, res)
 
 
-def parse_config(filename, args, configs):
+def parse_config(filename, user_filename, args, configs):
     """
     Parse configuration file.
 
@@ -1862,7 +1863,7 @@ def parse_config(filename, args, configs):
     implicit_configs = [
         os.path.join(configs.get("res_dir", default=RES_DIR), DEFAULT_CFG),
         SYSTEM_CFG,
-        os.path.expanduser(USER_CFG),
+        os.path.expanduser(user_filename),
         ]
 
     for cfg in implicit_configs:
@@ -1943,6 +1944,8 @@ def parse_cli():
                              help="Disable quilt integration")
     root_parser.add_argument("-C", "--config-option", action="append",
                              help="Override configuration options")
+    root_parser.add_argument("-u", "--user-config", default=USER_CFG,
+                             help="Location of user configuration file")
 
     cmdparsers = root_parser.add_subparsers(title='Commands',
                                             help='main ddiskit commands')
@@ -2046,7 +2049,7 @@ def main():
         if config_dir:
             os.chdir(config_dir)
 
-        configs = parse_config(args.config, args,
+        configs = parse_config(args.config, args.user_config, args,
                                DDiskitConfig(default_config))
         if configs is None:
             return ErrCode.CONFIG_READ_ERROR
@@ -2054,7 +2057,7 @@ def main():
         if configs is None:
             return ErrCode.CONFIG_CHECK_ERROR
     else:
-        configs = parse_config(None, args,
+        configs = parse_config(None, args, args.user_config,
                                DDiskitConfig(default_config))
 
     log_info("Config:\n%s" % configs, configs)
