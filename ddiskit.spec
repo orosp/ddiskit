@@ -1,5 +1,5 @@
 Name:           ddiskit
-Version:        3.5
+Version:        3.6
 Release:        1%{?dist}
 Summary:        Tool for Red Hat Enterprise Linux Driver Update Disk creation
 
@@ -67,6 +67,9 @@ find %{buildroot} -size 0 -delete
 %config(noreplace) /etc/ddiskit.config
 
 %changelog
+* Tue Oct 17 2017 Petr Oros <poros@redhat.com> - 3.6-1
+- New upstream release
+
 * Mon Jun 26 2017 Petr Oros <poros@redhat.com> - 3.5-1
 - New upstream release
 
