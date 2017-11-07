@@ -102,12 +102,14 @@ if [ -f "%{kver_state_file}" ]; then
 	tmp_initramfs="/boot/initramfs-$k.tmp"
 	dst_initramfs="/boot/initramfs-$k.img"
 
-	/usr/bin/dracut -f "$tmp_initramfs" "$k" || exit 1
-	cmp -s "$tmp_initramfs" "$dst_initramfs"
-	if [ "$?" = 1 ]; then
-		mv "$tmp_initramfs" "$dst_initramfs"
-	else
-		rm -f "$tmp_initramfs"
+	if [ -d "/lib/modules/$k" ]; then
+		/usr/bin/dracut -f "$tmp_initramfs" "$k" || exit 1
+		cmp -s "$tmp_initramfs" "$dst_initramfs"
+		if [ "$?" = 1 ]; then
+			mv "$tmp_initramfs" "$dst_initramfs"
+		else
+			rm -f "$tmp_initramfs"
+		fi
 	fi
 
 	rm -f "%{kver_state_file}"
