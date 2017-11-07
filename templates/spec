@@ -20,6 +20,7 @@ Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 %define dup_state_dir %{_localstatedir}/lib/rpm-state/kmod-dups
 %define kver_state_dir %{dup_state_dir}/kver
 %define kver_state_file %{kver_state_dir}/%{kmod_kernel_version}.%(arch)
+%define dup_module_list %{dup_state_dir}/rpm-kmod-%{kmod_name}-modules
 
 Name:		%{RPM_NAME}
 Version:	%{kmod_driver_version}
@@ -121,12 +122,18 @@ rmdir "%{dup_state_dir}" 2> /dev/null
 exit 0
 
 %preun
-rpm -ql %{RPM_NAME}-%{kmod_driver_version}-%{kmod_rpm_release}%{?dist}.$(arch) | grep '\.ko$' > /var/run/rpm-kmod-%{kmod_name}-modules
+mkdir -p "%{dup_state_dir}"
+rpm -ql %{RPM_NAME}-%{kmod_driver_version}-%{kmod_rpm_release}%{?dist}.$(arch) | \
+	grep '\.ko$' > "%{dup_module_list}"
 
 %postun
-modules=( $(cat /var/run/rpm-kmod-%{kmod_name}-modules) )
-rm /var/run/rpm-kmod-%{kmod_name}-modules
+modules=( $(cat "%{dup_module_list}") )
+rm "%{dup_module_list}"
 printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --remove-modules
+
+rmdir "%{dup_state_dir}" 2> /dev/null
+
+exit 0
 
 %files
 %defattr(644,root,root,755)
