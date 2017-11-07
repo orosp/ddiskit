@@ -18,7 +18,8 @@ Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 %define __find_provides /usr/lib/rpm/redhat/find-provides.ksyms %{kmod_name} %{?epoch:%{epoch}:}%{version}-%{release}
 %define sbindir %( if [ -d "/sbin" -a \! -h "/sbin" ]; then echo "/sbin"; else echo %{_sbindir}; fi )
 %define dup_state_dir %{_localstatedir}/lib/rpm-state/kmod-dups
-%define kver_state_file %{dup_state_dir}/%{kmod_kernel_version}.%(arch)
+%define kver_state_dir %{dup_state_dir}/kver
+%define kver_state_file %{kver_state_dir}/%{kmod_kernel_version}.%(arch)
 
 Name:		%{RPM_NAME}
 Version:	%{kmod_driver_version}
@@ -88,7 +89,7 @@ Summary:	%{DEVEL_SUMMARY}
 modules=( $(find /lib/modules/%{kmod_kernel_version}.%(arch)/extra/kmod-%{kmod_vendor}-%{kmod_name} | grep '\.ko$') )
 printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --add-modules --no-initramfs
 
-mkdir -p "%{dup_state_dir}"
+mkdir -p "%{kver_state_dir}"
 touch "%{kver_state_file}"
 
 exit 0
@@ -110,8 +111,10 @@ if [ -f "%{kver_state_file}" ]; then
 	fi
 
 	rm -f "%{kver_state_file}"
-	rmdir "%{dup_state_dir}" 2> /dev/null
+	rmdir "%{kver_state_dir}" 2> /dev/null
 fi
+
+rmdir "%{dup_state_dir}" 2> /dev/null
 
 exit 0
 
