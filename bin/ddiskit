@@ -111,7 +111,7 @@ default_config = {
         "kernel_nvr_re": KERNEL_NVR_RE,
         "kernel_fixed_re": KERNEL_Z_PART_RE,
         "kernel_dist_re": KERNEL_DIST_RE,
-        "kernel_flex_verson_re": "{kernel_nvr_re}{kernel_dist_re}",
+        "kernel_flex_version_re": "{kernel_nvr_re}{kernel_dist_re}",
         "kernel_fixed_version_re": "{kernel_nvr_re}{kernel_fixed_re}" +
                                    "{kernel_dist_re}",
         },
