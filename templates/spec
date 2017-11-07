@@ -122,14 +122,25 @@ rmdir "%{dup_state_dir}" 2> /dev/null
 exit 0
 
 %preun
+if rpm -q --filetriggers kmod 2> /dev/null| grep -q "Trigger for weak-modules call on kmod removal"; then
+	mkdir -p "%{kver_state_dir}"
+	touch "%{kver_state_file}"
+fi
+
 mkdir -p "%{dup_state_dir}"
 rpm -ql %{RPM_NAME}-%{kmod_driver_version}-%{kmod_rpm_release}%{?dist}.$(arch) | \
 	grep '\.ko$' > "%{dup_module_list}"
 
 %postun
+if rpm -q --filetriggers kmod 2> /dev/null| grep -q "Trigger for weak-modules call on kmod removal"; then
+	initramfs_opt="--no-initramfs"
+else
+	initramfs_opt=""
+fi
+
 modules=( $(cat "%{dup_module_list}") )
 rm -f "%{dup_module_list}"
-printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --remove-modules
+printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --remove-modules $initramfs_opt
 
 rmdir "%{dup_state_dir}" 2> /dev/null
 
