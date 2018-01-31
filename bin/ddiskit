@@ -1352,10 +1352,15 @@ def filter_tar_info(configs, nvv):
     return functools.partial(filter_tar_info_args, configs=configs, nvv=nvv)
 
 
-def file_walk(args):
+def file_walk(args, yield_dirs=False):
     for content in args:
         if os.path.isdir(content):
+            if yield_dirs:
+                yield content
             for root, dirs, files in os.walk(content):
+                if yield_dirs:
+                    for f in dirs:
+                        yield os.path.join(root, f)
                 for f in files:
                     yield os.path.join(root, f)
         elif os.path.exists(content):
