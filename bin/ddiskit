@@ -1352,6 +1352,18 @@ def filter_tar_info(configs, nvv):
     return functools.partial(filter_tar_info_args, configs=configs, nvv=nvv)
 
 
+def file_walk(args):
+    for content in args:
+        if os.path.isdir(content):
+            for root, dirs, files in os.walk(content):
+                for f in files:
+                    yield os.path.join(root, f)
+        elif os.path.exists(content):
+            yield content
+        else:
+            raise IOError(errno.ENOENT, os.strerror(errno.ENOENT), content)
+
+
 def cmd_build_rpm(configs):
     """
     CMD build_rpm callback
@@ -1640,24 +1652,12 @@ def cmd_build_iso(configs):
     CMD build_iso callback
     :param configs: Configuration object.
     """
-    def iterate_args(args):
-        for content in args:
-            if os.path.isdir(content):
-                for root, dirs, files in os.walk(content):
-                    for f in files:
-                        yield os.path.join(root, f)
-            elif os.path.exists(content):
-                yield content
-            else:
-                raise IOError(errno.ENOENT, os.strerror(errno.ENOENT),
-                              content)
-
     rpm_sign_check = int(configs.get("rpm_gpg_check.check_level", default=0))
     error = 0
 
     src_rpms = []
     bin_rpms = {}  # Binary RPMs are stored per-arch
-    for content in iterate_args(configs.get("filelist")):
+    for content in file_walk(configs.get("filelist")):
         try:
             if not content.endswith(".rpm"):
                 log_warn(("File name \"%s\" does not end with .rpm " +
