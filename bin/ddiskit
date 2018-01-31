@@ -1369,6 +1369,20 @@ def file_walk(args, yield_dirs=False):
             raise IOError(errno.ENOENT, os.strerror(errno.ENOENT), content)
 
 
+# pre-python 2.7 compat for TarFile.add(..., filter=)
+def tar_add(tar, path, filter=None):
+    for f in file_walk([path, ], yield_dirs=True):
+        ti = tar.gettarinfo(f)
+
+        if filter is not None:
+            ti = filter(ti)
+
+        if ti is None:
+            continue
+
+        tar.addfile(ti)
+
+
 def cmd_build_rpm(configs):
     """
     CMD build_rpm callback
@@ -1500,7 +1514,7 @@ def cmd_build_rpm(configs):
                 else:
                     log_status("  Skipping: %s" % files, configs, level=1)
                     continue
-            tar.add(os.path.normpath(files),
+            tar_add(tar, os.path.normpath(files),
                     filter=filter_tar_info(configs, nvv))
         tar.close()
     except Exception as err:
