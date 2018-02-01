@@ -1380,7 +1380,11 @@ def tar_add(tar, path, filter=None):
         if ti is None:
             continue
 
-        tar.addfile(ti)
+        if ti.isreg():
+            with open(f, "rb") as f:
+                tar.addfile(ti, f)
+        else:
+            tar.addfile(ti)
 
 
 def cmd_build_rpm(configs):
