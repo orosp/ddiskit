@@ -9,6 +9,7 @@
 %define kmod_devel_package	%{DEVEL_PACKAGE}
 
 %{!?dist: %define dist .%{RPM_DIST}}
+%{!?make_build: %define make_build make}
 
 Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 %{SOURCE_PATCHES}
