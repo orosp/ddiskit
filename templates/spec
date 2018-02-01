@@ -104,7 +104,9 @@ if [ -f "%{kver_state_file}" ]; then
 	tmp_initramfs="/boot/initramfs-$k.tmp"
 	dst_initramfs="/boot/initramfs-$k.img"
 
-	if [ -d "/lib/modules/$k" ]; then
+	# The same check as in weak-modules: we assume that the kernel present
+	# if the symvers file exists.
+	if [ -e "/boot/symvers-$k.gz" ]; then
 		/usr/bin/dracut -f "$tmp_initramfs" "$k" || exit 1
 		cmp -s "$tmp_initramfs" "$dst_initramfs"
 		if [ "$?" = 1 ]; then
