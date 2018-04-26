@@ -100,21 +100,27 @@ exit 0
 # We have to re-implement part of weak-modules here because it doesn't allow
 # calling initramfs regeneration separately
 if [ -f "%{kver_state_file}" ]; then
-	k="%{kmod_kernel_version}.%(arch)"
-	tmp_initramfs="/boot/initramfs-$k.tmp"
-	dst_initramfs="/boot/initramfs-$k.img"
+	kver_base="%{kmod_kernel_version}"
+	kvers=$(ls -d "/lib/modules/${kver_base%%.*}"*)
 
-	# The same check as in weak-modules: we assume that the kernel present
-	# if the symvers file exists.
-	if [ -e "/boot/symvers-$k.gz" ]; then
-		/usr/bin/dracut -f "$tmp_initramfs" "$k" || exit 1
-		cmp -s "$tmp_initramfs" "$dst_initramfs"
-		if [ "$?" = 1 ]; then
-			mv "$tmp_initramfs" "$dst_initramfs"
-		else
-			rm -f "$tmp_initramfs"
+	for k_dir in $kvers; do
+		k="${k_dir#/lib/modules/}"
+
+		tmp_initramfs="/boot/initramfs-$k.tmp"
+		dst_initramfs="/boot/initramfs-$k.img"
+
+		# The same check as in weak-modules: we assume that the kernel present
+		# if the symvers file exists.
+		if [ -e "/boot/symvers-$k.gz" ]; then
+			/usr/bin/dracut -f "$tmp_initramfs" "$k" || exit 1
+			cmp -s "$tmp_initramfs" "$dst_initramfs"
+			if [ "$?" = 1 ]; then
+				mv "$tmp_initramfs" "$dst_initramfs"
+			else
+				rm -f "$tmp_initramfs"
+			fi
 		fi
-	fi
+	done
 
 	rm -f "%{kver_state_file}"
 	rmdir "%{kver_state_dir}" 2> /dev/null
