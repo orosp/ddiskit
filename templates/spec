@@ -172,7 +172,7 @@ mkdir obj
 %build
 rm -rf obj
 cp -r source obj
-%{make_build} -C %{kernel_source} M=$PWD/obj/%{kmod_kbuild_dir} \
+%{make_build} -C %{kernel_source} V=1 M=$PWD/obj/%{kmod_kbuild_dir} \
 	NOSTDINC_FLAGS="-I $PWD/obj/include -I $PWD/obj/include/uapi" \
 	%{MAKE_TARGETS}
 # mark modules executable so that strip-to-file can strip them
