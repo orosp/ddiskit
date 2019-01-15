@@ -1091,7 +1091,11 @@ configuration variable.
 .PP
 Additionally, if the
 .I defaults.git_src_directory
-configuration option is set,
+configuration option
+(which, in turn, defaults to the value of the
+.I spec_file.module_build_dir
+configuration option, provided the latter is non-empty)
+is set,
 source files placed inside directories listed in this whitespace-separated list
 checked out (inside the
 .B src

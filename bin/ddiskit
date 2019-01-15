@@ -1217,6 +1217,12 @@ def cmd_prepare_sources(configs):
     revspec = ""
     src_copied = False
 
+    if not src_dirs:
+        src_dirs = configs.get("spec_file.module_build_dir")
+
+        if src_dirs == "ENTER_MODULE_BUILD_DIR":
+            src_dirs = ""
+
     if src_dirs:
         src_dirs = src_dirs.split()
         repo = configs.get("git_dir")
