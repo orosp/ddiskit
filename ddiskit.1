@@ -668,8 +668,8 @@ refers to the file in the provided directory.
 Otherwise, it is interpreted as a path relative to the current working
 directory (which is the directory the where module configuration resides).
 .PP
-For example, profile "my-profile" is searched relative to profile directory
-("/usr/share/ddiskit/profiles" by default), but profile "./my-profile"
+For example, profile "\fBmy-profile\fR" is searched relative to profile directory
+("\fB/usr/share/ddiskit/profiles\fR" by default), but profile "\fB./my-profile\fR"
 is searched relative to modules configuration directory.
 .\"
 .SS Configuration value evaluation
@@ -730,7 +730,7 @@ is performed:
 .IP \(bu 3
 .IR spec_file.source_patches " and " spec_file.source_patches_do
 generated in accordance with a lexicographically sorted list of patch files
-found in the patch directory (src/patch relative to current working directory).
+found in the patch directory (\fBsrc/patch\fR relative to current working directory).
 .I spec_file.source_patches
 contains lines in the "Patch\fIN\fR: \fIpatch-file-name\fR" format, and
 .I spec_file.source_patches_do
@@ -796,8 +796,8 @@ After this configuration processing, parts of the spec template in the
 of percent sign in comparison to the syntax used for configuration option
 substitution) are replaced with evaluated configuration values.
 If no appropriate configuration has been found, no replacement occurs.
-If configuration option evaluates to empty string, "%{nil}" is inserted into the
-resulting spec file.
+If configuration option evaluates to empty string, \fB%{nil}\fR is inserted
+into the resulting spec file.
 .\"
 .\"
 .SH ACTIONS
@@ -924,18 +924,18 @@ configuration option, the latter check may lead to warning or to the termination
 of the action:
 .RS
 .TP 3
-0
+.B 0
 Do not perform the spec file check.
 .TP
-1
+.B 1
 Perform spec file comparison and issue warning in case generated and existing
 spec files differ.
 .TP
-2
+.B 2
 Perform spec file comparison and issue warning in case generated and existing
 spec files differ, user is asked whether he wants to continue.
 .TP
-3
+.B 3
 Perform spec file comparison and abort action execution in case of any errors
 (during spec file generation or comparison).
 .RE
@@ -944,10 +944,10 @@ No spec file comparison is performed (regardless of the
 .I defaults.check_spec_on_build
 configuration option value) if spec file generation is enabled (obviously).
 .IP \(bu
-Check for the Makefile presence.
-Presence of file named "Makefile" somewhere in the source tree allows for
+Check for \fBMakefile\fR presence.
+Presence of file named \fBMakefile\fR somewhere in the source tree allows for
 passing this check.
-Absence of Makefile leads to early termination with a relevant exit code
+Absence of \fBMakefile\fR leads to early termination with a relevant exit code
 (please refer to the
 .I EXIT STATUS
 section for details).
@@ -995,7 +995,8 @@ configuration option (controlled via the
 .B --tar-strict
 action-specific command line option) is set to
 .BR True .
-The default pattern includes only *.c, *.h, Makefile, Kbuild, and Kconfig files,
+The default pattern includes only \fI*\fB.c\fR, \fI*\fB.h\fR, \fBMakefile\fR,
+\fBKbuild\fR, and \fBKconfig\fR files,
 which should be suitable for the most cases.
 .RE
 .IP \(bu
@@ -1169,14 +1170,14 @@ the
 .I default.check_git_src
 configuration option, with the following meaning of its value:
 .TP 3
-0
+.B 0
 The check is skipped.
 .TP
-1
+.B 1
 The check is performed and the warning is issued if the sources differ from the
 ones present in the repository.
 .TP
-2
+.B 2
 The check is performed and the build process is aborted in case of sources
 discrepancy or other issues during the check.
 .PP
@@ -1193,16 +1194,16 @@ The necessity of check is controlled via the
 .I rpm_gpg_check.check_level
 configuration option, which can have one of the following values:
 .TP 3
-0
+.B 0
 The check is skipped.
 .TP
-1
+.B 1
 The check is performed and the warning is issued for each RPM that failed it.
 .TP
-2
+.B 2
 The check is performed and RPMs that didn't pass the check are skipped.
 .TP
-3
+.B 3
 The check is performed and ISO creation is aborted if one of RPMs failed the
 check.
 .PP
