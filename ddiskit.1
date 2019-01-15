@@ -62,7 +62,10 @@ for the similar purpose, like
 .SH OPTIONS
 Please refer to the
 .I Configuration generation
-section for the description of "configuration option name" and "default value".
+section for the description of "configuration option name" and "default value"
+fields, and to the
+.I ACTIONS
+section for the description of the actions mentioned.
 .SS General options
 .TP
 \fB-h\fR, \fB--help\fR
@@ -545,7 +548,7 @@ release, and has the following format:
 \fIkernel_version\fR.\fIkernel_patchlevel\fR.\fIkernel_sublevel\fR-\fIrhel_release\fR.\fIrpm_dist\fR
 .CE
 For example, RHEL 7.3 GA kernel has kernel version 3.10.0-514.el7.
-As a result, it is expected that
+Consequently, it is expected that
 .IR kernel_version ", " kernel_patchlevel ", " kernel_sublevel ", " rhel_release
 are decimal numbers (having no more than 1, 2, 2, and 4 digits, respectively),
 and
@@ -669,8 +672,9 @@ Otherwise, it is interpreted as a path relative to the current working
 directory (which is the directory the where module configuration resides).
 .PP
 For example, profile "\fBmy-profile\fR" is searched relative to profile directory
-("\fB/usr/share/ddiskit/profiles\fR" by default), but profile "\fB./my-profile\fR"
-is searched relative to modules configuration directory.
+(stored in the \fIdefaults.profile_dir\fR configuration option,
+"\fB/usr/share/ddiskit/profiles\fR" by default), but profile "\fB./my-profile\fR"
+is searched relative to module's configuration directory.
 .\"
 .SS Configuration value evaluation
 Configuration option values can reference other configuration options using
@@ -1254,7 +1258,8 @@ src
 Please, respect the directory hierarchy for the drivers which are originally part
 of the kernel tree.
 .IP \(bu 3
-Additional patches for the code could be placed in the \fBpatches\fR directory.
+Additional patches for the code could be placed in the \fBsrc/patches\fR
+directory.
 .RE
 .IP 3.
 Fill out the \fBmodule.config\fR and generate the spec file:
