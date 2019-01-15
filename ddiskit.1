@@ -21,8 +21,6 @@
 .    RB "[" "\\$1" "]...\&"
 ..
 .TH DDISKIT "1"
-.\" For .URL
-.mso www.tmac
 .SH NAME
 ddiskit \- Red Hat tool for Driver Update Disk creation
 .SH SYNOPSIS
@@ -522,10 +520,12 @@ These files are applied one after another in aforementioned order, so the
 The exception from the rule are command line options, which take precedence
 at each point of configuration generation (during the profile path evaluation,
 for example).
-
-The configuration files themselves are sectioned key-value files with a
-syntax described in
-.URL https://docs.python.org/2/library/configparser.html "related python module documentation" ,
+.PP
+The configuration files themselves are sectioned key-value files,
+syntax of which is described in the
+.UR https://docs.python.org/2/library/configparser.html
+related Python module documentation
+.UE ,
 except for the interpolation part, which is home-grown and described
 in the section
 .IR "Configuration value evaluation" .
@@ -584,7 +584,9 @@ configuration variable against regular expressions set via the
 and
 .I defaults.kernel_fixed_version_re
 configuration options, which contain Python regular expressions (see
-.URL https://docs.python.org/2/library/re.html "Python re module documentation"
+.UR https://docs.python.org/2/library/re.html
+Python \fBre\fR module documentation
+.UE
 for details about regular expression syntax) for matching Y-stream and Z-stream
 kernel versioning scheme, respectively.
 In order to extract parts of kernel version described above, the following
@@ -1426,7 +1428,9 @@ directory structure creation error.
 Problems with
 .B ddiskit
 should be reported to
-.URL https://github.com/orosp/ddiskit/issues "ddiskit project bug tracker"
+.UR https://github.com/orosp/ddiskit/issues
+ddiskit project bug tracker
+.UE
 .\"
 .\"
 .SH HISTORY
@@ -1456,6 +1460,10 @@ the process of Driver Update Disk creation along with RHEL 7 support.
 .BR mock (1),
 .BR quilt (1)
 .PP
-.URL http://people.redhat.com/jcm/el6/dup/docs/dup_book.pdf "Jon Masters. Red Hat Driver Update Packages. Official Reference Guide"
+.UR http://people.redhat.com/jcm/el6/dup/docs/dup_book.pdf
+Jon Masters. Red Hat Driver Update Packages. Official Reference Guide
+.UE
 .PP
-.URL https://github.com/orosp/ddiskit/ "ddiskit repository"
+.UR https://github.com/orosp/ddiskit/
+ddiskit project repository
+.UE
