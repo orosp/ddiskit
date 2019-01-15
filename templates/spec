@@ -40,7 +40,7 @@ Epoch:		%{kmod_driver_epoch}
 Summary:	%{SUMMARY}
 Group:		System/Kernel
 License:	GPLv2
-URL:		http://www.kernel.org/
+URL:		https://www.kernel.org/
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildRequires:	kernel-devel = %kmod_kernel_version redhat-rpm-config kernel-abi-whitelists
 ExclusiveArch:	%{KERNEL_ARCH}
