@@ -2045,6 +2045,10 @@ def parse_cli():
                                              "directories in the git " +
                                              "repository that contains " +
                                              "module source files")
+    parser_prepare_sources.add_argument("-M", "--major",
+                                        help="Major distribution version")
+    parser_prepare_sources.add_argument("-m", "--minor",
+                                        help="Minor distribution version")
     parser_prepare_sources.set_defaults(func=cmd_prepare_sources)
 
     # parser for the "generate_spec" command

@@ -12,6 +12,13 @@
 include_srpm = %{global.include_srpm}
 
 ##
+## Behavioural settings and generic/common definitions
+##
+[defaults]
+major = %{defaults.major}
+minor = %{defaults.minor}
+
+##
 ## configuration values for the driver spec file
 ##
 [spec_file]

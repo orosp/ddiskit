@@ -6,6 +6,9 @@
 ## to allow check to work.
 check_git_src = 2
 
+[spec_file]
+rpm_dist = el{defaults.major}_{defaults.minor}
+
 [rpm_gpg_check]
 ## It should be a strict check for release ISOs
 check_level = 3

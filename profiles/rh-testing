@@ -7,6 +7,7 @@
 check_git_src = 2
 
 [spec_file]
+rpm_dist = el{defaults.major}_{defaults.minor}
 description_suffix =
 	This RPM has been provided by Red Hat for testing purposes only and is
 	NOT supported for any other use. This RPM should NOT be deployed for
