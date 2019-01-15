@@ -42,7 +42,8 @@ module_build_dir = %{spec_file.module_build_dir}
 ## RHEL 7.4: 3.10.0-693.el7
 ## RHEL 7.5: 3.10.0-862.el7
 kernel_version = %{spec_file.kernel_version}
-## target kernel exclusive arch (x86_64 ppc64 ppc64le, for example)
+## space-separated list of target architectures
+## (example architectures: aarch64 x86_64 ppc64 ppc64le s390x)
 kernel_arch = %{spec_file.kernel_arch}
 ## Install dependencies
 ## When DUD has firmware enabled, dependency on the firmware RPM will be added
