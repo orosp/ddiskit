@@ -23,6 +23,8 @@ module_name = %{spec_file.module_name}
 ## Module version. It's a good idea to make it equivalent to MODULE_VERSION
 ## value, kernel version or some other versioning scheme used for existing DUPs.
 ## Note that dashes are not allowed here (replace them with underscores).
+## Usually, RPMs that are released as a part of DUP have "_dupX.Y" suffix,
+## in order to signify that they are non-inbox driver updates for RHEL X.Y
 module_version = %{spec_file.module_version}
 ## RPM release version
 module_rpm_release = %{spec_file.module_rpm_release}
