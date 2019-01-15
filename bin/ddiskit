@@ -131,7 +131,7 @@ default_config = {
         "module_version": "ENTER_MODULE_VERSION",
         "module_rpm_release": 1,
         "rpm_dist": "ENTER_RPM_DIST",
-        "kernel_version": "ENTER_KERNEL_VERSION",
+        "kernel_version": "",
         "kernel_arch": "x86_64 ppc64 ppc64le",
         "firmware_include": False,
         "firmware_version": "ENTER_FIRMWARE_VERSION",
@@ -621,6 +621,45 @@ def get_kernel_version(ver, configs):
     return (ret, matched_re == kernel_flex_re)
 
 
+def get_mock_kernel_version(configs):
+    pkg = "kernel-devel"
+    mock_args = get_mock_args(configs)
+    if not configs.get_bool("mock_offline"):
+        ret, out = command(["mock", "-r", mock_args[1]["config"], "--install",
+                            pkg], configs)
+        if ret:
+            log_warn(("Mock returned non-zero status %d when tried " +
+                      "to install %s, output:\n%s") % (ret, pkg, out),
+                      configs)
+            return ""
+
+    ret, out = command(["mock", "-r", mock_args[1]["config"], "--dnf-cmd", "--",
+                        "repoquery", pkg, "--latest-limit", "1",
+                        "--qf", "[DNF] %{NAME} %{VERSION}-%{RELEASE}"], configs,
+                        cmd_print_lvl=2)
+
+    if ret:
+        log_warn(("DNF returned non-zero status %d when queried version " +
+                  "of the \"%s\" package, output:\n%s") % (ret, pkg, out),
+                 configs)
+        return ""
+
+    for l in out.splitlines():
+        if not l.startswith("[DNF]"):
+            continue
+
+        pkg = l.split()
+        if len(pkg) != 3:
+            log_warn("Unexpected output line: \"%s\", skipping" % l, configs)
+        if pkg[1] != pkg:
+            log_warn(("Unexpected output package \"%s\" in line \"%s\", " +
+                      "skipping") % (pkg[1], l), configs)
+
+        return pkg[2]
+
+    return ""
+
+
 def process_configs_for_spec(configs):
     """
     Process configuration before spec file generation.
@@ -656,6 +695,25 @@ def process_configs_for_spec(configs):
 
     # kernel_requires
     kernel_ver_string = configs.get("spec_file.kernel_version", default="")
+
+    if not kernel_ver_string:
+        log_info("Kernel version hasn't been specified, trying to get from " +
+                 "the build environment", configs)
+
+        kernel_ver_string = get_mock_kernel_version(configs) \
+                            if configs.get_bool("mock") \
+                            else get_rpm_kernel_version(configs)
+
+        if kernel_ver_string:
+            log_status("Got kernel version from the mock environment: %s",
+                       configs)
+            configs.set("spec_file.kernel_version", kernel_ver_string)
+        else:
+            log_error("Failed to get kernel version form build environment, " +
+                      "please provide spec_file.kernel_version configuration " +
+                      "parameter manually", configs)
+            return ErrCode.CONFIG_CHECK_ERROR
+
     kernel_ver, flex_deps = get_kernel_version(kernel_ver_string, configs)
 
     kernel_ver_dep_string = configs.get("spec_file.kernel_version_dep")
@@ -759,6 +817,10 @@ def check_config(configs):
                              "matches regular expression \"%s\"" % kernel_y_re,
                              configs, level=0)
                     continue
+                elif not val:
+                    log_warn("Kernel version is not specified, an attempt " +
+                             "will be made to get it from the build " +
+                             "environment", configs)
                 else:
                     kernel_y_re = configs.get("kernel_flex_version_re")
                     log_error(("Invalid kernel version in config file: " +

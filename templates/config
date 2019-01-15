@@ -42,6 +42,7 @@ rpm_dist = %{spec_file.rpm_dist}
 ## same as the subdirectory in the repository.
 module_build_dir = %{spec_file.module_build_dir}
 ## target kernel version (3.10.0-123.el7, for example)
+## when Mock is used, the latest kernel-devel package version is used by default
 ## RHEL 7.0: 3.10.0-123.el7
 ## RHEL 7.1: 3.10.0-229.el7
 ## RHEL 7.2: 3.10.0-327.el7

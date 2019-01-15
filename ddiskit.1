@@ -992,6 +992,16 @@ configuration option contains a Z-stream kernel version
 .I Kernel package versioning scheme
 section for the additional details regarding Y-stream and Z-stream versions).
 .RE
+.IP
+If
+.I spec_file.kernel_version
+configuration option is not set and
+.B mock
+support is enabled, its value is defaulted to the latest version of the
+.B kernel-devel
+package available in the
+.B mock
+environment.
 .IP \(bu
 .I spec_file.module_requires
 is set to
