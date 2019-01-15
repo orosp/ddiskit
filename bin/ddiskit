@@ -457,7 +457,7 @@ def val2bool(val):
 
 
 def command(cmd, configs, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
-            capture_output=True):
+            capture_output=True, capture_stderr=False):
     """
     Execute shell command and return stdout string
     :param cmd: Command
@@ -471,26 +471,32 @@ def command(cmd, configs, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
             args=cmd,
             cwd=cwd,
             close_fds=True,
-            stdout=PIPE if capture_output else None
+            stdout=PIPE if capture_output else None,
+            stderr=PIPE if capture_stderr else None
         )
-        result = process.communicate()[0]
+        result, reserr = process.communicate()
         ret = process.returncode
         if capture_output:
-            result = result.decode()
+            result = result.decode(sys.stdin.encoding or 'utf-8', "replace")
+        if capture_stderr:
+            reserr = reserr.decode(sys.stdin.encoding or 'utf-8', "replace")
     except OSError as err:
         log_error("Got OSError when tried to execute %r (errno %d): %s" %
                   (cmd, err.errno, err.strerror), configs,
                   level=max(1, min(cmd_print_lvl, res_print_lvl)))
         result = ""
+        reserr = ""
         ret = -256 - err.errno
 
     if capture_output:
         log_status(result, configs, level=res_print_lvl)
+    if capture_stderr and reserr:
+        log_status("--- stderr: ---\n" + reserr, configs, level=res_print_lvl)
 
     log_status("  Return code for %r: %d" % (cmd, ret), configs,
                level=cmd_print_lvl)
 
-    return (ret, result)
+    return (ret, result, reserr) if capture_stderr else (ret, result)
 
 # XXX global variable for log_* functions
 need_newline = False
