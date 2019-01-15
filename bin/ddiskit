@@ -2810,6 +2810,9 @@ def main():
         dump_ret = cmd_dump_config(configs)
         ret = ret or dump_ret
 
+    log_info("Command \"%s\" returned \"%r\"" % (args.func.__name__, ret),
+             configs, level=1)
+
     return ret
 
 
