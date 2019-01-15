@@ -1385,7 +1385,7 @@ def cmd_generate_spec(configs, spec_path=None):
 
 def filter_tar_info(configs, nvv):
     def filter_tar_info_args(ti, configs, nvv):
-        ti.mode = 0755 if ti.isdir() else 0644
+        ti.mode = 0o755 if ti.isdir() else 0o644
         ti.uname = "nobody"
         ti.gname = "nobody"
         ti.uid = 0
