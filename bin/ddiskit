@@ -216,7 +216,7 @@ class DDiskitConfig(object):
                                 performed. Providing value of 0 in this
                                 argument allows retrieving raw value.
         :param overrides:       Dict (which is expected to be small) of local
-                                overrides for configuration values. Keys are
+                                overrides for configuration values. Keys
                                 can be dotless strings (in this case they are
                                 assumed to belong to the section provided in
                                 section argument) or contain dot (which is
