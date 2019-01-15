@@ -8,6 +8,7 @@
 %define kmod_kernel_version_dep	%{KERNEL_VERSION_DEP}
 %define kmod_kbuild_dir		%{MODULE_BUILD_DIR}
 %define kmod_dependencies       %{DEPENDENCIES}
+%define kmod_dist_build_deps	%{DIST_BUILD_DEPENDENCIES}
 %define kmod_build_dependencies	%{BUILD_DEPENDENCIES}
 %define kmod_devel_package	%{DEVEL_PACKAGE}
 %define kmod_install_path	%{MODULE_INSTALL_SUBDIR}
@@ -17,6 +18,14 @@
 
 %if "%{kmod_kernel_version_dep}" == ""
 %define kmod_kernel_version_dep %{kmod_kernel_version}
+%endif
+
+%if "%{kmod_dist_build_deps}" == ""
+%if (0%{?rhel} > 7) || (0%{?centos} > 7)
+%define kmod_dist_build_deps redhat-rpm-config kernel-abi-whitelists elfutils-libelf-devel kernel-rpm-macros kmod
+%else
+%define kmod_dist_build_deps redhat-rpm-config kernel-abi-whitelists
+%endif
 %endif
 
 Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
@@ -42,7 +51,10 @@ Group:		System/Kernel
 License:	GPLv2
 URL:		https://www.kernel.org/
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-BuildRequires:	kernel-devel = %kmod_kernel_version redhat-rpm-config kernel-abi-whitelists
+BuildRequires:	kernel-devel = %kmod_kernel_version
+%if "%{kmod_dist_build_deps}" != ""
+BuildRequires:	%{kmod_dist_build_deps}
+%endif
 ExclusiveArch:	%{KERNEL_ARCH}
 %global kernel_source() /usr/src/kernels/%{kmod_kernel_version}.$(arch)
 
