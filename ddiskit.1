@@ -839,6 +839,19 @@ has proper format (only Y-stream and Z-stream kernel versions are accepted,
 see the
 .I Kernel package versioning scheme
 section for the acceptable version string format configuration details).
+.IP \(bu
+Whether
+.IR spec_file.module_name ", " spec_flie.module_version ", and "
+.I spec_file.module_rpm_release
+configuration options contain only characters accepted by RPM
+(alphanumeric plus
+.RB ' . "', '" - "', '" _ "', '" + "', '" % "', '" { "', '" } "'"
+for
+.IR spec_file.module_name ;
+alphanumeric plus
+.RB ' . "', '" _ "', '" + "', '" % "', '" { "', '" } "', '" ~ "'"
+for
+.IR spec_flie.module_version " and " spec_file.module_rpm_release ).
 .\"
 .SS File path evaluation
 Paths to various external resource files (like templates and profiles)

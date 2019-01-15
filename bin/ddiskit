@@ -786,6 +786,15 @@ def check_config(configs):
     :param configs: Configuration object to check.
     :return: Fixed config or None
     """
+    rpmname_char_wl = ".-_+%{}"
+    rpmver_char_wl  = "._+%{}~"
+
+    rpm_char_wl = {
+        "module_name":        rpmname_char_wl,
+        "module_version":     rpmver_char_wl,
+        "module_rpm_release": rpmver_char_wl,
+    }
+
     config_critic = False
     log_status("Checking config ... ", configs)
     for section in ["global", "spec_file"]:
@@ -839,6 +848,13 @@ def check_config(configs):
                     configs.set(key, val, section)
                     log_warn("Trailing \"/\" in module_build_dir, fixing.",
                              configs)
+            elif section == "spec_file" and key in rpm_char_wl:
+                if not all([c.isalnum() or c in rpm_char_wl[key] for c in val]):
+                    log_error(("Incorrect characters in %s.%s: \"%s\" may " +
+                               "contain only alphanumeric characters and " +
+                               "\"%s\"") %
+                              (section, key, val, rpm_char_wl[key]), configs)
+                    config_critic = True
 
     if config_critic:
         log_error("Unrecoverable failure, please fix the aforementioned " +
