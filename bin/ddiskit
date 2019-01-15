@@ -646,7 +646,14 @@ def process_configs_for_spec(configs):
     kernel_ver_string = configs.get("spec_file.kernel_version", default="")
     kernel_ver, flex_deps = get_kernel_version(kernel_ver_string, configs)
 
-    if flex_deps:
+    kernel_ver_dep_string = configs.get("spec_file.kernel_version_dep")
+    kernel_ver_min_string = configs.get("spec_file.kernel_version_min")
+
+    if kernel_ver_min_string:
+        kernel_requires = "Requires:	kernel >= " + kernel_ver_min_string
+    elif kernel_ver_dep_string:
+        kernel_requires = "Requires:	kernel = " + kernel_ver_dep_string
+    elif flex_deps:
         kver = "%s.%s.%s" % (kernel_ver["version"],
                              kernel_ver["patchlevel"],
                              kernel_ver["sublevel"])

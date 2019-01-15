@@ -3,6 +3,8 @@
 %define kmod_driver_version	%{MODULE_VERSION}
 %define kmod_rpm_release	%{MODULE_RPM_RELEASE}
 %define kmod_kernel_version	%{KERNEL_VERSION}
+%define kmod_kernel_version_min	%{KERNEL_VERSION_MIN}
+%define kmod_kernel_version_dep	%{KERNEL_VERSION_DEP}
 %define kmod_kbuild_dir		%{MODULE_BUILD_DIR}
 %define kmod_dependencies       %{DEPENDENCIES}
 %define kmod_build_dependencies	%{BUILD_DEPENDENCIES}
@@ -10,6 +12,10 @@
 
 %{!?dist: %define dist .%{RPM_DIST}}
 %{!?make_build: %define make_build make}
+
+%if "%{kmod_kernel_version_dep}" == ""
+%define kmod_kernel_version_dep %{kmod_kernel_version}
+%endif
 
 Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 %{SOURCE_PATCHES}
@@ -36,7 +42,11 @@ ExclusiveArch:	%{KERNEL_ARCH}
 %global kernel_source() /usr/src/kernels/%{kmod_kernel_version}.$(arch)
 
 %global _use_internal_dependency_generator 0
-Provides:	kernel-modules = %kmod_kernel_version.%{_target_cpu}
+%if "%{?kmod_kernel_version_min}" != ""
+Provides:	kernel-modules >= %{kmod_kernel_version_min}.%{_target_cpu}
+%else
+Provides:	kernel-modules = %{kmod_kernel_version_dep}.%{_target_cpu}
+%endif
 Provides:	kmod-%{kmod_name} = %{?epoch:%{epoch}:}%{version}-%{release}
 Requires(post):	%{sbindir}/weak-modules
 Requires(postun):	%{sbindir}/weak-modules
@@ -62,7 +72,11 @@ Conflicts:	kmod-%{kmod_name}
 Version:	%{FIRMWARE_VERSION}
 Summary:	%{FIRMWARE_SUMMARY}
 Provides:	firmware(%{kmod_name}) = %{FIRMWARE_VERSION}
-Provides:	kernel-modules = %{kmod_kernel_version}.%{_target_cpu}
+%if "%{kmod_kernel_version_min}" != ""
+Provides:	kernel-modules >= %{kmod_kernel_version_min}.%{_target_cpu}
+%else
+Provides:	kernel-modules = %{kmod_kernel_version_dep}.%{_target_cpu}
+%endif
 %description -n  %{RPM_NAME}-firmware
 %{FIRMWARE_DESCRIPTION_CONTENT}
 
@@ -100,7 +114,7 @@ exit 0
 # We have to re-implement part of weak-modules here because it doesn't allow
 # calling initramfs regeneration separately
 if [ -f "%{kver_state_file}" ]; then
-	kver_base="%{kmod_kernel_version}"
+	kver_base="%{kmod_kernel_version_dep}"
 	kvers=$(ls -d "/lib/modules/${kver_base%%.*}"*)
 
 	for k_dir in $kvers; do
@@ -188,7 +202,7 @@ for modules in $( find obj/%{kmod_kbuild_dir} -name "*.ko" -type f -printf "%{fi
 	else
 		module_weak_path=%{name}/$module_weak_path
 	fi
-	echo "override $(echo $modules | sed 's/.*\///') $(echo %{kmod_kernel_version} | sed 's/\.[^\.]*$//').* weak-updates/$module_weak_path" >> source/depmod.conf
+	echo "override $(echo $modules | sed 's/.*\///') $(echo %{kmod_kernel_version_dep} | sed 's/\.[^\.]*$//').* weak-updates/$module_weak_path" >> source/depmod.conf
 
 	# update greylist
 	nm -u obj/%{kmod_kbuild_dir}/$modules.ko | sed 's/.*U //' |  sed 's/^\.//' | sort -u | while read -r symbol; do

@@ -658,7 +658,10 @@ configuration options is set to
 .IP \(bu
 Whether
 .I spec_file.kernel_version
-has proper format (only Y-stream and Z-stream kernel versions are accepted).
+has proper format (only Y-stream and Z-stream kernel versions are accepted,
+see the
+.I Kernel package versioning scheme
+section for the acceptable version string format configuration details).
 .\"
 .SS File path evaluation
 Paths to various external resource files (like templates and profiles)
@@ -777,19 +780,41 @@ is set to the current date and time in "%a %b %d %Y"
 format, if this variable hasn't been set already.
 .IP \(bu
 .I spec_file.kernel_requires
-is formatted as
+is formatted as following (if the variable hasn't been set already):
+.RS
+.IP \(bu 3
+if the
+.I spec_file.kernel_version_min
+configuration option contains a non-empty value, it is set to
+.CS
+Requires:    kernel >= \fIspec_file.kernel_version_min\fR
+.CE
+.IP \(bu 3
+otherwise, if the
+.I spec_file.kernel_version_dep
+configuration option contains a non-empty value, it is set to
+.CS
+Requires:    kernel = \fIspec_file.kernel_version_dep\fR
+.CE
+.IP \(bu 3
+otherwise, it is set to
 .CS
 Requires:    kernel >= \fIkernel_version\fR-\fIkernel_release\fR.\fIkernel_dist\fR
 Requires:    kernel <  \fIkernel_version\fR-\fI(kernel_release + 1)\fR.\fIkernel_dist\fR
 .CE
-for the Y-stream kernel version, and
+if the
+.I spec_file.kernel_version
+configuration option contains a Y-stream kernel version, or
 .CS
 Requires:    kernel = \fIkernel_version\fR-\fIkernel_release\fR.\fIkernel_dist\fR
 .CE
-for the Z-stream kernel version, if the variable hasn't been set already
+if the
+.I spec_file.kernel_version
+configuration option contains a Z-stream kernel version
 (please refer to the
 .I Kernel package versioning scheme
 section for the additional details regarding Y-stream and Z-stream versions).
+.RE
 .IP \(bu
 .I spec_file.module_requires
 is set to
