@@ -6,6 +6,27 @@
 ## to allow check to work.
 check_git_src = 2
 
+# Directory in {git_dir} where kABI DUP symbols are placed
+kabi_dest_dir = redhat/kabi/kabi-dup-module/kabi_{arch}/
+symvers_symbol_re = ^\s*(?P<ver>\S+)\s+(?P<symbol>\S+)\s+(?P<file>\S+)\s(?P<export>\S+)\s*$
+kabi_check_symvers_conflicts = 2
+kabi_file_name_pattern = {sym}
+kabi_file_template = #{minor}-
+	{ver}	{sym}	{kernel_file}	{kernel_export}
+
+kabi_commit_log_template = {ver} {sym} ({kmod_file}) [{arch}]
+kabi_commit_message =
+	[redhat] kabi: Add {spec_file.module_name} DUP symbols to kabi-dup-module list
+
+	Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id={spec_file.z-stream}
+	Build: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID={brew_build_id}
+
+	Description: This patch adds non-whitelisted symbols used by the
+	{spec_file.module_name} kernel module released as a part of Driver Update
+	Program for RHEL {major}.{minor}.  The purpose of this list is to ensure that
+	none of the symbols used by the released DUP modules will be changed
+	during the Z-stream lifetime.
+
 [spec_file]
 rpm_dist = el{defaults.major}_{defaults.minor}
 

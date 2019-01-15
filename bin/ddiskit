@@ -21,7 +21,7 @@ import tarfile
 import tempfile
 import time
 from datetime import datetime
-from subprocess import PIPE, Popen
+from subprocess import PIPE, Popen, STDOUT
 try:
     import configparser
 except ImportError:
@@ -52,6 +52,9 @@ class ErrCode:
     GPG_SIGNATURE_CHECK_ERROR = 7
     GIT_CHECKOUT_ERROR = 8
     SPEC_CHECK_ERROR = 9
+    KABI_SYMBOL_CONFLICT_CHECK_ERROR = 10
+    GIT_ADD_ERROR = 11
+    GIT_COMMIT_ERROR = 12
 
     GENERIC_IO_ERROR = 32
     CONFIG_READ_ERROR = 34
@@ -69,6 +72,7 @@ class ErrCode:
 class QuiltCmd:
     APPLY = 0
     DEAPPLY = 1
+
 
 RES_DIR = "/usr/share/ddiskit/"
 TEMPLATE_DIR = "{res_dir}/templates"
@@ -497,6 +501,7 @@ def command(cmd, configs, cwd=None, cmd_print_lvl=1, res_print_lvl=2,
                level=cmd_print_lvl)
 
     return (ret, result, reserr) if capture_stderr else (ret, result)
+
 
 # XXX global variable for log_* functions
 need_newline = False
@@ -1679,6 +1684,16 @@ def rpm_get_arch(pkg, configs):
     return arch
 
 
+def rpm_get_requires(pkg, configs):
+    ret, deps = command(['rpm'] + rpm_verbosity_opts(configs) + ['-qRp', pkg],
+                        configs, cmd_print_lvl=2)
+
+    if ret:
+        return None
+
+    return deps
+
+
 def rpm_check_gpg(pkg, configs):
     """
     Performs checking of RPM's GPG signature.
@@ -1996,6 +2011,471 @@ def cmd_dump_config(configs):
     return ErrCode.SUCCESS
 
 
+# So far, we only check machine and endianness
+elf_machines = {
+    ("AArch64", "2's complement, little endian"): "aarch64",
+    ("Advanced Micro Devices X86-64", "2's complement, little endian"):
+        "x86_64",
+    ("Intel 80386", "2's complement, little endian"): "i386",
+    ("PowerPC64", "2's complement, big endian"): "ppc64",
+    ("PowerPC64", "2's complement, little endian"): "ppc64le",
+    ("IBM S/390", "2's complement, big endian"): "s390x",
+}
+elf_machine_re = re.compile('^  Machine:\s+(?P<machine>.*)$', re.MULTILINE)
+elf_endianness_re = re.compile('^  Data:\s+(?P<data>.*)$', re.MULTILINE)
+
+
+def get_kmod_modvers(configs, path, rpm=None):
+    log_status("    Processing \"%s\"%s as a kmod..." %
+               (path, " (inside \"%s\")" % rpm if rpm else ""),
+               configs, level=1)
+
+    # Checking that the file is a kmod using modinfo tool.  Apparently,
+    # modprobe --dump-modversions doesn't return erorr on *.ko.debug,
+    # but produces garbage.
+    ret, _, _ = command(["/sbin/modinfo", path],
+                        configs, cmd_print_lvl=2, capture_stderr=True)
+    if ret:
+        return None
+
+    ret, out = command(["readelf", "-h", path], configs, cmd_print_lvl=2)
+    if ret:
+        return None
+
+    machine = elf_machine_re.search(out)
+    endianness = elf_endianness_re.search(out)
+    if machine is None or endianness is None:
+        log_warn("Can't find \"Machine:\" and/or \"Data:\" tags in " +
+                 "readelf -h output:\n%s" % out, configs)
+
+        return None
+
+    machine = machine.group("machine")
+    endianness = endianness.group("data")
+    arch = elf_machines.get((machine, endianness))
+    if arch is None:
+        log_warn(("Unknown machine/data combination, can't detect kmod arch:" +
+                  " machine \"%s\", data \"%s\"") % (machine, endianness),
+                 configs)
+
+        return None
+
+    ret, out = command(["/sbin/modprobe", "--dump-modversions", path],
+                       configs, cmd_print_lvl=2)
+    if ret:
+        log_warn("modprobe failed to dump modversions for \"%s\"" % path,
+                 configs)
+
+        return None
+
+    ret = []
+    for line in out.split('\n'):
+        if not line:
+            continue
+
+        parts = line.split('\t', 1)
+
+        if len(parts) != 2:
+            log_warn(("Unexpected string in modprobe --dump-modversions " +
+                      "output: \"%s\"") % line, configs)
+            continue
+
+        ret.append((parts[1], {"arch": arch, "ver": parts[0],
+                               "files": [os.path.basename(path)]
+                               if rpm is None else
+                               ["%s:%s" % (os.path.basename(rpm),
+                                           os.path.basename(path))]}))
+
+    return ret
+
+
+def extract_kmods(configs, path):
+    ret = None
+
+    dir_tmp = tempfile.mkdtemp()
+
+    log_status("    Trying to extract files from RPM \"%s\"..." % path,
+               configs, level=1)
+
+    rpm2cpio = Popen(args=["rpm2cpio", path], stdout=PIPE, stderr=PIPE,
+                     close_fds=True)
+    cpio = Popen(args=["cpio", "-idmv", "*.ko*"], cwd=dir_tmp,
+                 stdin=rpm2cpio.stdout, stdout=PIPE, stderr=STDOUT)
+    out, cpio_stderr = cpio.communicate()
+    rpm2cpio_out, rpm2cpio_err = rpm2cpio.communicate()
+
+    rpm2cpio_ret = rpm2cpio.returncode
+    cpio_ret = cpio.returncode
+
+    log_info("rpm2cpio exit code: %d, cpio exit code: %d" %
+             (rpm2cpio_ret, cpio_ret), configs)
+    if rpm2cpio_err:
+        log_info("rpm2cpio stderr:\n%s" % rpm2cpio_err, configs, level=3)
+    if out:
+        log_info("cpio output:\n%s" % out, configs, level=3)
+    if cpio_stderr:
+        log_info("cpio stderr:\n%s" % cpio_stderr, configs, level=3)
+
+    if rpm2cpio_ret == 0 and cpio_ret == 0:
+        ret = []
+
+        for f in file_walk([dir_tmp]):
+            kmod_modvers = get_kmod_modvers(configs, f, rpm=path)
+
+            if kmod_modvers is not None:
+                ret += kmod_modvers
+
+    shutil.rmtree(dir_tmp)
+
+    return ret
+
+
+sym_dep_re = re.compile(r'^([\w,]+: )?(kernel|ksym)\((?P<sym>[^)]+)\)' +
+                        r'\s+=\s+(?P<ver>.*)$')
+
+
+def get_rpm_modvers(configs, path):
+    log_status("    Processing \"%s\" as an RPM..." % path, configs, level=1)
+
+    extract_kmod = configs.get_bool("kabi_use_rpm_ko", default=False)
+
+    if extract_kmod:
+        return extract_kmods(configs, path)
+
+    ret = []
+
+    arch = rpm_get_arch(path, configs)
+    deps = rpm_get_requires(path, configs)
+
+    if arch is None or deps is None:
+        return None
+
+    for dep in deps.split('\n'):
+        m = sym_dep_re.match(dep)
+        if m is None:
+            continue
+
+        ret.append((m.group("sym"),
+                   {"arch": arch,  "ver": m.group("ver"),
+                    "files": [os.path.basename(path)]}))
+
+    return ret
+
+
+def tristate(configs, val, error, question, warning):
+    """
+    Helper for handling abort/ask/continue tri-state configuration options.
+    """
+
+    if val == 2:
+        log_error(error, configs)
+        return False
+    elif val == 1:
+        return val2bool(raw_input(question))
+    elif val == 0:
+        log_warn(warning, configs)
+        return True
+
+
+def cmd_update_kabi(configs):
+    git_repo = configs.get("git_dir")
+    arch_set = set()
+
+    symver_pattern_str = configs.get("symvers_symbol_re")
+    symver_pattern = re.compile(symver_pattern_str)
+
+    overwrite = int(configs.get("kabi_files_overwrite", default=1))
+    check_conflicts = int(configs.get("kabi_check_symvers_conflicts",
+                                      default=1))
+
+    commit = configs.get_bool("kabi_commit", default=False)
+    commit_log = []
+    commit_list = []
+
+    if git_repo:
+        # We presume that this is not a bare repo
+        if os.path.basename(git_repo) == ".git":
+            # Formally, we have to check core,worktree here
+            parent_dir = os.path.dirname(git_repo)
+        else:
+            parent_dir = git_repo
+    else:
+        parent_dir = ""
+
+        if commit:
+            log_warn(("Git repository setting (%s) is not correct, "
+                     "commit to it is not possible") % git_repo, configs)
+            commit = 0
+
+    result_kabi = {}
+
+    log_status("Scanning files for kenel symbol dependencies...", configs)
+
+    files_total = 0
+    files_added = 0
+    symbols_found = 0
+    # Parse input files
+    for f in file_walk(configs.get("filelist")):
+        files_total += 1
+        log_status("  Scanning \"%s\" for kernel symbol dependencies" % f,
+                   configs, level=1)
+        modvers = get_rpm_modvers(configs, f)
+
+        if modvers is None:
+            (log_warn if f.endswith(".rpm") else log_info)(
+                    "Failed to parse file \"%s\" as an RPM" % f, configs)
+            modvers = get_kmod_modvers(configs, f)
+
+        if modvers is None:
+            (log_warn if f.endswith((".ko", ".ko.gz", ".ko.xz")) else
+             log_info)(
+                    "Failed to parse file \"%s\" as a kmod" % f, configs)
+
+            continue
+
+        files_added += 1
+        for sym, val in modvers:
+            arch = val["arch"]
+            if arch in result_kabi and sym in result_kabi[arch]:
+                if val["ver"] != result_kabi[arch][sym]["ver"]:
+                    msg = ("Conflicting versions for symbol \"%s\" (%s): " +
+                           "version is %s in %s, but \"%s\" in %s") % \
+                              (sym, arch, val["ver"], ", ".join(val["files"]),
+                               result_kabi[sym]["ver"],
+                               result_kabi[sym]["file_list"])
+                    continue
+                else:
+                    result_kabi[arch][sym]["files"] += val["files"]
+                    result_kabi[arch][sym]["file_list"] = \
+                        ", ".join(result_kabi[sym]["files"])
+
+            log_status(("    Adding symbol \"%s\" on architecture %s with " +
+                        "version \"%s\" from file \"%s\"") %
+                       (sym, arch, val["ver"], f), configs, level=2)
+
+            symbols_found += 1
+            if arch not in result_kabi:
+                result_kabi[arch] = {}
+            result_kabi[arch][sym] = val
+            result_kabi[arch][sym]["file_list"] = \
+                ", ".join(result_kabi[arch][sym]["files"])
+            arch_set.add(arch)
+
+    log_status("%d files scanned, added %d symbols (%s) from %d files" %
+               (files_total, symbols_found,
+                ", ".join(["%d unique on %s" % (len(s), a) for a, s in
+                           result_kabi.iteritems()]), files_added),
+               configs)
+
+    log_status("Scanning files for kenel symbol dependencies...", configs)
+
+    # Used for both Module.symvers and kABI whitelist
+    def parse_symvers_file(param, desc):
+        filenames = {}
+        ret = {}
+
+        for arch in arch_set:
+            filenames[arch] = configs.get(param, overrides={"arch": arch})
+
+            with open(filenames[arch], 'r') as f:
+                log_status("  Processing %s file \"%s\"..." %
+                           (desc, filenames[arch]), configs, level=2)
+                symvers = ret[arch] = {}
+
+                line_count = 0
+                for l in f.readlines():
+                    line_count += 1
+                    if l == "":
+                        break
+                    if l.endswith("\n"):
+                        l = l[:-1]
+                    m = symver_pattern.match(l)
+                    if not m:
+                        log_error(("Malformed record in Module.symvers (%s):" +
+                                   " \"%s\" doesn't match \"%s\"") %
+                                  (filenames[arch], symver_pattern_str, l),
+                                  configs)
+                        continue
+
+                    # ver, symbol, file, export
+                    parts = m.groupdict()
+
+                    if parts["symbol"] in symvers:
+                        log_warn(("Duplicate Module.symvers record (in " +
+                                  "\"%s\"): existing \"%s\", new \"%s\". " +
+                                  "Skipping.") % (filenames[arch],
+                                 symvers[parts["symbol"]]["str"], l))
+                        continue
+
+                    symvers[parts["symbol"]] = parts
+                    symvers[parts["symbol"]]["str"] = l
+                    symvers[parts["symbol"]]["line"] = line_count
+
+        return (filenames, ret)
+
+    symvers_path, kernel_symvers = parse_symvers_file("symvers_path",
+                                                      "module symvers")
+
+    log_status("%s module symvers files loaded, %s symbols total" %
+               (len(symvers_path),
+                sum([len(x) for x in kernel_symvers.itervalues()])),
+               configs)
+
+    whitelist_path = {}
+    whitelist = {}
+    if configs.get("kabi_whitelist") is not None:
+        whitelist_path, whitelist = parse_symvers_file("kabi_whitelist",
+                                                       "kABI whitelist")
+
+        log_status("%s kABI whitelist files loaded, %s symbols total" %
+                   (len(whitelist_path),
+                    sum([len(x) for x in whitelist.itervalues()])),
+                   configs)
+
+    log_status("Generating output files...", configs)
+
+    def map_map_iterator(m):
+        for sm in m.itervalues():
+            for k, v in sm.iteritems():
+                yield k, v
+
+    # Generate resulting files
+    # Mandatory symbol fields: ver, files, arch
+    # Optional symbol fields: kmod
+    for sym, val in map_map_iterator(result_kabi):
+        file_list = val["file_list"]
+        ver = val["ver"]
+        arch = val["arch"]
+
+        if sym not in kernel_symvers[arch]:
+            log_warn(("Symbol \"%s\" (%s, from %s) is not present in " +
+                      "Module.symvers (%s), skipping") % (sym, arch,
+                     file_list, symvers_path[arch]), configs)
+            continue
+
+        if arch in whitelist and sym in whitelist[arch]:
+            wl_sym = whitelist[arch][sym]
+
+            if ver != wl_sym["ver"]:
+                msg = ("Discovered a discrepancy between version of symbol " +
+                       "\"%s\" in files %s (%s) and kABI whitelist (%s, from" +
+                       " %s, line %d)") % (sym, file_list, ver, wl_sym["ver"],
+                                           whitelist_path[arch],
+                                           wl_sym["line"])
+
+                if not tristate(check_conflicts, msg + ", aborting",
+                                msg + ", continue (y/n)? ", msg):
+                    return ErrCode.KABI_SYMBOL_CONFLICT_CHECK_ERROR
+            else:
+                log_info(("Symbol \"%s\" (%s, from %s) is already present in" +
+                          " kABI whitelist (%s, line %d), skipping") %
+                         (sym, arch, file_list, whitelist_path[arch],
+                         wl_sym["line"]), configs)
+            continue
+
+        kernel_sym = kernel_symvers[arch][sym]
+
+        if ver != kernel_sym["ver"]:
+            msg = ("Discovered a discrepancy between version of symbol "
+                   "\"%s\" in files %s (%s) and Module.symvers (%s, from %s," +
+                   " line %d)") % (sym, file_list, ver, kernel_sym["ver"],
+                                   symvers_path[arch], kernel_sym["line"])
+
+            if not tristate(check_conflicts, msg + ", aborting",
+                            msg + ", continue (y/n)? ", msg):
+                return ErrCode.KABI_SYMBOL_CONFLICT_CHECK_ERROR
+
+        overrides = {
+            "sym": sym,
+            "arch": arch,
+            "ver": ver,
+            "kmod_file": file_list,
+            "kernel_file": kernel_sym["file"],
+            "kernel_export": kernel_sym["export"],
+        }
+
+        out_path = os.path.join(parent_dir,
+                                configs.get("kabi_dest_dir",
+                                            overrides=overrides),
+                                configs.get("kabi_file_name_pattern",
+                                            default=sym, overrides=overrides))
+        write_path = out_path
+
+        if not os.path.exists(os.path.dirname(out_path)):
+            os.makedirs(os.path.dirname(out_path))
+
+        if os.path.exists(out_path):
+            if overwrite == 0:
+                log_warn("kABI file overwrite disabled, skipping \"%s\"" %
+                         out_path, configs)
+                continue
+            elif overwrite == 1:
+                write_path = tempfile.mkstemp(".kabi", sym)[1]
+            else:
+                log_info("kABI file \"%s\" already exists, overwriting" %
+                         out_path)
+
+        with open(write_path, 'w') as f:
+            kabi_record = configs.get("kabi_file_template", default="",
+                                      overrides=overrides)
+
+            # Files should have \n at the end
+            if not kabi_record.endswith('\n'):
+                kabi_record += '\n'
+
+            f.write(kabi_record)
+
+        if write_path != out_path:
+            command(["git", "diff", "--patch", "--no-index", "--",
+                     out_path, write_path],
+                    configs, cmd_print_lvl=2, capture_output=False)
+
+            if val2bool(raw_input(
+                    "Do you want to overwrite the file (y/n)? ")):
+                shutil.move(write_path, out_path)
+            else:
+                os.unlink(write_path)
+                continue
+
+        commit_log.append(configs.get("kabi_commit_log_template",
+                                      overrides=overrides))
+        commit_list.append(out_path)
+
+    log_status("%d files created." % len(commit_list), configs)
+
+    commit_message = configs.get("kabi_commit_message", default="", overrides={
+            "kabi_commit_log": "\n".join(commit_log)})
+
+    if commit:
+        if len(commit_list) == 0:
+            log_status("Nothing to commit, skipping.", configs)
+            return ErrCode.SUCCESS
+
+        log_status("Adding %d files to git..." % len(commit_list), configs)
+        ret = command(["git", "--git-dir=%s" % git_repo,
+                       "--work-tree=%s" % parent_dir, "add", ] + commit_list,
+                      configs, capture_output=False, cmd_print_lvl=2)[0]
+
+        if ret:
+            log_error("Got error when tried to add kABI files, aborting.")
+            return ErrCode.GIT_ADD_ERROR
+
+        log_status("Commit...", configs)
+        ret = command(["git", "--git-dir=%s" % git_repo,
+                       "--work-tree=%s" % parent_dir, "commit",
+                       "-m", commit_message, "--", ] + commit_list,
+                      configs, capture_output=False, cmd_print_lvl=2)[0]
+
+        if ret:
+            log_error("Got an error when tried to make a git commit, " +
+                      "aborting.", configs)
+            return ErrCode.GIT_COMMIT_ERROR
+
+    log_status("Done.", configs)
+
+    return ErrCode.SUCCESS
+
+
 def parse_cli():
     """
     Commandline argument parser
@@ -2120,6 +2600,79 @@ def parse_cli():
                                     help="Name of config dump file")
     parser_dump_config.set_defaults(func=cmd_dump_config)
 
+    # parser for the "update_kabi" command
+    parser_update_kabi = cmdparsers.add_parser('update_kabi',
+                                               help='Update RHEL kABI' +
+                                                    'whitelist')
+    parser_update_kabi.add_argument("-c", "--config", default='module.config',
+                                    help="Config file")
+    parser_update_kabi.add_argument("-g", "--git-dir",
+                                    help="Directory containing source " +
+                                         "repository")
+    parser_update_kabi.add_argument("-d", "--kabi-dest-dir",
+                                    help="Destination directory where new " +
+                                         "whitelist entry files should be " +
+                                         "created")
+    parser_update_kabi.add_argument("-e", "--extract-kmod",
+                                    action="store_const",
+                                    dest="kabi_use_rpm_ko", const=True,
+                                    help="Use modvers of *.ko inside RPM " +
+                                         "instead of RPM requires")
+    parser_update_kabi.add_argument("-E", "--no-extract-kmod",
+                                    action="store_const",
+                                    dest="kabi_use_rpm_ko", const=False,
+                                    help="Use RPM Requires: field instead of" +
+                                         " modvers of the included kmods")
+    parser_update_kabi.add_argument("-o", "--overwrite",
+                                    action="store_const",
+                                    dest="kabi_files_overwrite", const=2,
+                                    help="Overwrite existing kABI files")
+    parser_update_kabi.add_argument("-O", "--no-overwrite",
+                                    action="store_const",
+                                    dest="kabi_files_overwrite", const=0,
+                                    help="Do not overwrite existing kABI " +
+                                         "files ")
+    parser_update_kabi.add_argument("-i", "--overwrite-interactive",
+                                    action="store_const",
+                                    dest="kabi_files_overwrite", const=1,
+                                    help="Ask for kABI file overwrite")
+    parser_update_kabi.add_argument("-t", "--commit", action="store_const",
+                                    dest="kabi_commit", const=True,
+                                    help="Commit changes on success")
+    parser_update_kabi.add_argument("-n", "--no-commit", action="store_const",
+                                    dest="kabi_commit", const=False,
+                                    help="Commit changes on success")
+    parser_update_kabi.add_argument("-m", "--kabi-commit-message",
+                                    help="Commit message")
+    parser_update_kabi.add_argument("-M", "--symvers-path",
+                                    help="Path to a relevant Module.symvers " +
+                                         "file")
+    parser_update_kabi.add_argument("-b", "--break-on-errors",
+                                    dest="kabi_check_symvers_conflicts",
+                                    action="store_const", const=2,
+                                    help="Abort processing if a symbol " +
+                                         "version conflict is discovered")
+    parser_update_kabi.add_argument("-B", "--no-break-on-version-conflicts",
+                                    dest="kabi_check_symvers_conflicts",
+                                    action="store_const", const=0,
+                                    help="Continue processing even if " +
+                                         "a symbol version conflict is " +
+                                         "discovered")
+    parser_update_kabi.add_argument("-a", "--ask-on-version-conflicts",
+                                    dest="kabi_check_symvers_conflicts",
+                                    action="store_const", const=1,
+                                    help="Ask whether to continue processing" +
+                                         " if a symbol version conflict " +
+                                         "is discovered")
+    parser_update_kabi.add_argument("-w", "--kabi-whitelist",
+                                    help="Whitelist file, for excluding kABI" +
+                                         " symbols that are added already")
+    parser_update_kabi.add_argument("filelist", nargs="*",
+                                    default=["rpm/RPMS/", "rpm/SRPMS/"],
+                                    help="File list (*.rpm/*.ko), whitespace" +
+                                         " separated")
+    parser_update_kabi.set_defaults(func=cmd_update_kabi)
+
     args = root_parser.parse_args()
     if not hasattr(args, "func"):
         root_parser.print_help()
@@ -2156,6 +2709,7 @@ def main():
         ret = ret or dump_ret
 
     return ret
+
 
 if __name__ == "__main__":
     sys.exit(main())

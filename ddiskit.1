@@ -421,6 +421,137 @@ Configuration option name:
 .br
 Default value: none; "{config}.generated" is a hard-coded default.
 .\"
+.SS Options for update_kabi action
+.TP
+\fB-c\fR \fICONFIG\fR, \fB--config\fR \fICONFIG\fR
+Path to the module configuration file.
+.IP
+Configuration option name:
+.I defaults.config
+.br
+Default value: "module.config"
+.TP
+\fB-g\fR \fIGIT_DIRECTORY\fR, \fB--git-dir\fR \fIGIT_DIRECTORY\fR
+Path to
+.B .git
+directory containing repository from where source files should be checked out.
+.IP
+Configuration option name:
+.I defaults.git_dir
+.br
+Default value: none
+.TP
+\fB-d\fR \fIKABI_DIRECTORY\fR, \fB--kabi-dest-dir\fR \fIKABI_DIRECTORY\fR
+Path to kABI symbol information files directory withing kernel source tree
+that is ought to be updated.
+.IP
+Configuration option name:
+.I defaults.kabi_dest_dir
+.br
+Default value: none
+.TP
+\fB-e\fR, \fB--extract-kmod\fR
+Extract kmods from RPMs and use their modversion data instead of
+RPM "\fBRequires\fR" tags.
+The option sets
+.I defaults.kabi_use_rpm_ko
+configuration option to
+.BR True .
+.TP
+\fB-E\fR, \fB--no-extract-kmod\fR
+Do not extract kmods from RPM and use data provided in "\fBRequires\fR" tags
+instead.
+The option sets
+.I defaults.kabi_use_rpm_ko
+configuration option to
+.BR False .
+.TP
+\fB-o\fR, \fB--overwrite\fR
+Overwrite existing kABI symbol information files.
+The option sets
+.I defaults.kabi_files_overwrite
+configuration option to
+.BR 2 .
+.TP
+\fB-O\fR, \fB--no-overwrite\fR
+Do not overwrite existing kABI symbol information files.
+The option sets
+.I defaults.kabi_files_overwrite
+configuration option to
+.BR 0 .
+.TP
+\fB-i\fR, \fB--overwrite-interactive\fR
+Ask user when a possibility of existing kABI symbol information file overwrite
+appears.
+The option sets
+.I defaults.kabi_files_overwrite
+configuration option to
+.BR 1 .
+.TP
+\fB-t\fR, \fB--commit\fR
+Perform create a git commit with the affected kABI symbol files on success.
+The option sets
+.I defaults.kabi_commit
+configuration option to
+.BR True .
+.TP
+\fB-n\fR, \fB--no-commit\fR
+Do not perform create a git commit with the affected kABI symbol files
+on success.
+The option sets
+.I defaults.kabi_commit
+configuration option to
+.BR False .
+.TP
+\fB-m\fR \fIMESSAGE\fR, \fB--kabi-commit-message\fR \fIMESSAGE\fR
+Commit message that is supplied for the git commit with the affected kABI
+symbol files.
+.IP
+Configuration option name:
+.I defaults.kabi_commit
+.br
+Default value: none
+.TP
+\fB-M\fR \fISYMVERS_PATH\fR, \fB--symvers-path\fR \fISYMVERS_PATH\fR
+Path to a relevant kernel's Module.symvers file (for example,
+"/usr/src/kernels/\fIKERNEL_VERSION\fR.{arch}/Module.symvers",
+present in the \fBkernel-devel\fR RPM).
+.IP
+Configuration option name:
+.I defaults.symvers_path
+.br
+Default value: none
+.TP
+\fB-w\fR \fIWHITELIST_PATH\fR, \fB--kabi-whitelist\fR \fIWHITELIST_PATH\fR
+Path to a file containing a list of symbols already white listed,
+in \fBModule.symvers\fR format.
+.IP
+Configuration option name:
+.I defaults.kabi_whitelist
+.br
+Default value: none
+.TP
+\fB-b\fR, \fB--break-on-errors\fR
+Abort when a symbol version conflict is discovered.
+The option sets
+.I defaults.kabi_check_symvers_conflicts
+configuration option to
+.BR 2 .
+.TP
+\fB-B\fR, \fB--no-break-on-version-conflicts\fR
+Continue processing even if a symbol version conflict is discovered.
+The option sets
+.I defaults.kabi_check_symvers_conflicts
+configuration option to
+.BR 0 .
+.TP
+\fB-a\fR, \fB--ask-on-version-conflicts\fR
+Ask user what to do when a symbol version conflict is discovered.
+The option sets
+.I defaults.kabi_check_symvers_conflicts
+configuration option to
+.BR 1 .
+.\"
 .\"
 .SH CONFIGURATION
 Configuration is a sectioned key-value store, with values being strings and
@@ -1137,6 +1268,118 @@ Output file for the dump is set in the
 .I defaults.dump_config_name
 option.
 .\"
+.SS update_kabi
+Generate files with kABI symbol information in the Red Hat Enterprise Linux
+kernel git repository and optionally commit the changes.
+The action processes kmods and RPMs provided in the positional arguments,
+collecting versions (checksums) of symbols present in module information
+sections and/or "\fBRequires\fR" RPM tags, and adds to the git repository files
+corresponding to symbols not yet added into it.
+The process is controlled via the following configuration options:
+.TP
+.I defaults.kabi_use_rpm_ko
+Whether to process kmod files inside the provided RPMs
+instead of RPM files themselves.
+.TP
+.IR defaults.symvers_symbol_re " (string)"
+Regular expression used for parsing lines in symvers files.
+Expected to contain
+.BR ver ", " symbol ", " file ", and " export
+groups.
+.TP
+.IR defaults.kabi_files_overwrite " (int)"
+Whether to overwrite kABI files if the files with the same name already exist.
+Can take the following values:
+.RS
+.TP 3
+.B 0
+Do not overwrite existing kABI files.
+.TQ
+.B 1
+Ask user on each possible overwrite.
+.TQ
+.B 2
+Overwrite existing kABI files.
+.RE
+.TP
+.IR defaults.kabi_check_symvers_conflicts " (int)"
+Whether to abort the action when a symbol version conflict
+(between newly added symbol and Module.symvers or kABI white list) is detected.
+Can take the following values:
+.RS
+.TP 3
+.B 0
+Continue processing.
+.TQ
+.B 1
+Ask user on each occesion.
+.TQ
+.B 2
+Abort the action.
+.RE
+.TP
+.IR defaults.kabi_commit " (bool)"
+Whether to commit the changes at the end of the successful kABI files update.
+.TP
+.IR defaults.symvers_path " (string) [1]"
+Path to the kernel's \fBModule.symvers\fR file.
+.TP
+.IR defaults.kabi_whitelist " (string) [1]"
+Path to the kABI white list (in \fBModule.symvers\fR format).
+.TP
+.IR defaults.git_dir " (string)"
+Path to the kernel's git repository.
+.TP
+.IR defaults.kabi_dest_dir " (string) [2]"
+Path in the kernel's repository to the directory with kABI symbol files.
+.TP
+.IR defaults.kabi_file_name_pattern " (string) [2]"
+Name of a kABI symbol file.
+.TP
+.IR defaults.kabi_file_template " (string) [2]"
+Contents template of a kABI symbol file.
+.TP
+.IR defaults.kabi_commit_log_template " (string) [2]"
+Template of a line in the commit log regarding specific kABI symbol file.
+.TP
+.IR defaults.kabi_commit_message " (string) [2]"
+Commit message used for the git commit, if
+.I defaults.kabi_commit
+configuration option is enabled.
+.PP
+Notes:
+.TP 4
+[1]
+The \fIarch\fR variable is overridden with with architecture of the kmod
+currently being processed ("\fBx86_64\fR" or "\fBppc64le\fR", for example).
+.TP
+[2]
+There are multiple overrides take place during evaluation of the values:
+.RS
+.TP 15
+.I sym
+Symbol being processed.
+.TQ
+.I arch
+Architecture of the kmod being processed.
+.TQ
+.I ver
+Version (checksum) of the symbol being processed.
+.TQ
+.I kmod_file
+File name of the kmod being processed.
+.TQ
+.I kernel_file
+Path to the file inside the kernel tree that contains the definition
+of the symbol being processed.
+.TQ
+.I kernel_export
+Type of the export ("\fBEXPORT_SYMBOL\fR", for example).
+.RE
+.PP
+As of now, the \fBrh-release\fR profile contains some useful default values
+for the aforementioned configuration options.
+.\"
 .\"
 .SH QUILT INTEGRATION
 .B ddiskit
@@ -1434,6 +1677,25 @@ problem occurred during git checkout of source files.
 .TP
 .B 9
 problem occurred during spec file comparison.
+.TP
+.B 10
+symbol version (checksum) conflict occurred
+.RI ( update_kabi
+action).
+.TP
+.B 11
+problem occurred during
+.B git add
+invocation
+.RI ( update_kabi
+action).
+.TP
+.B 12
+problem occurred during
+.B git commit
+invocation
+.RI ( update_kabi
+action).
 .TP
 .B 32
 generic input/output error.
