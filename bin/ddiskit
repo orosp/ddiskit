@@ -1982,7 +1982,8 @@ def cmd_build_iso(configs):
 
     shutil.rmtree(dir_tmp)
 
-    log_status("ISO creation ... %s" % ("Failed" if ret else "OK"), configs,
+    log_status("ISO creation (file name \"%s\")... %s" %
+               (isofile, "Failed" if ret else "OK"), configs,
                level=0 if ret else 1)
 
     return ret
