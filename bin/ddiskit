@@ -749,7 +749,7 @@ def process_configs_for_spec(configs):
 
     configs.humble_set("module_requires", module_requires)
 
-    return configs
+    return ErrCode.SUCCESS
 
 
 def apply_config(data, configs, empty_is_nil=True):
@@ -1419,6 +1419,10 @@ def cmd_generate_spec(configs, spec_path=None):
         log_status("Firmware directory is empty or nonexistent, skipping",
                    configs)
 
+    ret = process_configs_for_spec(configs)
+    if ret:
+        return ret
+
     source_fail = False
     for arch in configs.get("spec_file.kernel_arch").split():
         kernel_dir = "/usr/src/kernels/%s.%s" % \
@@ -1433,8 +1437,6 @@ def cmd_generate_spec(configs, spec_path=None):
                   "on this system. You can try to install kernel-devel-%s " +
                   "package in order to fix this") %
                  configs.get("spec_file.kernel_version"), configs, level=0)
-
-    process_configs_for_spec(configs)
 
     read_data = apply_config(read_data, configs)
     log_status("Writing spec into %s ... " % spec_path, configs, newline=False)
