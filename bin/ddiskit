@@ -1782,7 +1782,7 @@ def cmd_build_iso(configs):
                          "skipping \"%s\"" % content, configs)
                 continue
 
-            if rpm_is_debuginfo(content, configs) != False:
+            if rpm_is_debuginfo(content, configs):
                 log_warn("Debuginfo packages are not supported, skipping " +
                          "\"%s\"" % content, configs)
                 continue
