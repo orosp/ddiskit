@@ -734,7 +734,12 @@ is performed:
 .IP \(bu 3
 .IR spec_file.source_patches " and " spec_file.source_patches_do
 generated in accordance with a lexicographically sorted list of patch files
-found in the patch directory (\fBsrc/patch\fR relative to current working directory).
+found in the patch directory: \fBsrc/patch\fR relative to the current working
+directory (except when
+.BR quilt (1)
+integration is enabled; see the
+.I QUILT INTEGRATION
+section for details).
 .I spec_file.source_patches
 contains lines in the "Patch\fIN\fR: \fIpatch-file-name\fR" format, and
 .I spec_file.source_patches_do
@@ -1100,12 +1105,13 @@ Specifically:
 It de-applies quilt patches before building source tarball and applies them
 back after the build.
 .IP \(bu
-It ignores \fBseries\fR file in \fBpatches\fR directory when builds
-a list of patches during the
+It uses contents of the \fBseries\fR file in the \fBpatches\fR directory
+as the source of the list of patches during the
 .I generate_spec
 action, as well as during the tarball creation in the
 .I build_rpm
 action.
+The file itself is excluded from the list of files considered as patches.
 .IP \(bu
 It ignores hidden files during the tarball creation in the
 .I build_rpm

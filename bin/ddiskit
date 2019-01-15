@@ -1191,6 +1191,72 @@ def get_spec_path(configs):
     return "rpm/SPECS/%s.spec" % configs.get("spec_file.module_name")
 
 
+def check_patches_presence(configs, src_root):
+    if configs.get_bool("quilt_support"):
+        if os.path.isfile(os.path.join(src_root, "patches/series")):
+            return True
+        else:
+            log_info("Quilt support enabled, but series file is not present," +
+                     " falling back to default patch discovery method",
+                     configs)
+
+    if os.path.isdir(src_root + "patches") and \
+            os.listdir(src_root + "patches"):
+        return True
+
+    log_status("Patch directory is empty or nonexistent, skipping", configs)
+
+    return False
+
+
+def iterate_patches(configs, src_root):
+    if configs.get_bool("quilt_support") and \
+            os.path.isfile(os.path.join(src_root, "patches/series")):
+        patches_yielded = False
+
+        try:
+            with codecs.open(os.path.join(src_root, "patches/series"), 'r',
+                             encoding='utf-8') as series:
+                for patch in series.readlines():
+                    if patch == "":
+                        return
+                    if patch.lstrip().startswith('#'):
+                        continue
+                    if patch[-1] == '\n':
+                        patch = patch[:-1]
+                    patch = patch.rsplit(" #", 1)[0]
+
+                    if not os.path.isfile(os.path.join(src_root, "patches",
+                                          patch)):
+                        log_warn("Non-existing file is listed in series " +
+                                 "file, skipping: %s" % patch, configs)
+
+                        continue
+
+                    yield patch
+
+                    patches_yielded = True
+
+                return
+
+        except IOError as err:
+            log_error("Error while parsing series file: " + str(err), configs)
+            if patches_yielded:
+                return
+            else:
+                log_warn("Falling back to default patch enumeration method",
+                         configs, level=0)
+
+    for file in sorted(os.listdir(os.path.join(src_root, "patches"))):
+        # Hack for series file inside patches directory
+        if file == "series" and configs.get_bool("quilt_support"):
+            log_status("  Skipping %s" % file, configs, level=2)
+
+            continue
+
+        yield file
+
+
 def cmd_generate_spec(configs, spec_path=None):
     """
     CMD generate_spec callback
@@ -1228,26 +1294,15 @@ def cmd_generate_spec(configs, spec_path=None):
     src_root = "src/"
     patches = ""
     patches_do = ""
-    if os.path.isdir(src_root + "patches") and \
-            os.listdir(src_root + "patches"):
+    if check_patches_presence(configs, src_root):
         log_status("Patches found, adding to the spec file:", configs)
-        os.chdir(src_root + "patches")
         index = 0
         patches = "# Source code patches"
-        for files in sorted(os.listdir(".")):
-            # Hack for series file inside patches directory
-            if files == "series" and configs.get_bool("quilt_support"):
-                if configs.get("verbosity") >= 2:
-                    log_status("  Skipping %s" % files, configs)
-                continue
-
+        for files in iterate_patches(configs, src_root):
             log_status("  Patch%d: %s" % (index, files), configs)
             patches += "\nPatch%d:\t%s" % (index, files)
             patches_do += "\n%%patch%d -p1" % index
             index = index + 1
-    else:
-        log_status("Patch directory is empty or nonexistent, skipping",
-                   configs)
 
     configs.set("spec_file.source_patches", patches)
     configs.set("spec_file.source_patches_do", patches_do)
@@ -1533,18 +1588,13 @@ def cmd_build_rpm(configs):
     if os.path.isdir(src_root + "patches") and \
             os.listdir(src_root + "patches"):
         log_status("Copying patches into rpm/SOURCES:", configs)
-        os.chdir(src_root + "patches")
-        for files in os.listdir("."):
-            if files == "series" and configs.get_bool("quilt_support"):
-                log_status("  Skipping: %s" % files, configs)
-                continue
-            shutil.copyfile(files, "../../rpm/SOURCES/" + files)
+        for files in iterate_patches(configs, src_root):
+            shutil.copyfile(os.path.join(src_root, "patches", files),
+                            os.path.join("rpm", "SOURCES", files))
             log_status("  Copying: %s" % files, configs)
     else:
         log_warn("Patch directory not found or empty -> skipping",
                  configs, level=0)
-
-    os.chdir(cwd)
 
     build_arch = os.uname()[4]
     if not configs.get_bool("srpm") and \
