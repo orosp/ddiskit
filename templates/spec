@@ -1,6 +1,7 @@
 %define kmod_name		%{MODULE_NAME}
 %define kmod_vendor		%{GLOBAL.MODULE_VENDOR}
 %define kmod_driver_version	%{MODULE_VERSION}
+%define kmod_driver_epoch	%{MODULE_VERSION_EPOCH}
 %define kmod_rpm_release	%{MODULE_RPM_RELEASE}
 %define kmod_kernel_version	%{KERNEL_VERSION}
 %define kmod_kernel_version_min	%{KERNEL_VERSION_MIN}
@@ -33,6 +34,9 @@ Source0:	%{kmod_name}-%{kmod_vendor}-%{kmod_driver_version}.tar.bz2
 Name:		%{RPM_NAME}
 Version:	%{kmod_driver_version}
 Release:	%{kmod_rpm_release}%{?dist}
+%if "%{kmod_driver_epoch}" != ""
+Epoch:		%{kmod_driver_epoch}
+%endif
 Summary:	%{SUMMARY}
 Group:		System/Kernel
 License:	GPLv2
