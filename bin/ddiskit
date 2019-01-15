@@ -15,6 +15,7 @@ import errno
 import functools
 import os
 import re
+import shlex
 import shutil
 import sys
 import tarfile
@@ -987,6 +988,7 @@ def get_mock_args(configs):
     mock_cfg = configs.get("mock_config", default="default.cfg")
     mock_offline = configs.get_bool("mock_offline")
     verbosity = configs.get("verbosity", default=0)
+    opts = configs.get("mock_opts", default=None)
 
     res += ["-r", mock_cfg]
 
@@ -996,8 +998,11 @@ def get_mock_args(configs):
         res.append("-q")
     if mock_offline:
         res.append("--offline")
+    if opts is not None:
+        opts = shlex.split(opts)
+        res += opts
 
-    return (res, {"config": mock_cfg, "offline": mock_offline})
+    return (res, {"config": mock_cfg, "offline": mock_offline, "opts": opts})
 
 
 def do_build_rpm(configs, arch):
@@ -2566,6 +2571,16 @@ def parse_cli():
     parser_build_rpm.add_argument("-l", "--mock-offline", action="store_true",
                                   default=None,
                                   help="Run mock in offline mode")
+    parser_build_rpm.add_argument("-O", "--mock-opts",
+                                  default=None,
+                                  help="Mock options, shell quoting " + \
+                                       "is supported")
+    parser_build_rpm.add_argument("-A", "--mock-opts-append",
+                                  default=None, action="append",
+                                  dest="mock_opts",
+                                  help="Additional mock options (avoid " + \
+                                       "overriding options already set), " + \
+                                       "shell quoting is supported")
     parser_build_rpm.add_argument("-g", "--check-git-src", default=None,
                                   help="Whether to perform verification of " +
                                        "sources against git repository. " +

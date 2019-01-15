@@ -354,6 +354,34 @@ Configuration option name:
 .br
 Default value: False
 .TP
+\fB-O\fR \fIMOCK_OPTIONS\fR, \fB--mock-opts\fR \fIMOCK_OPTIONS\fR
+Additional options that have to be passed to
+.B mock
+invocations.
+Shell quoting is supported.
+Overwrites options set by previous
+.BR -O " and/or " -A
+options.
+.IP
+Configuration option name:
+.I defaults.mock_opts
+.br
+Default value: none
+.TP
+\fB-A\fR \fIMOCK_OPTIONS\fR, \fB--mock-opts-append\fR \fIMOCK_OPTIONS\fR
+Additional options that have to be passed to
+.B mock
+invocations.
+Shell quoting is supported.
+Appends options to the options set by previous
+.BR -O " and/or " -A
+options.
+.IP
+Configuration option name:
+.I defaults.mock_opts
+.br
+Default value: none
+.TP
 \fB-g\fR \fILEVEL\fR, \fB--check-git-src\fR \fILEVEL\fI
 Set the level of source code repository authenticity check. See the
 .I SOURCE CODE VERIFICATION
