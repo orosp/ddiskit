@@ -1407,7 +1407,7 @@ def cmd_build_rpm(configs):
     if configs.get_bool("generate_spec_on_build"):
         ret = cmd_generate_spec(configs)
         if ret:
-            log_error("spec file generation failed, aborting")
+            log_error("spec file generation failed, aborting", configs)
     else:
         check_spec = int(configs.get("check_spec_on_build", default=0))
 
