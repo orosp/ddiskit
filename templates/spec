@@ -9,6 +9,7 @@
 %define kmod_dependencies       %{DEPENDENCIES}
 %define kmod_build_dependencies	%{BUILD_DEPENDENCIES}
 %define kmod_devel_package	%{DEVEL_PACKAGE}
+%define kmod_install_path	%{MODULE_INSTALL_SUBDIR}
 
 %{!?dist: %define dist .%{RPM_DIST}}
 %{!?make_build: %define make_build make}
@@ -102,7 +103,7 @@ Summary:	%{DEVEL_SUMMARY}
 %endif
 
 %post
-modules=( $(find /lib/modules/%{kmod_kernel_version}.%(arch)/extra/kmod-%{kmod_vendor}-%{kmod_name} | grep '\.ko$') )
+modules=( $(find /lib/modules/%{kmod_kernel_version}.%(arch)/%{kmod_install_path} | grep '\.ko$') )
 printf '%s\n' "${modules[@]}" | %{sbindir}/weak-modules --add-modules --no-initramfs
 
 mkdir -p "%{kver_state_dir}"
@@ -213,7 +214,7 @@ sort -u source/greylist | uniq > source/greylist.txt
 
 %install
 export INSTALL_MOD_PATH=$RPM_BUILD_ROOT
-export INSTALL_MOD_DIR=extra/%{name}
+export INSTALL_MOD_DIR=%{kmod_install_path}
 make -C %{kernel_source} modules_install \
 	M=$PWD/obj/%{kmod_kbuild_dir}
 # Cleanup unnecessary kernel-generated module dependency files.
