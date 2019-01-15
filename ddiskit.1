@@ -16,7 +16,7 @@
 .\" an-ext.tmac.
 .de OM
 .  ie \\n(.$-1 \
-.    RI "[\fB\\$1\fP" "\ \\$2" "]...\&"
+.    RI "[\fB\\$1\fR" "\ \\$2" "]...\&"
 .  el \
 .    RB "[" "\\$1" "]...\&"
 ..
@@ -542,7 +542,7 @@ Y-stream kernel version.
 This kernel package version is shipped as a part of General Availability
 release, and has the following format:
 .CS
-\fIkernel_version\fP.\fIkernel_patchlevel\fP.\fIkernel_sublevel\fP-\fIrhel_release\fP.\fIrpm_dist\fP
+\fIkernel_version\fR.\fIkernel_patchlevel\fR.\fIkernel_sublevel\fR-\fIrhel_release\fR.\fIrpm_dist\fR
 .CE
 For example, RHEL 7.3 GA kernel has kernel version 3.10.0-514.el7.
 As a result, it is expected that
@@ -558,7 +558,7 @@ These kernel packages are provided as a part of updates for the existing release
 (so-called Z-stream).
 The versions of these packages have the following format:
 .CS
-\fIkernel_version\fP.\fIkernel_patchlevel\fP.\fIkernel_sublevel\fP-\fIrhel_release\fP\fB[\fP.\fIupdate_release\fP\fB]+\fP.\fIrpm_dist\fP
+\fIkernel_version\fR.\fIkernel_patchlevel\fR.\fIkernel_sublevel\fR-\fIrhel_release\fR\fB[\fR.\fIupdate_release\fR\fB]+\fR.\fIrpm_dist\fR
 .CE
 The restrictions on the parts that also used for the Y-stream kernel package
 version description are the same, and \fIupdate_release\fR is a number that
@@ -770,8 +770,8 @@ format, if this variable hasn't been set already.
 .I spec_file.kernel_requires
 is formatted as
 .CS
-Requires:    kernel >= \fIkernel_version\fP-\fIkernel_release\fP.\fIkernel_dist\fP
-Requires:    kernel <  \fIkernel_version\fP-\fI(kernel_release + 1)\fP.\fIkernel_dist\fP
+Requires:    kernel >= \fIkernel_version\fR-\fIkernel_release\fR.\fIkernel_dist\fR
+Requires:    kernel <  \fIkernel_version\fR-\fI(kernel_release + 1)\fR.\fIkernel_dist\fR
 .CE
 for the Y-stream kernel version, and
 .CS
@@ -1226,7 +1226,7 @@ GPG signature.
 .IP 1. 3
 Create initial directory structure and module configuration.
 .CS
-$ \fBddiskit\fP prepare_sources
+$ \fBddiskit\fR prepare_sources
 Writing new config file (module.config)... OK
 Creating directory structure for RPM build ... OK
 Creating directory structure for source code ... OK
@@ -1258,7 +1258,7 @@ Additional patches for the code could be placed in the \fBpatches\fR directory.
 .IP 3.
 Fill out the \fBmodule.config\fR and generate the spec file:
 .CS
-$ \fBddiskit\fP generate_spec
+$ \fBddiskit\fR generate_spec
 Checking config ...
 Config check ... OK
 RPM spec file "rpm/SPECS/tg3.spec" exists!
@@ -1276,12 +1276,12 @@ you can optionally check it out before proceeding.
 .IP 4.
 Build binary RPM:
 .CS
-$ \fBddiskit\fP build_rpm
+$ \fBddiskit\fR build_rpm
 .CE
 .IP 5.
 Build Driver Update Disk ISO:
 .CS
-$ \fBddiskit\fP build_iso
+$ \fBddiskit\fR build_iso
 .CE
 .\"
 .\"
