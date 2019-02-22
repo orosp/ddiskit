@@ -8,6 +8,7 @@
 # This software may be freely redistributed under the terms of the GNU
 # General Public License version 3 (GPLv3).
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import argparse
 import codecs
@@ -28,6 +29,9 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
+if (sys.version_info > (3, 0)):
+    unicode = str
+    long = int
 
 class ErrCode:
     """
@@ -146,15 +150,15 @@ spec_var_re = re.compile(r"%{([^{}]*)}")
 class DDiskitConfig(object):
     def __init__(self, cfg={}):
         # Some sanity checks
-        for k, v in cfg.iteritems():
-            if not isinstance(k, basestring) or not isinstance(v, dict):
+        for k, v in cfg.items():
+            if not isinstance(k, u"".__class__) or not isinstance(v, dict):
                 raise TypeError("cfg must be a dict of dicts with strings " +
                                 "as keys")
             if "." in k:
                 raise ValueError("dict keys in cfg shouldn't contain dots")
 
-            for k, v in v.iteritems():
-                if not isinstance(k, basestring):
+            for k, v in v.items():
+                if not isinstance(k, u"".__class__):
                     raise TypeError("cfg dicts' keys must be strings")
                 if "." in k:
                     raise ValueError("dict keys in cfg shouldn't contain dots")
@@ -164,10 +168,10 @@ class DDiskitConfig(object):
     def __str__(self):
         res = []
 
-        for sk, sv in self._cfg.iteritems():
+        for sk, sv in self._cfg.items():
             res.append("[%s]" % sk)
 
-            for ik, iv in sv.iteritems():
+            for ik, iv in sv.items():
                 res.append("\t%s = %r" % (ik, iv))
 
         return "\n".join(res)
@@ -191,7 +195,7 @@ class DDiskitConfig(object):
         return section in self._cfg
 
     def iterkeys(self, section):
-        return self._cfg[section].iterkeys() if section else []
+        return self._cfg[section].keys() if section else []
 
     def get(self, key, section="defaults", default=None, max_subst_depth=8,
             overrides=None):
@@ -266,7 +270,7 @@ class DDiskitConfig(object):
             :return:  Value to substitute it with: configuration value in case
                       it exists or unchanged value in case it does not.
             """
-            key = map(lambda s: s.lower(), m.group(1).split('.', 1))
+            key = list(map(lambda s: s.lower(), m.group(1).split('.', 1)))
 
             if len(key) == 1:
                 key.insert(0, section)
@@ -379,7 +383,8 @@ class DDiskitConfig(object):
         """
         def unicodify(v):
             if isinstance(v, str):
-                return unicode(v, encoding=encoding)
+                if (sys.version_info < (3, 0)):
+                    return unicode(v, encoding=encoding)
 
             return v
 
@@ -388,7 +393,7 @@ class DDiskitConfig(object):
         if "defaults" not in self._cfg:
             self._cfg["defaults"] = {}
         self._cfg["defaults"].update([(unicodify(k), unicodify(v))
-                                      for k, v in args.__dict__.iteritems()
+                                      for k, v in args.__dict__.items()
                                       if v is not None])
 
         if args.config_option:
@@ -417,10 +422,10 @@ class DDiskitConfig(object):
         if cfgparser is None:
             cfgparser = configparser.RawConfigParser()
 
-        for s_name, section in self._cfg.iteritems():
+        for s_name, section in self._cfg.items():
             cfgparser.add_section(s_name)
 
-            for i_name, item in section.iteritems():
+            for i_name, item in section.items():
                 if s_name == "defaults" and i_name == "func":
                     continue
                 cfgparser.set(s_name, i_name, item)
@@ -450,7 +455,7 @@ def val2bool(val):
         return val
     if isinstance(val, (int, long)):
         return val != 0
-    if isinstance(val, basestring):
+    if isinstance(val, u"".__class__):
         val = val.lower().encode("utf-8", "ignore")
 
         if val in ("t", "y", "true", "yes", "1"):
@@ -1929,7 +1934,7 @@ def cmd_build_iso(configs):
     for file in src_rpms:
         shutil.copy(file, dir)
 
-    for arch, rpms in bin_rpms.iteritems():
+    for arch, rpms in bin_rpms.items():
         dir = os.path.join(dir_tmp, "disk/rpms", arch)
         for file in rpms:
             shutil.copy(file, dir)
@@ -2356,7 +2361,7 @@ def cmd_update_kabi(configs):
     log_status("%d files scanned, added %d symbols (%s) from %d files" %
                (files_total, symbols_found,
                 ", ".join(["%d unique on %s" % (len(s), a) for a, s in
-                           result_kabi.iteritems()]), files_added),
+                           result_kabi.items()]), files_added),
                configs)
 
     log_status("Scanning files for kenel symbol dependencies...", configs)
@@ -2428,7 +2433,7 @@ def cmd_update_kabi(configs):
 
     def map_map_iterator(m):
         for sm in m.itervalues():
-            for k, v in sm.iteritems():
+            for k, v in sm.items():
                 yield k, v
 
     # Generate resulting files
