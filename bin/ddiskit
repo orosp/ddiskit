@@ -456,7 +456,7 @@ def val2bool(val):
     if isinstance(val, (int, long)):
         return val != 0
     if isinstance(val, u"".__class__):
-        val = val.lower().encode("utf-8", "ignore")
+        val = val.lower()
 
         if val in ("t", "y", "true", "yes", "1"):
             return True
