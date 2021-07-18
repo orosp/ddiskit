@@ -455,7 +455,7 @@ def val2bool(val):
         return val
     if isinstance(val, (int, long)):
         return val != 0
-    if isinstance(val, u"".__class__):
+    if isinstance(val, u"".__class__) or isinstance(val, str):
         val = val.lower()
 
         if val in ("t", "y", "true", "yes", "1"):
