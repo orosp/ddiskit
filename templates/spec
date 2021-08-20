@@ -21,7 +21,9 @@
 %endif
 
 %if "%{kmod_dist_build_deps}" == ""
-%if (0%{?rhel} > 7) || (0%{?centos} > 7)
+%if (0%{?rhel} > 8) || (0%{?centos} > 8)
+%define kmod_dist_build_deps redhat-rpm-config kernel-abi-stablelists elfutils-libelf-devel kernel-rpm-macros kmod
+%elif (0%{?rhel} > 7) || (0%{?centos} > 7)
 %define kmod_dist_build_deps redhat-rpm-config kernel-abi-whitelists elfutils-libelf-devel kernel-rpm-macros kmod
 %else
 %define kmod_dist_build_deps redhat-rpm-config kernel-abi-whitelists
